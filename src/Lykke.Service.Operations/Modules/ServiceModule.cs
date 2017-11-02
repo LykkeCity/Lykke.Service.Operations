@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
+using AzureStorage.Tables.Templates.Index;
 using Common.Log;
 using Lykke.Service.Operations.AzureRepositories;
 using Lykke.Service.Operations.Core.Domain;
@@ -54,7 +55,8 @@ namespace Lykke.Service.Operations.Modules
                 .As<IShutdownManager>();
 
             builder.RegisterInstance<IOperationsRepository>(new OperationsRepository(
-                AzureTableStorage<OperationEntity>.Create(_dbSettings.ConnectionString(x => x.OperationsConnectionString), "Operations", _log)));
+                AzureTableStorage<OperationEntity>.Create(_dbSettings.ConnectionString(x => x.OperationsConnectionString), "Operations", _log),
+                AzureTableStorage<AzureIndex>.Create(_dbSettings.ConnectionString(x => x.OperationsConnectionString), "Operations", _log)));
 
             builder.Populate(_services);
         }

@@ -12,8 +12,23 @@ namespace Lykke.Service.Operations.AzureRepositories
         public Guid Id => new Guid(RowKey);
         public DateTime Created { get; set; }
         public Guid ClientId { get; set; }
-        public OperationType Type { get; set; }
-        public OperationStatus Status { get; set; }        
+
+        [IgnoreProperty]
+        public OperationType Type
+        {
+            get => (OperationType) Enum.Parse(typeof(OperationType), TypeString);
+            set => TypeString = value.ToString();
+        }
+        public string TypeString { get; set; }
+
+        [IgnoreProperty]
+        public OperationStatus Status
+        {
+            get => (OperationStatus)Enum.Parse(typeof(OperationStatus), StatusString);
+            set => StatusString = value.ToString();
+        }
+        public string StatusString { get; set; }
+
         public string AssetId { get; set; }
         [IgnoreProperty]
         public decimal Amount => decimal.TryParse(AmountString, NumberStyles.Any, CultureInfo.InvariantCulture, out var val) ? val : 0;
@@ -25,7 +40,7 @@ namespace Lykke.Service.Operations.AzureRepositories
         {
             return new OperationEntity
             {
-                PartitionKey = "Transfers",
+                PartitionKey = "Operations",
                 RowKey = id.ToString(),
                 Created = DateTime.UtcNow,
                 ClientId = clientId,
@@ -35,6 +50,6 @@ namespace Lykke.Service.Operations.AzureRepositories
                 AmountString = amount.ToString(CultureInfo.InvariantCulture),
                 WalletId = walletId
             };
-        }
+        }        
     }
 }
