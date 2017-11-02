@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace Lykke.Service.Operations.Controllers
             _operationsRepository = operationsRepository;
         }
 
-        [HttpGet]        
+        [HttpGet]
         [Route("{id}")]
         [ProducesResponseType(typeof(OperationModel), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -53,6 +54,7 @@ namespace Lykke.Service.Operations.Controllers
         
         [HttpGet]
         [Route("list/{status}")]
+        [ProducesResponseType(typeof(IEnumerable<OperationModel>), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> Get(OperationStatus status)
         {
             var operations = await _operationsRepository.Get(status);
@@ -77,7 +79,7 @@ namespace Lykke.Service.Operations.Controllers
         
         [HttpPost]
         [Route("transfer/{id}")]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> Transfer([FromBody]CreateTransferCommand cmd, Guid? id)
         {
