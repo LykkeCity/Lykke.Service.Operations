@@ -8,6 +8,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Models;
+    using System.Collections;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -49,9 +51,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// </param>
             /// <param name='id'>
             /// </param>
-            public static void ApiOperationsByIdGet(this IOperationsAPI operations, System.Guid id)
+            public static OperationModel ApiOperationsByIdGet(this IOperationsAPI operations, System.Guid id)
             {
-                operations.ApiOperationsByIdGetAsync(id).GetAwaiter().GetResult();
+                return operations.ApiOperationsByIdGetAsync(id).GetAwaiter().GetResult();
             }
 
             /// <param name='operations'>
@@ -62,9 +64,42 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task ApiOperationsByIdGetAsync(this IOperationsAPI operations, System.Guid id, CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task<OperationModel> ApiOperationsByIdGetAsync(this IOperationsAPI operations, System.Guid id, CancellationToken cancellationToken = default(CancellationToken))
             {
-                (await operations.ApiOperationsByIdGetWithHttpMessagesAsync(id, null, cancellationToken).ConfigureAwait(false)).Dispose();
+                using (var _result = await operations.ApiOperationsByIdGetWithHttpMessagesAsync(id, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='status'>
+            /// Possible values include: 'Created', 'Accepted', 'Confirmed', 'Completed',
+            /// 'Canceled', 'Failed'
+            /// </param>
+            public static IList<OperationModel> ApiOperationsListByStatusGet(this IOperationsAPI operations, OperationStatus status)
+            {
+                return operations.ApiOperationsListByStatusGetAsync(status).GetAwaiter().GetResult();
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='status'>
+            /// Possible values include: 'Created', 'Accepted', 'Confirmed', 'Completed',
+            /// 'Canceled', 'Failed'
+            /// </param>
+            /// <param name='cancellationToken'>
+            /// The cancellation token.
+            /// </param>
+            public static async Task<IList<OperationModel>> ApiOperationsListByStatusGetAsync(this IOperationsAPI operations, OperationStatus status, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                using (var _result = await operations.ApiOperationsListByStatusGetWithHttpMessagesAsync(status, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
             }
 
             /// <param name='operations'>
@@ -74,9 +109,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// </param>
             /// <param name='cmd'>
             /// </param>
-            public static void ApiOperationsTransferByIdPost(this IOperationsAPI operations, System.Guid id, CreateTransferCommand cmd = default(CreateTransferCommand))
+            public static System.Guid? ApiOperationsTransferByIdPost(this IOperationsAPI operations, System.Guid id, CreateTransferCommand cmd = default(CreateTransferCommand))
             {
-                operations.ApiOperationsTransferByIdPostAsync(id, cmd).GetAwaiter().GetResult();
+                return operations.ApiOperationsTransferByIdPostAsync(id, cmd).GetAwaiter().GetResult();
             }
 
             /// <param name='operations'>
@@ -89,9 +124,35 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task ApiOperationsTransferByIdPostAsync(this IOperationsAPI operations, System.Guid id, CreateTransferCommand cmd = default(CreateTransferCommand), CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task<System.Guid?> ApiOperationsTransferByIdPostAsync(this IOperationsAPI operations, System.Guid id, CreateTransferCommand cmd = default(CreateTransferCommand), CancellationToken cancellationToken = default(CancellationToken))
             {
-                (await operations.ApiOperationsTransferByIdPostWithHttpMessagesAsync(id, cmd, null, cancellationToken).ConfigureAwait(false)).Dispose();
+                using (var _result = await operations.ApiOperationsTransferByIdPostWithHttpMessagesAsync(id, cmd, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='id'>
+            /// </param>
+            public static void ApiOperationsCancelByIdPost(this IOperationsAPI operations, System.Guid id)
+            {
+                operations.ApiOperationsCancelByIdPostAsync(id).GetAwaiter().GetResult();
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='id'>
+            /// </param>
+            /// <param name='cancellationToken'>
+            /// The cancellation token.
+            /// </param>
+            public static async Task ApiOperationsCancelByIdPostAsync(this IOperationsAPI operations, System.Guid id, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                (await operations.ApiOperationsCancelByIdPostWithHttpMessagesAsync(id, null, cancellationToken).ConfigureAwait(false)).Dispose();
             }
 
     }
