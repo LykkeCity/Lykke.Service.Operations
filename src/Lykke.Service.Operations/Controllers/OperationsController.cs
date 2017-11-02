@@ -81,6 +81,7 @@ namespace Lykke.Service.Operations.Controllers
         [Route("transfer/{id}")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.Created)]
         public async Task<IActionResult> Transfer([FromBody]CreateTransferCommand cmd, Guid? id)
         {
             if (!id.HasValue)
