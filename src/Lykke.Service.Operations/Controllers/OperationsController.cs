@@ -8,6 +8,7 @@ using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Controllers
@@ -25,16 +26,17 @@ namespace Lykke.Service.Operations.Controllers
         [HttpGet]
         [Route("{id}")]
         [ProducesResponseType(typeof(OperationModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> Get(Guid? id)
         {
             if (!id.HasValue)
-                return BadRequest(new { message = "Operation id is required" });
+                return BadRequest(new OperationResult("id", "Operation id is required"));
 
             var operation = await _operationsRepository.Get(id.Value);
 
             if (operation == null)
-                return NotFound(new { message = "Operation not found" });
+                return NotFound();
 
             return Ok(new OperationModel
             {
@@ -80,20 +82,20 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("transfer/{id}")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(Guid?), (int)HttpStatusCode.Created)]
+        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
         public async Task<IActionResult> Transfer([FromBody]CreateTransferCommand cmd, Guid? id)
         {
             if (!id.HasValue)
-                return BadRequest(new { message = "Operation id is required" });
+                return BadRequest(new OperationResult("id", "Operation id is required"));
 
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return BadRequest(new OperationResult(ModelState));
 
             var operation = await _operationsRepository.Get(id.Value);
 
             if (operation != null)
-                return BadRequest(new { message = "Operation with the id already exists." });
+                return BadRequest(new OperationResult("id", "Operation with the id already exists."));
 
             await _operationsRepository.CreateTransfer(id.Value, cmd.ClientId, cmd.AssetId, cmd.Amount, cmd.WalletId);
             
@@ -103,12 +105,12 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("cancel/{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> Cancel(Guid? id)
         {
             if (!id.HasValue)
-                return BadRequest(new { message = "Operation id is required" });
+                return BadRequest(new OperationResult("id", "Operation id is required"));
 
             var operation = await _operationsRepository.Get(id.Value);
 
@@ -116,7 +118,7 @@ namespace Lykke.Service.Operations.Controllers
                 return NotFound();
 
             if (operation.Status != OperationStatus.Created)
-                return BadRequest(new { message = "An operation in created status could be canceled" });
+                return BadRequest(new OperationResult("id", "An operation in created status could be canceled"));
 
             await _operationsRepository.Cancel(id.Value);
 
