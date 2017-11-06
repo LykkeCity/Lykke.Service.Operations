@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Common;
 using Lykke.Contracts.Operations;
+using Lykke.Service.ClientAccount.Client;
+using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
+using Lykke.Service.PushNotifications.Client;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Controllers
@@ -17,10 +18,12 @@ namespace Lykke.Service.Operations.Controllers
     public class OperationsController : Controller
     {
         private readonly IOperationsRepository _operationsRepository;
+        private readonly IClientAccountService _clientAccountService;        
 
-        public OperationsController(IOperationsRepository operationsRepository)
+        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService)
         {
             _operationsRepository = operationsRepository;
+            _clientAccountService = clientAccountService;            
         }
 
         [HttpGet]
@@ -49,7 +52,9 @@ namespace Lykke.Service.Operations.Controllers
                 {
                     operation.AssetId,
                     operation.Amount,
-                    operation.WalletId
+                    operation.SourceWalletId,
+                    operation.WalletId,
+                    TransferType = operation.TransferType.ToString()
                 })
             });
         }
@@ -72,7 +77,9 @@ namespace Lykke.Service.Operations.Controllers
                 {
                     o.AssetId,
                     o.Amount,
-                    o.WalletId
+                    o.SourceWalletId,
+                    o.WalletId,
+                    TransferType = o.TransferType.ToString()
                 })
             });
 
@@ -97,7 +104,23 @@ namespace Lykke.Service.Operations.Controllers
             if (operation != null)
                 return BadRequest(new OperationResult("id", "Operation with the id already exists."));
 
-            await _operationsRepository.CreateTransfer(id.Value, cmd.ClientId, cmd.AssetId, cmd.Amount, cmd.WalletId);
+            var isSourceWalletIsTrusted = await _clientAccountService.IsTrustedAsync(cmd.SourceWalletId.ToString()) ?? false;
+            var isDestinationWalletIsTrusted = await _clientAccountService.IsTrustedAsync(cmd.WalletId.ToString()) ?? false;
+
+            var transferType = TransferType.TrustedToTrusted;
+
+            if (!isSourceWalletIsTrusted)
+            {
+                transferType = TransferType.TradingToTrusted;
+            }
+            else if (!isDestinationWalletIsTrusted)
+            {
+                transferType = TransferType.TrustedToTrading;
+            }
+
+            await _operationsRepository.CreateTransfer(id.Value, transferType, cmd.ClientId, cmd.AssetId, cmd.Amount, cmd.WalletId, cmd.SourceWalletId);
+
+            //await _pushNotificationsClient.SendDataNotificationToAllDevicesAsync(null,)
             
             return Created(Url.Action("Get", new { id }), id);
         }

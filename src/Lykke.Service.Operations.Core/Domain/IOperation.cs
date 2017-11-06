@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Contracts.Operations;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.Operations.Core.Domain
 {
@@ -14,12 +16,14 @@ namespace Lykke.Service.Operations.Core.Domain
         OperationStatus Status { get; }
         string AssetId { get; }
         decimal Amount { get; }
-        Guid WalletId { get; }
+        Guid SourceWalletId { get; }
+        Guid WalletId { get; }        
+        TransferType TransferType { get; set; }
     }
 
     public interface IOperationsRepository
     {
-        Task CreateTransfer(Guid id, Guid clientId, string assetId, decimal amount, Guid walletId);
+        Task CreateTransfer(Guid id, TransferType transferType, Guid clientId, string assetId, decimal amount, Guid sourceWalletId, Guid walletId);
         Task<IOperation> Get(Guid id);
         Task Cancel(Guid id);
         Task<IEnumerable<IOperation>> Get(OperationStatus status);

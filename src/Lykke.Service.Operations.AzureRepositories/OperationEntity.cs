@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Globalization;
-using Common.Platforms;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Core.Domain;
 using Microsoft.WindowsAzure.Storage.Table;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.Operations.AzureRepositories
 {
@@ -33,10 +34,18 @@ namespace Lykke.Service.Operations.AzureRepositories
         [IgnoreProperty]
         public decimal Amount => decimal.TryParse(AmountString, NumberStyles.Any, CultureInfo.InvariantCulture, out var val) ? val : 0;
         public string AmountString { get; set; }
-
+        public Guid SourceWalletId { get; set; }
         public Guid WalletId { get; set; }
 
-        public static OperationEntity CreateTransfer(Guid id, Guid clientId, string assetId, decimal amount, Guid walletId)
+        [IgnoreProperty]        
+        public TransferType TransferType
+        {
+            get => (TransferType)Enum.Parse(typeof(TransferType), TransferTypeString);
+            set => TransferTypeString = value.ToString();
+        }
+        public string TransferTypeString { get; set; }
+
+        public static OperationEntity CreateTransfer(Guid id, TransferType transferType, Guid clientId, string assetId, decimal amount, Guid sourceWalletId, Guid walletId)
         {
             return new OperationEntity
             {
@@ -46,8 +55,10 @@ namespace Lykke.Service.Operations.AzureRepositories
                 ClientId = clientId,
                 Type = OperationType.Transfer,
                 Status = OperationStatus.Created,
+                TransferType = transferType,
                 AssetId = assetId,
                 AmountString = amount.ToString(CultureInfo.InvariantCulture),
+                SourceWalletId = sourceWalletId,
                 WalletId = walletId
             };
         }        

@@ -15,6 +15,9 @@ namespace Lykke.Service.Operations.Models
             RuleFor(m => m.Amount)
                 .GreaterThan(0);
 
+            RuleFor(m => m.SourceWalletId)
+                .NotEmpty();
+
             RuleFor(m => m.WalletId)
                 .NotEmpty();
         }

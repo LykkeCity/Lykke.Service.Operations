@@ -24,11 +24,12 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateTransferCommand class.
         /// </summary>
-        public CreateTransferCommand(System.Guid clientId, double amount, System.Guid walletId, string assetId = default(string))
+        public CreateTransferCommand(System.Guid clientId, double amount, System.Guid sourceWalletId, System.Guid walletId, string assetId = default(string))
         {
             ClientId = clientId;
             AssetId = assetId;
             Amount = amount;
+            SourceWalletId = sourceWalletId;
             WalletId = walletId;
             CustomInit();
         }
@@ -52,6 +53,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         [JsonProperty(PropertyName = "Amount")]
         public double Amount { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "SourceWalletId")]
+        public System.Guid SourceWalletId { get; set; }
 
         /// <summary>
         /// </summary>

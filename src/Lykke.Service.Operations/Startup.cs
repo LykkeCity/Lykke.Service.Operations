@@ -59,7 +59,7 @@ namespace Lykke.Service.Operations
                 var appSettings = Configuration.LoadSettings<AppSettings>();
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.OperationsService), appSettings.Nested(x => x.OperationsService.Db), Log));
+                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.OperationsService), appSettings.Nested(x => x.OperationsService.Db), appSettings.Nested(x => x.OperationsService.Services), Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
