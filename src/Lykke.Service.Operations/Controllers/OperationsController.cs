@@ -118,7 +118,7 @@ namespace Lykke.Service.Operations.Controllers
                 transferType = TransferType.TrustedToTrading;
             }
 
-            await _operationsRepository.CreateTransfer(id.Value, transferType, cmd.ClientId, cmd.AssetId, cmd.Amount, cmd.WalletId, cmd.SourceWalletId);
+            await _operationsRepository.CreateTransfer(id.Value, transferType, cmd.ClientId, cmd.AssetId, cmd.Amount, cmd.SourceWalletId, cmd.WalletId);
 
             //await _pushNotificationsClient.SendDataNotificationToAllDevicesAsync(null,)
             
