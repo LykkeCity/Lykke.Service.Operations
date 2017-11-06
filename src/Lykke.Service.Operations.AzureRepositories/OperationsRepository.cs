@@ -40,7 +40,7 @@ namespace Lykke.Service.Operations.AzureRepositories
         {
             var transfer = OperationEntity.CreateTransfer(id, transferType, clientId, assetId, amount, sourceWalletId, walletId);
 
-            var indexEntry = AzureIndex.Create(OperationStatus.Created.ToString(), clientId.ToString(), transfer);
+            var indexEntry = AzureIndex.Create(OperationStatus.Created.ToString(), id.ToString(), transfer);
             await _operationsIndices.InsertAsync(indexEntry);
 
             await _tableStorage.InsertAsync(transfer);            
