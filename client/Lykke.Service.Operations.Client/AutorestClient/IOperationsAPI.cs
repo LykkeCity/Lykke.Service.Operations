@@ -56,6 +56,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient
         /// </param>
         Task<HttpOperationResponse<object>> ApiOperationsByIdGetWithHttpMessagesAsync(System.Guid id, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <param name='clientId'>
+        /// </param>
         /// <param name='status'>
         /// Possible values include: 'Created', 'Accepted', 'Confirmed',
         /// 'Completed', 'Canceled', 'Failed'
@@ -66,7 +68,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse<IList<OperationModel>>> ApiOperationsListByStatusGetWithHttpMessagesAsync(OperationStatus status, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse<IList<OperationModel>>> ApiOperationsByClientIdListByStatusGetWithHttpMessagesAsync(System.Guid clientId, OperationStatus status, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='id'>
         /// </param>

@@ -419,6 +419,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             return _result;
         }
 
+        /// <param name='clientId'>
+        /// </param>
         /// <param name='status'>
         /// Possible values include: 'Created', 'Accepted', 'Confirmed', 'Completed',
         /// 'Canceled', 'Failed'
@@ -438,7 +440,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse<IList<OperationModel>>> ApiOperationsListByStatusGetWithHttpMessagesAsync(OperationStatus status, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse<IList<OperationModel>>> ApiOperationsByClientIdListByStatusGetWithHttpMessagesAsync(System.Guid clientId, OperationStatus status, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             // Tracing
             bool _shouldTrace = ServiceClientTracing.IsEnabled;
@@ -447,13 +449,15 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             {
                 _invocationId = ServiceClientTracing.NextInvocationId.ToString();
                 Dictionary<string, object> tracingParameters = new Dictionary<string, object>();
+                tracingParameters.Add("clientId", clientId);
                 tracingParameters.Add("status", status);
                 tracingParameters.Add("cancellationToken", cancellationToken);
-                ServiceClientTracing.Enter(_invocationId, this, "ApiOperationsListByStatusGet", tracingParameters);
+                ServiceClientTracing.Enter(_invocationId, this, "ApiOperationsByClientIdListByStatusGet", tracingParameters);
             }
             // Construct URL
             var _baseUrl = BaseUri.AbsoluteUri;
-            var _url = new System.Uri(new System.Uri(_baseUrl + (_baseUrl.EndsWith("/") ? "" : "/")), "api/operations/list/{status}").ToString();
+            var _url = new System.Uri(new System.Uri(_baseUrl + (_baseUrl.EndsWith("/") ? "" : "/")), "api/operations/{clientId}/list/{status}").ToString();
+            _url = _url.Replace("{clientId}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(clientId, SerializationSettings).Trim('"')));
             _url = _url.Replace("{status}", System.Uri.EscapeDataString(SafeJsonConvert.SerializeObject(status, SerializationSettings).Trim('"')));
             // Create HTTP transport objects
             var _httpRequest = new HttpRequestMessage();
