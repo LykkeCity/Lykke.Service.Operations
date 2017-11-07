@@ -46,19 +46,19 @@ namespace Lykke.Service.Operations.AzureRepositories
             await _tableStorage.InsertAsync(transfer);            
         }
 
-        public async Task Cancel(Guid id)
+        public async Task UpdateStatus(Guid id, OperationStatus status)
         {
             var operation = await _tableStorage.GetDataAsync(_partitionKey, id.ToString());
-            var canceledEntry = AzureIndex.Create(OperationStatus.Canceled.ToString(), id.ToString(), operation);
+            var indexedEntry = AzureIndex.Create(status.ToString(), id.ToString(), operation);
 
             await _tableStorage.MergeAsync(_partitionKey, id.ToString(), entity =>
             {
-                entity.Status = OperationStatus.Canceled;
+                entity.Status = status;
                 return entity;
             });
 
             await _operationsIndices.DeleteAsync(operation.StatusString, id.ToString());            
-            await _operationsIndices.InsertAsync(canceledEntry);
+            await _operationsIndices.InsertAsync(indexedEntry);
         }        
     }
 }

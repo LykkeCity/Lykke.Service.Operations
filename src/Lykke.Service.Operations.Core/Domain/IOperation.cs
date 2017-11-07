@@ -26,6 +26,6 @@ namespace Lykke.Service.Operations.Core.Domain
         Task<IOperation> Get(Guid id);
         Task<IEnumerable<IOperation>> Get(Guid clientId, OperationStatus status);
         Task CreateTransfer(Guid id, TransferType transferType, Guid clientId, string assetId, decimal amount, Guid sourceWalletId, Guid walletId);
-        Task Cancel(Guid id);        
+        Task UpdateStatus(Guid id, OperationStatus status);        
     }
 }

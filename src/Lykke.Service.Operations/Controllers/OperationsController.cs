@@ -130,12 +130,9 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> Cancel(Guid? id)
-        {
-            if (!id.HasValue)
-                return BadRequest(new OperationResult("id", "Operation id is required"));
-
-            var operation = await _operationsRepository.Get(id.Value);
+        public async Task<IActionResult> Cancel(Guid id)
+        {            
+            var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
                 return NotFound();
@@ -143,7 +140,24 @@ namespace Lykke.Service.Operations.Controllers
             if (operation.Status != OperationStatus.Created)
                 return BadRequest(new OperationResult("id", "An operation in created status could be canceled"));
 
-            await _operationsRepository.Cancel(id.Value);
+            await _operationsRepository.UpdateStatus(id, OperationStatus.Canceled);
+
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("complete/{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> Complete(Guid id)
+        {
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation == null)
+                return NotFound();
+            
+            await _operationsRepository.UpdateStatus(id, OperationStatus.Completed);
 
             return Ok();
         }
