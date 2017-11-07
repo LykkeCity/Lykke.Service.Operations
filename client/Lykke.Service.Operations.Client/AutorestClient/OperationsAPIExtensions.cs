@@ -162,5 +162,31 @@ namespace Lykke.Service.Operations.Client.AutorestClient
                 }
             }
 
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='id'>
+            /// </param>
+            public static IDictionary<string, IList<string>> ApiOperationsCompleteByIdPost(this IOperationsAPI operations, System.Guid id)
+            {
+                return operations.ApiOperationsCompleteByIdPostAsync(id).GetAwaiter().GetResult();
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='id'>
+            /// </param>
+            /// <param name='cancellationToken'>
+            /// The cancellation token.
+            /// </param>
+            public static async Task<IDictionary<string, IList<string>>> ApiOperationsCompleteByIdPostAsync(this IOperationsAPI operations, System.Guid id, CancellationToken cancellationToken = default(CancellationToken))
+            {
+                using (var _result = await operations.ApiOperationsCompleteByIdPostWithHttpMessagesAsync(id, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
+            }
+
     }
 }
