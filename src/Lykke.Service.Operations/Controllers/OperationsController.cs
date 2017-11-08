@@ -4,11 +4,12 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Lykke.Contracts.Operations;
-using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
+using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
-using Lykke.Service.PushNotifications.Client;
+using Lykke.Service.PushNotifications.Client.AutorestClient;
+using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
@@ -18,12 +19,14 @@ namespace Lykke.Service.Operations.Controllers
     public class OperationsController : Controller
     {
         private readonly IOperationsRepository _operationsRepository;
-        private readonly IClientAccountService _clientAccountService;        
+        private readonly IClientAccountService _clientAccountService;
+        private readonly IPushNotificationsAPI _pushNotificationsApi;
 
-        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService)
+        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService, IPushNotificationsAPI pushNotificationsApi)
         {
             _operationsRepository = operationsRepository;
-            _clientAccountService = clientAccountService;            
+            _clientAccountService = clientAccountService;
+            _pushNotificationsApi = pushNotificationsApi;
         }
 
         [HttpGet]
@@ -104,6 +107,7 @@ namespace Lykke.Service.Operations.Controllers
             if (operation != null)
                 return BadRequest(new OperationResult("id", "Operation with the id already exists."));
 
+            var clientAccount = (ClientResponseModel)await _clientAccountService.GetByIdAsync(cmd.ClientId.ToString());
             var isSourceWalletIsTrusted = await _clientAccountService.IsTrustedAsync(cmd.SourceWalletId.ToString()) ?? false;
             var isDestinationWalletIsTrusted = await _clientAccountService.IsTrustedAsync(cmd.WalletId.ToString()) ?? false;
 
@@ -118,9 +122,9 @@ namespace Lykke.Service.Operations.Controllers
                 transferType = TransferType.TrustedToTrading;
             }
 
-            await _operationsRepository.CreateTransfer(id.Value, transferType, cmd.ClientId, cmd.AssetId, cmd.Amount, cmd.SourceWalletId, cmd.WalletId);
+            await _operationsRepository.CreateTransfer(id.Value, transferType, cmd.ClientId, cmd.AssetId, cmd.Amount, cmd.SourceWalletId, cmd.WalletId);            
 
-            //await _pushNotificationsClient.SendDataNotificationToAllDevicesAsync(null,)
+            await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId } ));
             
             return Created(Url.Action("Get", new { id }), id);
         }

@@ -10,5 +10,6 @@
     public class ServicesSettings
     {
         public string ClientAccountUrl { get; set; }
+        public string PushNotificationsUrl { get; set; }
     }
 }

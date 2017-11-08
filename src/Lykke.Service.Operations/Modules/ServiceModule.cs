@@ -10,6 +10,7 @@ using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.Core.Settings.ServiceSettings;
 using Lykke.Service.Operations.Services;
+using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.SettingsReader;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,6 +66,10 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterType<ClientAccountService>()
                 .As<IClientAccountService>()
                 .WithParameter("baseUri", new Uri(_servicesSettings.Nested(s => s.ClientAccountUrl).CurrentValue));
+
+            builder.RegisterType<PushNotificationsAPI>()
+                .As<IPushNotificationsAPI>()
+                .WithParameter("baseUri", new Uri(_servicesSettings.Nested(s => s.PushNotificationsUrl).CurrentValue));
 
             builder.Populate(_services);
         }
