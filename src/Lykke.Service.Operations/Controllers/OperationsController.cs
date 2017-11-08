@@ -161,5 +161,22 @@ namespace Lykke.Service.Operations.Controllers
 
             return Ok();
         }
+
+        [HttpPost]
+        [Route("fail/{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> Fail(Guid id)
+        {
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation == null)
+                return NotFound();
+
+            await _operationsRepository.UpdateStatus(id, OperationStatus.Failed);
+
+            return Ok();
+        }
     }
 }
