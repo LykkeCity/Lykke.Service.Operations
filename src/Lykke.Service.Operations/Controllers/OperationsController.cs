@@ -116,6 +116,7 @@ namespace Lykke.Service.Operations.Controllers
             if (!isSourceWalletIsTrusted)
             {
                 transferType = TransferType.TradingToTrusted;
+                cmd.SourceWalletId = cmd.ClientId;
             }
             else if (!isDestinationWalletIsTrusted)
             {
