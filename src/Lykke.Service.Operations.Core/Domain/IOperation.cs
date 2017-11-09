@@ -14,18 +14,14 @@ namespace Lykke.Service.Operations.Core.Domain
         Guid ClientId { get; }        
         OperationType Type { get; }
         OperationStatus Status { get; }
-        string AssetId { get; }
-        decimal Amount { get; }
-        Guid SourceWalletId { get; }
-        Guid WalletId { get; }        
-        TransferType TransferType { get; set; }
+        string Context { get; set; }
     }
 
     public interface IOperationsRepository
     {        
         Task<IOperation> Get(Guid id);
         Task<IEnumerable<IOperation>> Get(Guid clientId, OperationStatus status);
-        Task CreateTransfer(Guid id, TransferType transferType, Guid clientId, string assetId, decimal amount, Guid sourceWalletId, Guid walletId);
+        Task Create(Guid id, Guid clientId, OperationType operationType, string context);
         Task UpdateStatus(Guid id, OperationStatus status);        
     }
 }

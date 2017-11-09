@@ -36,9 +36,9 @@ namespace Lykke.Service.Operations.AzureRepositories
             return (await _tableStorage.GetDataAsync(indices.Select(i => new Tuple<string, string>(i.PrimaryPartitionKey, i.PrimaryRowKey)))).Where(t => t.ClientId == clientId);
         }
 
-        public async Task CreateTransfer(Guid id, TransferType transferType, Guid clientId, string assetId, decimal amount, Guid sourceWalletId, Guid walletId)
+        public async Task Create(Guid id, Guid clientId, OperationType operationType, string context)
         {
-            var transfer = OperationEntity.CreateTransfer(id, transferType, clientId, assetId, amount, sourceWalletId, walletId);
+            var transfer = OperationEntity.Create(id, clientId, operationType, context);
 
             var indexEntry = AzureIndex.Create(OperationStatus.Created.ToString(), id.ToString(), transfer);
             await _operationsIndices.InsertAsync(indexEntry);

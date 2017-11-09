@@ -13,6 +13,7 @@ namespace Lykke.Service.Operations.AzureRepositories
         public Guid Id => new Guid(RowKey);
         public DateTime Created { get; set; }
         public Guid ClientId { get; set; }
+        public string Context { get; set; }
 
         [IgnoreProperty]
         public OperationType Type
@@ -28,24 +29,9 @@ namespace Lykke.Service.Operations.AzureRepositories
             get => (OperationStatus)Enum.Parse(typeof(OperationStatus), StatusString);
             set => StatusString = value.ToString();
         }
-        public string StatusString { get; set; }
-
-        public string AssetId { get; set; }
-        [IgnoreProperty]
-        public decimal Amount => decimal.TryParse(AmountString, NumberStyles.Any, CultureInfo.InvariantCulture, out var val) ? val : 0;
-        public string AmountString { get; set; }
-        public Guid SourceWalletId { get; set; }
-        public Guid WalletId { get; set; }
-
-        [IgnoreProperty]        
-        public TransferType TransferType
-        {
-            get => (TransferType)Enum.Parse(typeof(TransferType), TransferTypeString);
-            set => TransferTypeString = value.ToString();
-        }
-        public string TransferTypeString { get; set; }
-
-        public static OperationEntity CreateTransfer(Guid id, TransferType transferType, Guid clientId, string assetId, decimal amount, Guid sourceWalletId, Guid walletId)
+        public string StatusString { get; set; }        
+        
+        public static OperationEntity Create(Guid id, Guid clientId, OperationType operationType, string context)
         {
             return new OperationEntity
             {
@@ -53,13 +39,9 @@ namespace Lykke.Service.Operations.AzureRepositories
                 RowKey = id.ToString(),
                 Created = DateTime.UtcNow,
                 ClientId = clientId,
-                Type = OperationType.Transfer,
+                Type = operationType,
                 Status = OperationStatus.Created,
-                TransferType = transferType,
-                AssetId = assetId,
-                AmountString = amount.ToString(CultureInfo.InvariantCulture),
-                SourceWalletId = sourceWalletId,
-                WalletId = walletId
+                Context = context                
             };
         }        
     }

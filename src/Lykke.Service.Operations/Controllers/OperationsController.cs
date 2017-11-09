@@ -11,6 +11,7 @@ using Lykke.Service.Operations.Models;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Controllers
@@ -51,14 +52,7 @@ namespace Lykke.Service.Operations.Controllers
                 Type = operation.Type,
                 Status = operation.Status,
                 ClientId = operation.ClientId,
-                Context = JObject.FromObject(new
-                {
-                    operation.AssetId,
-                    operation.Amount,
-                    operation.SourceWalletId,
-                    operation.WalletId,
-                    TransferType = operation.TransferType.ToString()
-                })
+                Context = JObject.Parse(operation.Context)
             });
         }
         
@@ -76,14 +70,7 @@ namespace Lykke.Service.Operations.Controllers
                 Type = o.Type,
                 Status = o.Status,
                 ClientId = o.ClientId,
-                Context = JObject.FromObject(new
-                {
-                    o.AssetId,
-                    o.Amount,
-                    o.SourceWalletId,
-                    o.WalletId,
-                    TransferType = o.TransferType.ToString()
-                })
+                Context = JObject.Parse(o.Context)
             });
 
             return Ok(result);
@@ -94,15 +81,15 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> Transfer([FromBody]CreateTransferCommand cmd, Guid? id)
+        public async Task<IActionResult> Transfer(Guid id, [FromBody]CreateTransferCommand cmd)
         {
-            if (!id.HasValue)
-                return BadRequest(new OperationResult("id", "Operation id is required"));
+            if (id == Guid.Empty)
+                return BadRequest(new OperationResult("id", "Operation id must be non empty"));
 
             if (!ModelState.IsValid)
                 return BadRequest(new OperationResult(ModelState));
 
-            var operation = await _operationsRepository.Get(id.Value);
+            var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
                 return BadRequest(new OperationResult("id", "Operation with the id already exists."));
@@ -123,10 +110,53 @@ namespace Lykke.Service.Operations.Controllers
                 transferType = TransferType.TrustedToTrading;
             }
 
-            await _operationsRepository.CreateTransfer(id.Value, transferType, cmd.ClientId, cmd.AssetId, cmd.Amount, cmd.SourceWalletId, cmd.WalletId);            
+            var context = new TransferContext
+            {
+                AssetId = cmd.AssetId,
+                Amount = cmd.Amount,
+                SourceWalletId = cmd.SourceWalletId,
+                WalletId = cmd.WalletId,
+                TransferType = transferType
+            };
+
+            await _operationsRepository.Create(id, cmd.ClientId, OperationType.Transfer, JsonConvert.SerializeObject(context));            
 
             await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId } ));
             
+            return Created(Url.Action("Get", new { id }), id);
+        }
+
+        [HttpPost]
+        [Route("payment/{id}")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> Payment(Guid id, [FromBody]CreatePaymentCommand cmd)
+        {
+            if (id == Guid.Empty)
+                return BadRequest(new OperationResult("id", "Operation id must be non empty"));
+
+            if (!ModelState.IsValid)
+                return BadRequest(new OperationResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                return BadRequest(new OperationResult("id", "Operation with the id already exists."));
+
+            var clientAccount = (ClientResponseModel)await _clientAccountService.GetByIdAsync(cmd.ClientId.ToString());
+            
+            var context = new PaymentContext
+            {
+                AssetId = cmd.AssetId,
+                Amount = cmd.Amount,
+                PaymentType = cmd.PaymentType
+            };
+
+            await _operationsRepository.Create(id, cmd.ClientId, OperationType.Payment, JsonConvert.SerializeObject(context));
+
+            await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId }));
+
             return Created(Url.Action("Get", new { id }), id);
         }
 
