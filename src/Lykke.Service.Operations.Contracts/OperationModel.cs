@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
-namespace Lykke.Service.Operations.Models
+namespace Lykke.Service.Operations.Contracts
 {
     public class OperationModel
     {

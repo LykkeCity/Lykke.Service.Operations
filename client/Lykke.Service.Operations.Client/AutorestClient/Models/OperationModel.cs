@@ -24,23 +24,19 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the OperationModel class.
         /// </summary>
+        /// <param name="type">Possible values include: 'Transfer',
+        /// 'VisaCardPayment'</param>
         /// <param name="status">Possible values include: 'Created',
         /// 'Accepted', 'Confirmed', 'Completed', 'Canceled', 'Failed'</param>
-        public OperationModel(System.Guid id, System.DateTime created, OperationStatus status, System.Guid clientId, object context = default(object))
+        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context = default(object))
         {
             Id = id;
             Created = created;
+            Type = type;
             Status = status;
             ClientId = clientId;
             Context = context;
             CustomInit();
-        }
-        /// <summary>
-        /// Static constructor for OperationModel class.
-        /// </summary>
-        static OperationModel()
-        {
-            Type = "Transfer";
         }
 
         /// <summary>
@@ -59,6 +55,12 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         public System.DateTime Created { get; set; }
 
         /// <summary>
+        /// Gets or sets possible values include: 'Transfer', 'VisaCardPayment'
+        /// </summary>
+        [JsonProperty(PropertyName = "Type")]
+        public OperationType Type { get; set; }
+
+        /// <summary>
         /// Gets or sets possible values include: 'Created', 'Accepted',
         /// 'Confirmed', 'Completed', 'Canceled', 'Failed'
         /// </summary>
@@ -74,11 +76,6 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         [JsonProperty(PropertyName = "Context")]
         public object Context { get; set; }
-
-        /// <summary>
-        /// </summary>
-        [JsonProperty(PropertyName = "Type")]
-        public static string Type { get; private set; }
 
         /// <summary>
         /// Validate the object.

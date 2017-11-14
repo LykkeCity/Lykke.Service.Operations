@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Lykke.Service.Operations.Contracts;
 
 namespace Lykke.Service.Operations.Models
 {

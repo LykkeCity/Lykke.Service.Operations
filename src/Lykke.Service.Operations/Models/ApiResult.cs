@@ -4,14 +4,14 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Lykke.Service.Operations.Models
 {
-    public class OperationResult : Dictionary<string, string[]>
+    public class ApiResult : Dictionary<string, string[]>
     {
-        public OperationResult(string field, string message)
+        public ApiResult(string field, string message)
         {
             this[field] = new [] { message };
         }
 
-        public OperationResult(ModelStateDictionary modelState)
+        public ApiResult(ModelStateDictionary modelState)
         {
             foreach (var key in modelState.Keys)
             {

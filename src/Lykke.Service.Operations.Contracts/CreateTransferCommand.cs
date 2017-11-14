@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lykke.Service.Operations.Models
+namespace Lykke.Service.Operations.Contracts
 {
     public class CreateTransferCommand
     {
