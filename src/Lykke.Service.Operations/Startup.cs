@@ -81,8 +81,9 @@ namespace Lykke.Service.Operations
                     app.UseDeveloperExceptionPage();
                 }
 
-                app.UseLykkeMiddleware("Operations", ex => new {Message = "Technical problem"});
-
+                CreateErrorResponse errorResponseFactory = ex => new { Message = "Technical problem" };
+                app.UseMiddleware<Middleware.GlobalErrorHandlerMiddleware>("Operations", errorResponseFactory);
+                
                 app.UseMvc();
                 app.UseSwagger();
                 app.UseSwaggerUi();

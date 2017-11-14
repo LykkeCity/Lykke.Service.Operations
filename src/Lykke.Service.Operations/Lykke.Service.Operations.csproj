@@ -39,7 +39,6 @@
     <PackageReference Include="FluentValidation.AspNetCore" Version="7.2.1" />
     <PackageReference Include="Lykke.Common" Version="3.0.2" />
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="1.0.14" />
-    <PackageReference Include="Lykke.Common.Entities" Version="1.0.34" />
     <PackageReference Include="Lykke.Logs" Version="3.2.2" />
     <PackageReference Include="Lykke.Service.ClientAccount.Client" Version="1.0.39-beta" />
     <PackageReference Include="Lykke.Service.PushNotifications.Client" Version="1.1.6" />
@@ -62,6 +61,7 @@
   
   <ItemGroup>
     <ProjectReference Include="..\Lykke.Service.Operations.AzureRepositories\Lykke.Service.Operations.AzureRepositories.csproj" />
+    <ProjectReference Include="..\Lykke.Service.Operations.Contracts\Lykke.Service.Operations.Contracts.csproj" />
     <ProjectReference Include="..\Lykke.Service.Operations.Core\Lykke.Service.Operations.Core.csproj" />
     <ProjectReference Include="..\Lykke.Service.Operations.Services\Lykke.Service.Operations.Services.csproj" />
   </ItemGroup>

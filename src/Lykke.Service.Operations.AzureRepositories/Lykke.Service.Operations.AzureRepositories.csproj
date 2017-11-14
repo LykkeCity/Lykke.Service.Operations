@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Lykke.AzureStorage" Version="2.1.4" />
-    <PackageReference Include="Lykke.Common.Entities" Version="1.0.33" />
+    <PackageReference Include="Lykke.Contracts" Version="1.0.38" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Lykke.Contracts.Operations;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
+using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
@@ -33,33 +34,28 @@ namespace Lykke.Service.Operations.Controllers
         [HttpGet]
         [Route("{id}")]
         [ProducesResponseType(typeof(OperationModel), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> Get(Guid? id)
+        public async Task<OperationModel> Get(Guid id)
         {
-            if (!id.HasValue)
-                return BadRequest(new OperationResult("id", "Operation id is required"));
-
-            var operation = await _operationsRepository.Get(id.Value);
+            var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
-                return NotFound();
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
 
-            return Ok(new OperationModel
+            return new OperationModel
             {
-                Id = id.Value,
+                Id = id,
                 Created = operation.Created,
                 Type = operation.Type,
                 Status = operation.Status,
                 ClientId = operation.ClientId,
                 Context = JObject.Parse(operation.Context)
-            });
+            };
         }
         
         [HttpGet]
         [Route("{clientId}/list/{status}")]
         [ProducesResponseType(typeof(IEnumerable<OperationModel>), (int)HttpStatusCode.OK)]
-        public async Task<IActionResult> Get(Guid clientId, OperationStatus status)
+        public async Task<IEnumerable<OperationModel>> Get(Guid clientId, OperationStatus status)
         {
             var operations = await _operationsRepository.Get(clientId, status);
 
@@ -73,27 +69,25 @@ namespace Lykke.Service.Operations.Controllers
                 Context = JObject.Parse(o.Context)
             });
 
-            return Ok(result);
+            return result;
         }
         
         [HttpPost]
-        [Route("transfer/{id}")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
+        [Route("transfer/{id}")]         
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
         public async Task<IActionResult> Transfer(Guid id, [FromBody]CreateTransferCommand cmd)
         {
             if (id == Guid.Empty)
-                return BadRequest(new OperationResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
 
             if (!ModelState.IsValid)
-                return BadRequest(new OperationResult(ModelState));
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));                
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
-                return BadRequest(new OperationResult("id", "Operation with the id already exists."));
-
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+            
             var clientAccount = (ClientResponseModel)await _clientAccountService.GetByIdAsync(cmd.ClientId.ToString());
             var isSourceWalletIsTrusted = await _clientAccountService.IsTrustedAsync(cmd.SourceWalletId.ToString()) ?? false;
             var isDestinationWalletIsTrusted = await _clientAccountService.IsTrustedAsync(cmd.WalletId.ToString()) ?? false;
@@ -125,93 +119,75 @@ namespace Lykke.Service.Operations.Controllers
             
             return Created(Url.Action("Get", new { id }), id);
         }
-
-        [HttpPost]
-        [Route("payment/{id}")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> Payment(Guid id, [FromBody]CreatePaymentCommand cmd)
-        {
-            if (id == Guid.Empty)
-                return BadRequest(new OperationResult("id", "Operation id must be non empty"));
-
-            if (!ModelState.IsValid)
-                return BadRequest(new OperationResult(ModelState));
-
-            var operation = await _operationsRepository.Get(id);
-
-            if (operation != null)
-                return BadRequest(new OperationResult("id", "Operation with the id already exists."));
-
-            var clientAccount = (ClientResponseModel)await _clientAccountService.GetByIdAsync(cmd.ClientId.ToString());
-            
-            var context = new PaymentContext
-            {
-                AssetId = cmd.AssetId,
-                Amount = cmd.Amount,
-                PaymentType = cmd.PaymentType
-            };
-
-            await _operationsRepository.Create(id, cmd.ClientId, OperationType.Payment, JsonConvert.SerializeObject(context));
-
-            await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId }));
-
-            return Created(Url.Action("Get", new { id }), id);
-        }
-
+   
         [HttpPost]
         [Route("cancel/{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> Cancel(Guid id)
-        {            
+        public async Task Cancel(Guid id)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
             var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
-                return NotFound();
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
 
             if (operation.Status != OperationStatus.Created)
-                return BadRequest(new OperationResult("id", "An operation in created status could be canceled"));
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be canceled"));
 
-            await _operationsRepository.UpdateStatus(id, OperationStatus.Canceled);
-
-            return Ok();
+            await _operationsRepository.UpdateStatus(id, OperationStatus.Canceled);            
         }
 
         [HttpPost]
         [Route("complete/{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> Complete(Guid id)
+        public async Task Complete(Guid id)
         {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
             var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
-                return NotFound();
-            
-            await _operationsRepository.UpdateStatus(id, OperationStatus.Completed);
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
 
-            return Ok();
+            await _operationsRepository.UpdateStatus(id, OperationStatus.Completed);            
         }
 
         [HttpPost]
         [Route("fail/{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(OperationResult), (int)HttpStatusCode.BadRequest)]
-        [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> Fail(Guid id)
+        public async Task Fail(Guid id)
         {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
             var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
-                return NotFound();
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
 
-            await _operationsRepository.UpdateStatus(id, OperationStatus.Failed);
+            await _operationsRepository.UpdateStatus(id, OperationStatus.Failed);            
+        }
 
-            return Ok();
+        [HttpPost]
+        [Route("confirm/{id}")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public async Task Confirm(Guid id)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation == null)
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
+
+            if (operation.Status != OperationStatus.Created)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be confirmed"));
+
+            await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
         }
     }
 }
