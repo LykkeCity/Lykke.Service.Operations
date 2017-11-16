@@ -150,9 +150,9 @@ namespace Lykke.Service.Operations.Controllers
 
             var operation = await _operationsRepository.Get(id);
 
-            if (operation == null)
-                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
-
+            if (operation == null || operation.Status == OperationStatus.Completed || operation.Status == OperationStatus.Confirmed)
+                return;
+            
             await _operationsRepository.UpdateStatus(id, OperationStatus.Completed);            
         }
 
@@ -167,7 +167,7 @@ namespace Lykke.Service.Operations.Controllers
             var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
-                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
+                return;
 
             await _operationsRepository.UpdateStatus(id, OperationStatus.Failed);            
         }
