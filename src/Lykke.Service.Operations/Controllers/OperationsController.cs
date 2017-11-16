@@ -116,7 +116,7 @@ namespace Lykke.Service.Operations.Controllers
 
             await _operationsRepository.Create(id, cmd.ClientId, OperationType.Transfer, JsonConvert.SerializeObject(context));            
 
-            await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId } ));
+            await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId }, "Operation" ));
             
             return Created(Url.Action("Get", new { id }), id);
         }
