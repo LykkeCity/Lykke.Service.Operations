@@ -89,8 +89,8 @@ namespace Lykke.Service.Operations.Controllers
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
             
             var clientAccount = (ClientResponseModel)await _clientAccountService.GetByIdAsync(cmd.ClientId.ToString());
-            var isSourceWalletIsTrusted = await _clientAccountService.IsTrustedAsync(cmd.SourceWalletId.ToString()) ?? false;
-            var isDestinationWalletIsTrusted = await _clientAccountService.IsTrustedAsync(cmd.WalletId.ToString()) ?? false;
+            var isSourceWalletIsTrusted = (bool?)await _clientAccountService.IsTrustedAsync(cmd.SourceWalletId.ToString()) ?? false;
+            var isDestinationWalletIsTrusted = (bool?)await _clientAccountService.IsTrustedAsync(cmd.WalletId.ToString()) ?? false;
 
             var transferType = TransferType.TrustedToTrusted;
 
