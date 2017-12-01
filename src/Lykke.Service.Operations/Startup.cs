@@ -59,7 +59,10 @@ namespace Lykke.Service.Operations
                 var appSettings = Configuration.LoadSettings<AppSettings>();
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.OperationsService), appSettings.Nested(x => x.OperationsService.Db), appSettings.Nested(x => x.OperationsService.Services), Log));
+                builder.RegisterModule(new ServiceModule(appSettings.CurrentValue.OperationsService,
+                                                        appSettings.CurrentValue.Assets,
+                                                        appSettings.Nested(x => x.OperationsService.Db),
+                                                        Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
@@ -83,7 +86,7 @@ namespace Lykke.Service.Operations
 
                 CreateErrorResponse errorResponseFactory = ex => new { Message = "Technical problem" };
                 app.UseMiddleware<Middleware.GlobalErrorHandlerMiddleware>("Operations", errorResponseFactory);
-                
+
                 app.UseMvc();
                 app.UseSwagger();
                 app.UseSwaggerUi();
@@ -140,12 +143,12 @@ namespace Lykke.Service.Operations
             try
             {
                 // NOTE: Service can't recieve and process requests here, so you can destroy all resources
-                
+
                 if (Log != null)
                 {
                     await Log.WriteMonitorAsync("", "", "Terminating");
                 }
-                
+
                 ApplicationContainer.Dispose();
             }
             catch (Exception ex)
