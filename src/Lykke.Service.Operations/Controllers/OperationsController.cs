@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Lykke.Contracts.Operations;
+using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.Operations.Contracts;
@@ -23,12 +24,14 @@ namespace Lykke.Service.Operations.Controllers
         private readonly IOperationsRepository _operationsRepository;
         private readonly IClientAccountService _clientAccountService;
         private readonly IPushNotificationsAPI _pushNotificationsApi;
+        private readonly IAssetsServiceWithCache _assetsServiceWithCache;
 
-        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService, IPushNotificationsAPI pushNotificationsApi)
+        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService, IPushNotificationsAPI pushNotificationsApi, IAssetsServiceWithCache assetsServiceWithCache)
         {
             _operationsRepository = operationsRepository;
             _clientAccountService = clientAccountService;
             _pushNotificationsApi = pushNotificationsApi;
+            _assetsServiceWithCache = assetsServiceWithCache;
         }
 
         [HttpGet]
@@ -90,6 +93,7 @@ namespace Lykke.Service.Operations.Controllers
             
             var clientAccount = (ClientResponseModel)await _clientAccountService.GetByIdAsync(cmd.ClientId.ToString());
             var isSourceWalletIsTrusted = (bool?)await _clientAccountService.IsTrustedAsync(cmd.SourceWalletId.ToString()) ?? false;
+            var isSourceAssetIsTrusted = (await _assetsServiceWithCache.TryGetAssetAsync(cmd.AssetId))?.IsTrusted ?? false;
             var isDestinationWalletIsTrusted = (bool?)await _clientAccountService.IsTrustedAsync(cmd.WalletId.ToString()) ?? false;
 
             var transferType = TransferType.TrustedToTrusted;
@@ -104,6 +108,9 @@ namespace Lykke.Service.Operations.Controllers
                 transferType = TransferType.TrustedToTrading;
                 cmd.WalletId = cmd.ClientId;
             }
+
+            if (isSourceAssetIsTrusted)
+                transferType = TransferType.TrustedToTrusted;
 
             var context = new TransferContext
             {

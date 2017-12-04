@@ -40,6 +40,7 @@
     <PackageReference Include="Lykke.Common" Version="3.0.2" />
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="1.0.14" />
     <PackageReference Include="Lykke.Logs" Version="3.2.2" />
+    <PackageReference Include="Lykke.Service.Assets.Client" Version="2.1.0.16" />
     <PackageReference Include="Lykke.Service.ClientAccount.Client" Version="1.0.66" />
     <PackageReference Include="Lykke.Service.PushNotifications.Client" Version="1.1.8" />
     <PackageReference Include="Lykke.Service.Session" Version="1.0.33" />
