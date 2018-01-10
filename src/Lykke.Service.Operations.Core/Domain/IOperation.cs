@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Contracts.Operations;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.Operations.Core.Domain
 {

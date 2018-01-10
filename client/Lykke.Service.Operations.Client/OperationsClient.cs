@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Common.Log;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Client.AutorestClient;
 using Lykke.Service.Operations.Contracts;
@@ -32,7 +31,7 @@ namespace Lykke.Service.Operations.Client
 
         public async Task<IEnumerable<OperationModel>> Get(Guid clientId, OperationStatus status)
         {
-            return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, Mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(m => Mapper.Map<OperationModel>(m));
+            return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, Mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(Mapper.Map<OperationModel>);
         }
 
         public async Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand)

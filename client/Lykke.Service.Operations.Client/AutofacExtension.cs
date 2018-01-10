@@ -1,6 +1,5 @@
 ﻿using System;
 using Autofac;
-using Common.Log;
 
 namespace Lykke.Service.Operations.Client
 {
