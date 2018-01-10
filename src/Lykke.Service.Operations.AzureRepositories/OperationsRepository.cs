@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using AzureStorage.Tables.Templates.Index;
-using Common.PasswordTools;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Core.Domain;
 

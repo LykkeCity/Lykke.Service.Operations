@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Globalization;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Core.Domain;
 using Microsoft.WindowsAzure.Storage.Table;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.Operations.AzureRepositories
 {
