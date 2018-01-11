@@ -141,6 +141,9 @@ namespace Lykke.Service.Operations.Controllers
             if (operation == null)
                 throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
 
+            if (operation.Status == OperationStatus.Canceled)
+                return;
+
             if (operation.Status != OperationStatus.Created)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be canceled"));
 
@@ -173,7 +176,7 @@ namespace Lykke.Service.Operations.Controllers
 
             var operation = await _operationsRepository.Get(id);
 
-            if (operation == null)
+            if (operation == null || operation.Status == OperationStatus.Failed)
                 return;
 
             await _operationsRepository.UpdateStatus(id, OperationStatus.Failed);            
@@ -192,7 +195,10 @@ namespace Lykke.Service.Operations.Controllers
             if (operation == null)
                 throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
 
-            if (operation.Status != OperationStatus.Created)
+            if (operation.Status == OperationStatus.Confirmed)
+                return;
+
+            if (operation.Status != OperationStatus.Created) // todo: accepted?
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be confirmed"));
 
             await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
