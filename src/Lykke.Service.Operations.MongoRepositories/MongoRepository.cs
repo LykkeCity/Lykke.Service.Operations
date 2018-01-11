@@ -54,12 +54,15 @@ namespace Lykke.Service.Operations.MongoRepositories
 
         public async Task Add(IEnumerable<T> items)
         {
-            var documents = items.ToList();
-            foreach (var document in documents)
+            var entities = items.ToList();
+            foreach (var entity in entities)
             {
-                document.Id = Guid.NewGuid();
+                if (entity.Id == Guid.Empty)
+                {
+                    entity.Id = Guid.NewGuid();
+                }
             }
-            await GetCollection().InsertManyAsync(documents).ConfigureAwait(false);
+            await GetCollection().InsertManyAsync(entities).ConfigureAwait(false);
         }
 
         public async Task Update(T entity)

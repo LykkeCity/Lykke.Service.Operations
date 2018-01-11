@@ -11,6 +11,7 @@ namespace Lykke.Service.Operations.MongoRepositories
     {
         public OperationsRepository(IMongoDatabase database) : base(database)
         {
+            GetCollection().Indexes.CreateOneAsync(Builders<Operation>.IndexKeys.Ascending(_ => _.ClientId).Ascending(_ => _.Status));
         }
 
         public async Task<IEnumerable<Operation>> Get(Guid clientId, OperationStatus status)
