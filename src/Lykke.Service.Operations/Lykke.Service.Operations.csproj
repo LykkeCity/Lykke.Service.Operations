@@ -61,9 +61,9 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Lykke.Service.Operations.AzureRepositories\Lykke.Service.Operations.AzureRepositories.csproj" />
     <ProjectReference Include="..\Lykke.Service.Operations.Contracts\Lykke.Service.Operations.Contracts.csproj" />
     <ProjectReference Include="..\Lykke.Service.Operations.Core\Lykke.Service.Operations.Core.csproj" />
+    <ProjectReference Include="..\Lykke.Service.Operations.MongoRepositories\Lykke.Service.Operations.MongoRepositories.csproj" />
     <ProjectReference Include="..\Lykke.Service.Operations.Services\Lykke.Service.Operations.Services.csproj" />
   </ItemGroup>
 
