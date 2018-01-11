@@ -33,7 +33,8 @@ namespace Lykke.Service.Operations.Modules
                 .As<IShutdownManager>();
 
             builder.RegisterType<OperationsRepository>()
-                .As<IOperationsRepository>();
+                .As<IOperationsRepository>()
+                .SingleInstance();
         }
     }
 }
