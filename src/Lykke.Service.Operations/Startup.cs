@@ -22,6 +22,9 @@ namespace Lykke.Service.Operations
 {
     public class Startup
     {
+        private const string ApiVersion = "v1";
+        private const string ApiTitle = "Operations API";
+
         public IHostingEnvironment Environment { get; }
         public IContainer ApplicationContainer { get; private set; }
         public IConfigurationRoot Configuration { get; }
@@ -51,7 +54,8 @@ namespace Lykke.Service.Operations
 
                 services.AddSwaggerGen(options =>
                 {
-                    options.DefaultLykkeConfiguration("v1", "Operations API");
+                    options.DefaultLykkeConfiguration(ApiVersion, ApiTitle);
+                    options.DescribeAllEnumsAsStrings();
                 });
 
                 var builder = new ContainerBuilder();
@@ -86,12 +90,12 @@ namespace Lykke.Service.Operations
                 app.UseMiddleware<Middleware.GlobalErrorHandlerMiddleware>("Operations", errorResponseFactory);
 
                 app.UseMvc();
+                app.UseSwagger();
                 app.UseSwaggerUI(x =>
                 {
                     x.RoutePrefix = "swagger/ui";
-                    x.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+                    x.SwaggerEndpoint("/swagger/v1/swagger.json", ApiVersion);
                 });
-                app.UseSwaggerUi();
                 app.UseStaticFiles();
 
                 appLifetime.ApplicationStarted.Register(() => StartApplication().Wait());
