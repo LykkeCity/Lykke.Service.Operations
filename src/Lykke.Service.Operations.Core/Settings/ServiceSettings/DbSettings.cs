@@ -3,6 +3,6 @@
     public class DbSettings
     {
         public string LogsConnString { get; set; }
-        public string OperationsConnectionString { get; set; }
+        public string MongoConnectionString { get; set; }
     }
 }

@@ -8,7 +8,6 @@ using FluentValidation.AspNetCore;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
-using Lykke.Service.Operations.Controllers;
 using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.Core.Settings;
 using Lykke.Service.Operations.Modules;
@@ -23,6 +22,9 @@ namespace Lykke.Service.Operations
 {
     public class Startup
     {
+        private const string ApiVersion = "v1";
+        private const string ApiTitle = "Operations API";
+
         public IHostingEnvironment Environment { get; }
         public IContainer ApplicationContainer { get; private set; }
         public IConfigurationRoot Configuration { get; }
@@ -52,17 +54,17 @@ namespace Lykke.Service.Operations
 
                 services.AddSwaggerGen(options =>
                 {
-                    options.DefaultLykkeConfiguration("v1", "Operations API");
+                    options.DefaultLykkeConfiguration(ApiVersion, ApiTitle);
+                    options.DescribeAllEnumsAsStrings();
                 });
 
                 var builder = new ContainerBuilder();
                 var appSettings = Configuration.LoadSettings<AppSettings>();
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.CurrentValue.OperationsService,
-                                                        appSettings.CurrentValue.Assets,
-                                                        appSettings.Nested(x => x.OperationsService.Db),
-                                                        Log));
+                builder.RegisterModule(new ServiceModule(Log));
+                builder.RegisterModule(new ClientsModule(appSettings.CurrentValue.OperationsService, appSettings.CurrentValue.Assets));
+                builder.RegisterModule(new MongoDbModule(appSettings.Nested(x => x.OperationsService.Db)));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
@@ -89,7 +91,11 @@ namespace Lykke.Service.Operations
 
                 app.UseMvc();
                 app.UseSwagger();
-                app.UseSwaggerUi();
+                app.UseSwaggerUI(x =>
+                {
+                    x.RoutePrefix = "swagger/ui";
+                    x.SwaggerEndpoint("/swagger/v1/swagger.json", ApiVersion);
+                });
                 app.UseStaticFiles();
 
                 appLifetime.ApplicationStarted.Register(() => StartApplication().Wait());
@@ -107,7 +113,7 @@ namespace Lykke.Service.Operations
         {
             try
             {
-                // NOTE: Service not yet recieve and process requests here
+                // NOTE: Service not yet receive and process requests here
 
                 await ApplicationContainer.Resolve<IStartupManager>().StartAsync();
 
@@ -124,7 +130,7 @@ namespace Lykke.Service.Operations
         {
             try
             {
-                // NOTE: Service still can recieve and process requests here, so take care about it if you add logic here.
+                // NOTE: Service still can receive and process requests here, so take care about it if you add logic here.
 
                 await ApplicationContainer.Resolve<IShutdownManager>().StopAsync();
             }
@@ -142,7 +148,7 @@ namespace Lykke.Service.Operations
         {
             try
             {
-                // NOTE: Service can't recieve and process requests here, so you can destroy all resources
+                // NOTE: Service can't receive and process requests here, so you can destroy all resources
 
                 if (Log != null)
                 {
@@ -179,7 +185,7 @@ namespace Lykke.Service.Operations
             var dbLogConnectionStringManager = settings.Nested(x => x.OperationsService.Db.LogsConnString);
             var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
 
-            // Creating azure storage logger, which logs own messages to concole log
+            // Creating azure storage logger, which logs own messages to console log
             if (!string.IsNullOrEmpty(dbLogConnectionString) && !(dbLogConnectionString.StartsWith("${") && dbLogConnectionString.EndsWith("}")))
             {
                 var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
