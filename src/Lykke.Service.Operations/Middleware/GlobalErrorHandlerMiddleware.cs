@@ -34,7 +34,7 @@ namespace Lykke.Service.Operations.Middleware
             }
             catch (ApiException ex)
             {
-                await LogError(context, ex);
+                await LogWarning(context, ex);
                 await CreateApiErrorResponse(context, ex);
             }
             catch (Exception ex)
@@ -44,23 +44,36 @@ namespace Lykke.Service.Operations.Middleware
             }
         }
 
-        private async Task LogError(HttpContext context, Exception ex)
+        private async Task LogWarning(HttpContext httpContext, ApiException ex)
         {
-            using (var ms = new MemoryStream())
-            {
-                context.Request.Body.CopyTo(ms);
-                
-                ms.Seek(0, SeekOrigin.Begin);
+            var context = await GetBody(httpContext.Request);
+            await _log.WriteWarningAsync(_componentName, httpContext.Request.GetUri().AbsoluteUri, context, ex.Result.ToJson());
+        }
 
-                await _log.LogPartFromStream(ms, _componentName, context.Request.GetUri().AbsoluteUri, ex);
+        private async Task LogError(HttpContext httpContext, Exception ex)
+        {
+            var context = await GetBody(httpContext.Request);
+            await _log.WriteErrorAsync(_componentName, httpContext.Request.GetUri().AbsoluteUri, context, ex);
+        }
+
+        private static async Task<string> GetBody(HttpRequest request)
+        {
+            if (request.ContentLength != null && request.ContentLength > 0 && request.Body.CanSeek)
+            {
+                request.Body.Seek(0, SeekOrigin.Begin);
+                using (var reader = new StreamReader(request.Body))
+                {
+                    return await reader.ReadToEndAsync();
+                }
             }
+            return String.Empty;
         }
 
         private async Task CreateApiErrorResponse(HttpContext ctx, ApiException ex)
         {
             ctx.Response.ContentType = "application/json";
-            ctx.Response.StatusCode = (int) ex.StatusCode;
-            
+            ctx.Response.StatusCode = (int)ex.StatusCode;
+
             var responseJson = JsonConvert.SerializeObject(ex.Result);
 
             await ctx.Response.WriteAsync(responseJson);
