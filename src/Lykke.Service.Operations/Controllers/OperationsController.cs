@@ -19,6 +19,7 @@ using Newtonsoft.Json.Linq;
 namespace Lykke.Service.Operations.Controllers
 {
     [Route("api/operations")]
+    [Produces("application/json")]
     public class OperationsController : Controller
     {
         private readonly IOperationsRepository _operationsRepository;
@@ -73,6 +74,38 @@ namespace Lykke.Service.Operations.Controllers
             });
 
             return result;
+        }
+
+        /// <summary>
+        /// Registers a new order with attached client order Id.
+        /// </summary>
+        /// <param name="id">The order Id</param>
+        /// <param name="cmd">Order related information</param>
+        /// <returns>A path to the new context</returns>
+        [HttpPost]
+        [Route("newOrder/{id}")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> NewOrder(Guid id, [FromBody]CreateNewOrderCommand cmd)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
+            if (!ModelState.IsValid)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+
+            var context = new NewOrderContext
+            {
+                ClientOrderId = cmd.ClientOrderId,
+            };
+
+            await _operationsRepository.Create(id, cmd.WalletId, OperationType.NewOrder, JsonConvert.SerializeObject(context));
+
+            return Created(Url.Action("Get", new { id }), id);
         }
 
         [HttpPost]

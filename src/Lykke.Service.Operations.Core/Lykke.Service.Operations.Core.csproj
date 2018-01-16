@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Lykke.Common" Version="4.1.0" />
-    <PackageReference Include="Lykke.Contracts" Version="1.0.40" />
+    <PackageReference Include="Lykke.Contracts" Version="1.0.42" />
   </ItemGroup>
 
 </Project>

@@ -90,7 +90,10 @@ namespace Lykke.Service.Operations
                 app.UseMiddleware<Middleware.GlobalErrorHandlerMiddleware>("Operations", errorResponseFactory);
 
                 app.UseMvc();
-                app.UseSwagger();
+                app.UseSwagger(c =>
+                {
+                    c.PreSerializeFilters.Add((swagger, httpReq) => swagger.Host = httpReq.Host.Value);
+                });
                 app.UseSwaggerUI(x =>
                 {
                     x.RoutePrefix = "swagger/ui";

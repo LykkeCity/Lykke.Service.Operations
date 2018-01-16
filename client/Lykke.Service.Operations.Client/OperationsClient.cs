@@ -11,19 +11,19 @@ using Newtonsoft.Json.Linq;
 namespace Lykke.Service.Operations.Client
 {
     public class OperationsClient : IOperationsClient, IDisposable
-    {        
+    {
         private OperationsAPI _operationsApi;
-        
+
         public OperationsClient(string serviceUrl)
-        {            
-            _operationsApi = new OperationsAPI(new Uri(serviceUrl));            
+        {
+            _operationsApi = new OperationsAPI(new Uri(serviceUrl));
         }
 
         public async Task<OperationModel> Get(Guid id)
         {
             var op = await _operationsApi.ApiOperationsByIdGetAsync(id);
 
-            var result =  Mapper.Map<OperationModel>(op);
+            var result = Mapper.Map<OperationModel>(op);
             result.Context = JObject.FromObject(op.Context);
 
             return result;
@@ -37,26 +37,31 @@ namespace Lykke.Service.Operations.Client
         public async Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand)
         {
             return (await _operationsApi.ApiOperationsTransferByIdPostAsync(id, Mapper.Map<AutorestClient.Models.CreateTransferCommand>(transferCommand))).Value;
+        }   
+               
+        public async Task<Guid> NewOrder(Guid id, CreateNewOrderCommand newOrderCommand)
+        {
+            return (await _operationsApi.ApiOperationsNewOrderByIdPostAsync(id, Mapper.Map<AutorestClient.Models.CreateNewOrderCommand>(newOrderCommand))).Value;
         }
 
-        public async Task Cancel(Guid id)
+        public Task Cancel(Guid id)
         {
-            await _operationsApi.ApiOperationsCancelByIdPostAsync(id);
+            return _operationsApi.ApiOperationsCancelByIdPostAsync(id);
         }
 
-        public async Task Complete(Guid id)
+        public Task Complete(Guid id)
         {
-            await _operationsApi.ApiOperationsCompleteByIdPostAsync(id);
+            return _operationsApi.ApiOperationsCompleteByIdPostAsync(id);
         }
 
-        public async Task Confirm(Guid id)
+        public Task Confirm(Guid id)
         {
-            await _operationsApi.ApiOperationsConfirmByIdPostAsync(id);
+            return _operationsApi.ApiOperationsConfirmByIdPostAsync(id);
         }
 
-        public async Task Fail(Guid id)
+        public Task Fail(Guid id)
         {
-            await _operationsApi.ApiOperationsFailByIdPostAsync(id);
+            return _operationsApi.ApiOperationsFailByIdPostAsync(id);
         }
 
         public void Dispose()
