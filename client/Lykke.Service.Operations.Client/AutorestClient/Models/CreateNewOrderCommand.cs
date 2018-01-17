@@ -6,6 +6,7 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -47,12 +48,22 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
-            //Nothing to validate
+            if (ClientOrderId != null)
+            {
+                if (ClientOrderId.Length > 50)
+                {
+                    throw new ValidationException(ValidationRules.MaxLength, "ClientOrderId", 50);
+                }
+                if (ClientOrderId.Length < 1)
+                {
+                    throw new ValidationException(ValidationRules.MinLength, "ClientOrderId", 1);
+                }
+            }
         }
     }
 }

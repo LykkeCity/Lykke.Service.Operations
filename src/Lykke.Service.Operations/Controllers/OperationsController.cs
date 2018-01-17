@@ -88,7 +88,7 @@ namespace Lykke.Service.Operations.Controllers
         public async Task<IActionResult> NewOrder(Guid id, [FromBody]CreateNewOrderCommand cmd)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be not empty and has a correct GUID value"));
 
             if (!ModelState.IsValid)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));

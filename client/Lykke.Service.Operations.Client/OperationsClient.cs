@@ -13,9 +13,15 @@ namespace Lykke.Service.Operations.Client
     public class OperationsClient : IOperationsClient, IDisposable
     {
         private OperationsAPI _operationsApi;
+        private readonly IMapper _mapper;
 
         public OperationsClient(string serviceUrl)
         {
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<ClientAutomapperProfile>();
+            });
+            _mapper = config.CreateMapper();
             _operationsApi = new OperationsAPI(new Uri(serviceUrl));
         }
 
@@ -31,17 +37,17 @@ namespace Lykke.Service.Operations.Client
 
         public async Task<IEnumerable<OperationModel>> Get(Guid clientId, OperationStatus status)
         {
-            return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, Mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(Mapper.Map<OperationModel>);
+            return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, _mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(_mapper.Map<OperationModel>);
         }
 
         public async Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand)
         {
-            return (await _operationsApi.ApiOperationsTransferByIdPostAsync(id, Mapper.Map<AutorestClient.Models.CreateTransferCommand>(transferCommand))).Value;
-        }   
-               
+            return (await _operationsApi.ApiOperationsTransferByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateTransferCommand>(transferCommand))).Value;
+        }
+
         public async Task<Guid> NewOrder(Guid id, CreateNewOrderCommand newOrderCommand)
         {
-            return (await _operationsApi.ApiOperationsNewOrderByIdPostAsync(id, Mapper.Map<AutorestClient.Models.CreateNewOrderCommand>(newOrderCommand))).Value;
+            return (await _operationsApi.ApiOperationsNewOrderByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateNewOrderCommand>(newOrderCommand))).Value;
         }
 
         public Task Cancel(Guid id)
