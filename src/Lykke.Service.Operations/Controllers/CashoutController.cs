@@ -3,17 +3,20 @@ using System.Net;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using Lykke.Contracts.Operations;
 using Lykke.Service.Balances.AutorestClient.Models;
 using Lykke.Service.Balances.Client;
 using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.ExchangeOperations.Client;
 using Lykke.Service.Kyc.Abstractions.Services;
 using Lykke.Service.Limitations.Client;
+using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Models;
 using Lykke.Service.Operations.Services;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.SwaggerGen.Annotations;
+using Newtonsoft.Json;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Lykke.Service.Operations.Controllers
 {
@@ -49,15 +52,15 @@ namespace Lykke.Service.Operations.Controllers
         }
 
         [ProducesResponseType((int)HttpStatusCode.OK)]        
-        [HttpPost("cashout")]
+        [HttpPost("cashout/{id}")]
         [SwaggerOperation("Cashout")]
-        public async Task CashoutAsync([FromBody]HotWalletCashoutOperation model)
+        public async Task CashoutAsync(Guid id, [FromBody]HotWalletCashoutOperation model)
         {
             #region Validation
 
             var clientId = model.ClientId;
 
-            var globalSettings = await _appGlobalSettingsRepositry.GetAsync();            
+            var globalSettings = await _appGlobalSettingsRepositry.GetAsync();                        
 
             var context = new
             {                
@@ -77,9 +80,19 @@ namespace Lykke.Service.Operations.Controllers
                     globalSettings.CashOutBlocked,
                     globalSettings.LowCashOutLimit,
                     globalSettings.LowCashOutTimeoutMins
-                },
+                },               
             };
-            
+
+            var operation = new Operation
+            {
+                Id = id,
+                ClientId = new Guid(model.ClientId),
+                Created = DateTime.UtcNow,
+                Status = OperationStatus.Created,
+                Type = OperationType.Cashout,
+                Context = JsonConvert.SerializeObject(context, Formatting.Indented)
+            };
+
             #endregion
 
             //var ethAsset = await _srvEthereumHelper.GetEthAsset();

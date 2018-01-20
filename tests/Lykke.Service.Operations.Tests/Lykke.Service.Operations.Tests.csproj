@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\client\Lykke.Service.Operations.Client\Lykke.Service.Operations.Client.csproj" />
+    <ProjectReference Include="..\..\src\Lykke.Service.Operations\Lykke.Service.Operations.csproj" />
   </ItemGroup>
 
   <ItemGroup>
