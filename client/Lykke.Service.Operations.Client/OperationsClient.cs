@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using JetBrains.Annotations;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Client.AutorestClient;
 using Lykke.Service.Operations.Contracts;
@@ -10,13 +11,18 @@ using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Client
 {
-    public class OperationsClient : IOperationsClient, IDisposable
+    public sealed class OperationsClient : IOperationsClient, IDisposable
     {
         private OperationsAPI _operationsApi;
         private readonly IMapper _mapper;
 
-        public OperationsClient(string serviceUrl)
+        public OperationsClient([NotNull] string serviceUrl)
         {
+            if (string.IsNullOrWhiteSpace(serviceUrl))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(serviceUrl));
+            }
+
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile<ClientAutomapperProfile>();
@@ -29,7 +35,7 @@ namespace Lykke.Service.Operations.Client
         {
             var op = await _operationsApi.ApiOperationsByIdGetAsync(id);
 
-            var result = Mapper.Map<OperationModel>(op);
+            var result = _mapper.Map<OperationModel>(op);
             result.Context = JObject.FromObject(op.Context);
 
             return result;
