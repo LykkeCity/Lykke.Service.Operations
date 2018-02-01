@@ -7,7 +7,6 @@ using JetBrains.Annotations;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Client.AutorestClient;
 using Lykke.Service.Operations.Contracts;
-using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Client
 {
@@ -36,7 +35,6 @@ namespace Lykke.Service.Operations.Client
             var op = await _operationsApi.ApiOperationsByIdGetAsync(id);
 
             var result = _mapper.Map<OperationModel>(op);
-            result.Context = JObject.FromObject(op.Context);
 
             return result;
         }

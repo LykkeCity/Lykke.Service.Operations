@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using AutoMapper;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
@@ -14,7 +14,6 @@ using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Controllers
 {
@@ -26,13 +25,15 @@ namespace Lykke.Service.Operations.Controllers
         private readonly IClientAccountService _clientAccountService;
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
+        private readonly IMapper _mapper;
 
-        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService, IPushNotificationsAPI pushNotificationsApi, IAssetsServiceWithCache assetsServiceWithCache)
+        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService, IPushNotificationsAPI pushNotificationsApi, IAssetsServiceWithCache assetsServiceWithCache, IMapper mapper)
         {
             _operationsRepository = operationsRepository;
             _clientAccountService = clientAccountService;
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -45,15 +46,9 @@ namespace Lykke.Service.Operations.Controllers
             if (operation == null)
                 throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
 
-            return new OperationModel
-            {
-                Id = id,
-                Created = operation.Created,
-                Type = operation.Type,
-                Status = operation.Status,
-                ClientId = operation.ClientId,
-                Context = JObject.Parse(operation.Context)
-            };
+            var result = _mapper.Map<Operation, OperationModel>(operation);
+
+            return result;
         }
 
         [HttpGet]
@@ -63,15 +58,7 @@ namespace Lykke.Service.Operations.Controllers
         {
             var operations = await _operationsRepository.Get(clientId, status);
 
-            var result = operations.Select(o => new OperationModel
-            {
-                Id = o.Id,
-                Created = o.Created,
-                Type = o.Type,
-                Status = o.Status,
-                ClientId = o.ClientId,
-                Context = JObject.Parse(o.Context)
-            });
+            var result = _mapper.Map<IEnumerable<Operation>, IEnumerable<OperationModel>>(operations);
 
             return result;
         }

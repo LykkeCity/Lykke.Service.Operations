@@ -26,7 +26,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// 'VisaCardPayment', 'NewOrder'</param>
         /// <param name="status">Possible values include: 'Created',
         /// 'Accepted', 'Confirmed', 'Completed', 'Canceled', 'Failed'</param>
-        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context = default(object))
+        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, string context = default(string))
         {
             Id = id;
             Created = created;
@@ -74,7 +74,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Context")]
-        public object Context { get; set; }
+        public string Context { get; set; }
 
         /// <summary>
         /// Validate the object.
