@@ -65,6 +65,7 @@ namespace Lykke.Service.Operations
                 builder.RegisterModule(new ServiceModule(Log));
                 builder.RegisterModule(new ClientsModule(appSettings.CurrentValue.OperationsService, appSettings.CurrentValue.Assets));
                 builder.RegisterModule(new MongoDbModule(appSettings.Nested(x => x.OperationsService.Db)));
+                builder.RegisterModule<AutoMapperModules>();
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
@@ -90,7 +91,10 @@ namespace Lykke.Service.Operations
                 app.UseMiddleware<Middleware.GlobalErrorHandlerMiddleware>("Operations", errorResponseFactory);
 
                 app.UseMvc();
-                app.UseSwagger();
+                app.UseSwagger(c =>
+                {
+                    c.PreSerializeFilters.Add((swagger, httpReq) => swagger.Host = httpReq.Host.Value);
+                });
                 app.UseSwaggerUI(x =>
                 {
                     x.RoutePrefix = "swagger/ui";

@@ -16,5 +16,13 @@ namespace Lykke.Service.Operations.Client
         Task Complete(Guid id);
         Task Confirm(Guid id);
         Task Fail(Guid id);
+
+        /// <summary>
+        /// Registers a new order with attached client order Id.
+        /// </summary>
+        /// <param name="id">The order Id</param>
+        /// <param name="newOrderCommand">Order related information</param>
+        /// <returns>A path to the new context</returns>
+        Task<Guid> NewOrder(Guid id, CreateNewOrderCommand newOrderCommand);
     }
 }

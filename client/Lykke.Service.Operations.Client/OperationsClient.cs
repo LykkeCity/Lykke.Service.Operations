@@ -3,60 +3,75 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using JetBrains.Annotations;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Client.AutorestClient;
 using Lykke.Service.Operations.Contracts;
-using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Client
 {
-    public class OperationsClient : IOperationsClient, IDisposable
-    {        
+    public sealed class OperationsClient : IOperationsClient, IDisposable
+    {
         private OperationsAPI _operationsApi;
-        
-        public OperationsClient(string serviceUrl)
-        {            
-            _operationsApi = new OperationsAPI(new Uri(serviceUrl));            
+        private readonly IMapper _mapper;
+
+        public OperationsClient([NotNull] string serviceUrl)
+        {
+            if (string.IsNullOrWhiteSpace(serviceUrl))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(serviceUrl));
+            }
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<ClientAutomapperProfile>();
+            });
+            _mapper = config.CreateMapper();
+            _operationsApi = new OperationsAPI(new Uri(serviceUrl));
         }
 
         public async Task<OperationModel> Get(Guid id)
         {
             var op = await _operationsApi.ApiOperationsByIdGetAsync(id);
 
-            var result =  Mapper.Map<OperationModel>(op);
-            result.Context = JObject.FromObject(op.Context);
+            var result = _mapper.Map<OperationModel>(op);
 
             return result;
         }
 
         public async Task<IEnumerable<OperationModel>> Get(Guid clientId, OperationStatus status)
         {
-            return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, Mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(Mapper.Map<OperationModel>);
+            return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, _mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(_mapper.Map<OperationModel>);
         }
 
         public async Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand)
         {
-            return (await _operationsApi.ApiOperationsTransferByIdPostAsync(id, Mapper.Map<AutorestClient.Models.CreateTransferCommand>(transferCommand))).Value;
+            return (await _operationsApi.ApiOperationsTransferByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateTransferCommand>(transferCommand))).Value;
         }
 
-        public async Task Cancel(Guid id)
+        public async Task<Guid> NewOrder(Guid id, CreateNewOrderCommand newOrderCommand)
         {
-            await _operationsApi.ApiOperationsCancelByIdPostAsync(id);
+            return (await _operationsApi.ApiOperationsNewOrderByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateNewOrderCommand>(newOrderCommand))).Value;
         }
 
-        public async Task Complete(Guid id)
+        public Task Cancel(Guid id)
         {
-            await _operationsApi.ApiOperationsCompleteByIdPostAsync(id);
+            return _operationsApi.ApiOperationsCancelByIdPostAsync(id);
         }
 
-        public async Task Confirm(Guid id)
+        public Task Complete(Guid id)
         {
-            await _operationsApi.ApiOperationsConfirmByIdPostAsync(id);
+            return _operationsApi.ApiOperationsCompleteByIdPostAsync(id);
         }
 
-        public async Task Fail(Guid id)
+        public Task Confirm(Guid id)
         {
-            await _operationsApi.ApiOperationsFailByIdPostAsync(id);
+            return _operationsApi.ApiOperationsConfirmByIdPostAsync(id);
+        }
+
+        public Task Fail(Guid id)
+        {
+            return _operationsApi.ApiOperationsFailByIdPostAsync(id);
         }
 
         public void Dispose()

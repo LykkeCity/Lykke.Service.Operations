@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using AutoMapper;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
@@ -14,24 +14,26 @@ using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Controllers
 {
     [Route("api/operations")]
+    [Produces("application/json")]
     public class OperationsController : Controller
     {
         private readonly IOperationsRepository _operationsRepository;
         private readonly IClientAccountService _clientAccountService;
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
+        private readonly IMapper _mapper;
 
-        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService, IPushNotificationsAPI pushNotificationsApi, IAssetsServiceWithCache assetsServiceWithCache)
+        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService, IPushNotificationsAPI pushNotificationsApi, IAssetsServiceWithCache assetsServiceWithCache, IMapper mapper)
         {
             _operationsRepository = operationsRepository;
             _clientAccountService = clientAccountService;
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -44,15 +46,9 @@ namespace Lykke.Service.Operations.Controllers
             if (operation == null)
                 throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
 
-            return new OperationModel
-            {
-                Id = id,
-                Created = operation.Created,
-                Type = operation.Type,
-                Status = operation.Status,
-                ClientId = operation.ClientId,
-                Context = JObject.Parse(operation.Context)
-            };
+            var result = _mapper.Map<Operation, OperationModel>(operation);
+
+            return result;
         }
 
         [HttpGet]
@@ -62,17 +58,41 @@ namespace Lykke.Service.Operations.Controllers
         {
             var operations = await _operationsRepository.Get(clientId, status);
 
-            var result = operations.Select(o => new OperationModel
-            {
-                Id = o.Id,
-                Created = o.Created,
-                Type = o.Type,
-                Status = o.Status,
-                ClientId = o.ClientId,
-                Context = JObject.Parse(o.Context)
-            });
+            var result = _mapper.Map<IEnumerable<Operation>, IEnumerable<OperationModel>>(operations);
 
             return result;
+        }
+
+        /// <summary>
+        /// Registers a new order with attached client order Id.
+        /// </summary>
+        /// <param name="id">The order Id</param>
+        /// <param name="cmd">Order related information</param>
+        /// <returns>A path to the new context</returns>
+        [HttpPost]
+        [Route("newOrder/{id}")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> NewOrder(Guid id, [FromBody]CreateNewOrderCommand cmd)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be not empty and has a correct GUID value"));
+
+            if (!ModelState.IsValid)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+
+            var context = new NewOrderContext
+            {
+                ClientOrderId = cmd.ClientOrderId,
+            };
+
+            await _operationsRepository.Create(id, cmd.WalletId, OperationType.NewOrder, JsonConvert.SerializeObject(context));
+
+            return Created(Url.Action("Get", new { id }), id);
         }
 
         [HttpPost]
