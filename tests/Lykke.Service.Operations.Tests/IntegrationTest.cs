@@ -9,7 +9,7 @@ namespace Lykke.Service.Operations.Tests
     {
         private readonly string _url = "http://localhost:5000";
 
-        [Fact]
+        [Fact(Skip="integration test")]
         public async Task CallApiByOldClient()
         {
             var oc = new Client.OperationsClient(_url);
