@@ -95,5 +95,10 @@ namespace Lykke.Service.Operations.Core.Domain
         {
             
         }
+
+        public void Accept()
+        {
+            Status = OperationStatus.Accepted;
+        }
     }
 }

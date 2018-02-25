@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Autofac;
 using Common.Log;
 using Lykke.Contracts.Operations;
+using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Core.Settings.Assets;
+using Lykke.Service.Operations.Core.Settings.ServiceSettings;
 using Lykke.Service.Operations.Modules;
 using Lykke.Service.Operations.Workflow;
 using Lykke.Workflow;
@@ -19,39 +23,69 @@ namespace Lykke.Service.Operations.Tests
     public class WorkflowTests
     {
         [Fact]
-        public void RunWorkflow()
+        public async Task RunWorkflow()
         {
             var builder = new ContainerBuilder();
 
             builder.RegisterModule(new ServiceModule(new LogToConsole()));
             builder.RegisterModule(new WorkflowModule());
+            
             var container = builder.Build();
-
+            
             var context = new
             {
-                AssetId = "BTC",
-                Volume = 0.01m,
-                DestinationAddress = "",
-                Asset = new Asset
+                Volume = 2.1m,
+                Asset = new
                 {
+                    Id = "LKK",
                     IsTradable = true,
-                    IsTrusted = false
+                    IsTrusted = true,
+                    Blockchain = Blockchain.Bitcoin
+                },
+                AssetPair = new
+                {
+                    Id = "LKKBTC",
+                    BaseAsset = new { Id = "LKK", KycNeeded = false, LykkeEntityId = "Lykke UK", Blockchain = Blockchain.Bitcoin },
+                    QuotingAsset = new { Id = "BTC", KycNeeded = true, LykkeEntityId = "Lykke UK", Blockchain = Blockchain.Bitcoin },
+                    MinVolume = 2m,
+                    MinInvertedVolume = 0.00001m
+                },   
+                NeededAsset = new
+                {
+                    Id = "BTC",
+                    IsTrusted = true,
+                    NeededAmount = 1000m
+                },
+                Wallet = new
+                {
+                    Balance = 10000m
                 },
                 Client = new
-                {
-                    KycStatus = KycStatus.Ok.ToString(),
-                    CashOutBlockedSettings = (CashOutBlockSettings)null,
-                    BackupSettings = (BackupSettings)null,
-                    Balance = 1000
+                {                   
+                    Id = Guid.NewGuid(),
+                    TradesBlocked = false,                    
+                    BackupDone = true,                 
+                    KycStatus = KycStatus.Ok,                    
+                    PersonalData = new
+                    {
+                        Country = "RUS",
+                        CountryFromID = "RUS",
+                        CountryFromPOA = "RUS",
+                    }
                 },
-                GlobalContext = new
+                GlobalSettings = new
                 {
-                    CashOutBlocked = false,
-                    LowCashOutLimit = 0.01m,
-                    LowCashOutTimeoutMins = 2
+                    BlockedAssetPairs = new[] { "BTCUSD" },
+                    BitcoinBlockchainOperationsDisabled = false,
+                    BtcOperationsDisabled = false
                 },
+                IcoSettings = new
+                {
+                    RestrictedCountriesIso3 = new[] { "USA" },
+                    LKK2YAssetId = "LKK2Y"
+                }
             };
-
+            
             var operation = new Operation
             {
                 Id = Guid.NewGuid(),
@@ -63,12 +97,14 @@ namespace Lykke.Service.Operations.Tests
                 Type = OperationType.Cashout
             };
 
-            var wf = container.ResolveNamed<OperationWorkflow>("CashoutWorkflow", new TypedParameter(typeof(Operation), operation));            
+            var wf = container.ResolveNamed<OperationWorkflow>("TradeWorkflow", new TypedParameter(typeof(Operation), operation));            
 
             var result = wf.Run(operation);
 
-            Trace.WriteLine(result.Error);
+            Trace.WriteLine(JsonConvert.SerializeObject(operation, Formatting.Indented));
+            Trace.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
             Assert.Equal(WorkflowState.Complete, result.State);
+            Assert.Equal(OperationStatus.Accepted, operation.Status);
         }
     }
 }

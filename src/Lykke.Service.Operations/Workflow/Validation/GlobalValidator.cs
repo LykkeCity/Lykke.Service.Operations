@@ -2,9 +2,9 @@
 
 namespace Lykke.Service.Operations.Workflow.Validation
 {
-    internal class GlobalCheckInputValidator : AbstractValidator<GlobalCheckInput>
+    internal class GlobalValidator : AbstractValidator<GlobalInput>
     {
-        public GlobalCheckInputValidator()
+        public GlobalValidator()
         {
             RuleFor(t => t.CashOutBlocked)
                 .Equal(false)

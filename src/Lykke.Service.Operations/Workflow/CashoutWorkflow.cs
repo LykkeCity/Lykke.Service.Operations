@@ -1,79 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Operations.Core.Domain;
-using Lykke.Service.Operations.Workflow.Activities;
-using Lykke.Service.Operations.Workflows;
+using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Workflow
 {
-    public static class WorkflowFrontActivities
-    {        
-        public static WorkflowConfiguration<TContext> FallbackToFront<TContext>(this WorkflowConfiguration<TContext> config)
-        {
-            return config.OnFail("FallBackToFront");
-        }
-    }
-
-    internal static class WorkflowConfigurationExtensions
-    {
-        public static IActivitySlot<TContext, TInput, TOutput, TFailOutput> MergeFailOutput<TContext, TInput, TOutput,
-            TFailOutput>(
-            this IActivitySlot<TContext, TInput, TOutput, TFailOutput> slot,
-            Func<TFailOutput, object> getContextMapFromFailOutput
-        )
-            where TContext : Operation
-        {
-            return slot.MergeFailOutput((context, output) => getContextMapFromFailOutput(output));
-        }
-
-        public static IActivitySlot<TContext, TInput, TOutput, TFailOutput> MergeFailOutput<TContext, TInput, TOutput, TFailOutput>(
-            this IActivitySlot<TContext, TInput, TOutput, TFailOutput> slot,
-            Func<TContext, TFailOutput, object> getContextMapFromOutput
-        )
-            where TContext : Operation
-        {
-            return slot.ProcessFailOutput((context, output) => JsonStringExtensions.Merge(((JObject)context.OperationValues), JObject.FromObject(getContextMapFromOutput(context, output))));
-        }
-    }
-
-    public class OperationWorkflow : Workflow<Operation>
-    {
-        protected ILog Log { get; }
-
-        public OperationWorkflow(Operation operation, ILog log, IActivityFactory activityFactory) 
-            : base(operation, activityFactory, operation)
-        {
-            Log = log;
-        }
-
-        public override Execution<Operation> Run(Operation operation)
-        {
-            Log.WriteInfo(nameof(CashoutWorkflow), null, $"Operation [{operation.Id}] Run - running operation of type '{operation.Type}'");
-
-            var state = operation.WorkflowState;
-            var result = base.Run(operation);
-            operation.ApplyValuesChanges();
-
-            Log.WriteInfo(nameof(CashoutWorkflow), null, $"Operation [{operation.Id}] of type '{operation.Type}' Run - state changed from {state} to {operation.WorkflowState}");
-            
-            return result;
-        }
-
-        protected ISlotCreationHelper<Operation, ValidationActivity<TInput>> ValidationNode<TInput>(string name)
-            where TInput : class
-        {
-            return Node<ValidationActivity<TInput>>(name, null, string.Format("{0} validation", typeof(TInput).Name));
-        }
-    }
-
     [UsedImplicitly]
     public class CashoutWorkflow : OperationWorkflow
     {
@@ -86,16 +21,14 @@ namespace Lykke.Service.Operations.Workflow
                 cfg 
                     .Do("Global check").OnFail("Fail operation")
                     .Do("Asset check").OnFail("Fail operation")
-                    .Do("Client check").FallbackToFront()
-                    .Do("Balance check").FallbackToFront()
-                    .Do("Limits check").FallbackToFront()
-                    .Do("Payment check").FallbackToFront()
+                    .Do("Client check").OnFail("Fail operation")
+                    .Do("Balance check").OnFail("Fail operation")
+                    .Do("Limits check").OnFail("Fail operation")
+                    .Do("Payment check").OnFail("Fail operation")
                     .Do("Send to Matching Engine").OnFail("Fail operation")                    
                     .Do("Successful operation finish")
                     .Do("Logging successful operation finish")
-                    .ContinueWith("Clear")
-                    .WithBranch()
-                        .Do("FallBackToFront").OnFail("Cancel operation")
+                    .ContinueWith("Clear")                    
                     .WithBranch()
                         .Do("Fail operation").ContinueWith("Clear")
                     .WithBranch()
@@ -105,23 +38,23 @@ namespace Lykke.Service.Operations.Workflow
                     .End()
             );
 
-            ValidationNode<GlobalCheckInput>("Global check")
-                .WithInput(context => new GlobalCheckInput
+            ValidationNode<GlobalInput>("Global check")
+                .WithInput(context => new GlobalInput
                 {
                     CashOutBlocked = (bool)context.OperationValues.GlobalContext.CashOutBlocked
                 })
                 .MergeFailOutput(output => output);
 
-            ValidationNode<AssetCheckInput>("Asset check")
-                .WithInput(context => new AssetCheckInput
+            ValidationNode<AssetInput>("Asset check")
+                .WithInput(context => new AssetInput
                 {
                     IsTradable = (bool)context.OperationValues.Asset.IsTradable,
                     IsTrusted = (bool)context.OperationValues.Asset.IsTrusted                    
                 })
                 .MergeFailOutput(output => output);            
 
-            ValidationNode<ClientCheckInput>("Client check")
-                .WithInput(context => new ClientCheckInput
+            ValidationNode<ClientInput>("Client check")
+                .WithInput(context => new ClientInput
                 {
 
                 })
@@ -201,17 +134,25 @@ namespace Lykke.Service.Operations.Workflow
     {
     }
 
-    internal class ClientCheckInput
+    public class ClientInput
     {
+        public bool TradesBlocked { get; set; }
+        public bool BackupDone { get; set; }        
     }
 
-    public class AssetCheckInput
+    public class AssetInput
     {
+        public string Id { get; set; }
         public bool IsTradable { get; set; }
         public bool IsTrusted { get; set; }
+        public string NeededAssetId { get; set; }
+        public bool NeededAssetIsTrusted { get; set; }
+        public decimal NeededAmount { get; set; }
+        public double WalletBalance { get; set; }
+        public OrderAction OrderAction { get; set; }
     }
 
-    internal class GlobalCheckInput
+    internal class GlobalInput
     {
         public bool CashOutBlocked { get; set; }
     }

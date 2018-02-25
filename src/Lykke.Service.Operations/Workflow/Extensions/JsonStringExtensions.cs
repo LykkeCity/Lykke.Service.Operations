@@ -4,7 +4,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Lykke.Service.Operations.Workflows
+namespace Lykke.Service.Operations.Workflow.Extensions
 {
     public static class JsonStringExtensions
     {
