@@ -4,6 +4,7 @@ using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.MongoRepositories;
 using Lykke.Service.Operations.Services;
+using Lykke.Service.RateCalculator.Client;
 
 namespace Lykke.Service.Operations.Modules
 {
@@ -34,7 +35,7 @@ namespace Lykke.Service.Operations.Modules
 
             builder.RegisterType<OperationsRepository>()
                 .As<IOperationsRepository>()
-                .SingleInstance();
+                .SingleInstance();            
         }
     }
 }

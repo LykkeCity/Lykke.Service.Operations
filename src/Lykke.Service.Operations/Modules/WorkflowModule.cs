@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Autofac;
 using Autofac.Core;
@@ -25,6 +26,14 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterGeneric(typeof(DelegateActivity<,>));
 
             builder.RegisterType<ActivityFactory>().As<IActivityFactory>();
+
+            builder.Register<Func<string, Operation, OperationWorkflow>>(context =>
+            {
+                var ctx = context.Resolve<IComponentContext>();
+
+                return (workflow, operation) =>
+                    ctx.ResolveNamed<OperationWorkflow>(workflow, new TypedParameter(typeof(Operation), operation));
+            });
         }
     }
 

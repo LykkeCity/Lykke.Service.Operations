@@ -4,7 +4,9 @@ using System.Linq;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Core.Extensions;
 using Lykke.Workflow;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json.Linq;
+using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
 namespace Lykke.Service.Operations.Core.Domain
 {
@@ -17,15 +19,34 @@ namespace Lykke.Service.Operations.Core.Domain
         public Guid ClientId { get; set; }
         public OperationType Type { get; set; }
         public OperationStatus Status { get; set; }
-        public string Context { get; set; }
-
+        public string Context { get; set; }        
+        [BsonIgnore]
         public dynamic OperationValues { get; set; }
-        
+        public JObject OperationValuesJObject
+        {
+            get => (JObject)OperationValues;
+            set => OperationValues = value;
+        }
+
         public WorkflowState WorkflowState { get; set; }
+        public string InputValues { get; set; }
 
         public Operation()
         {            
             WorkflowState = WorkflowState.None;
+            InputValues = "{}";
+            OperationValues = JObject.Parse("{}");
+        }
+
+        public void Create(Guid id, Guid clientId, OperationType type, string inputValues)
+        {
+            Id = id;
+            Created = DateTime.UtcNow;
+            ClientId = clientId;
+            Status = OperationStatus.Created;
+            Type = type;
+            InputValues = inputValues;
+            OperationValues = JObject.Parse(inputValues);
         }
 
         public void Fail()

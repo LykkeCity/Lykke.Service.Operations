@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Core.Domain;
 using MongoDB.Driver;
+using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
 namespace Lykke.Service.Operations.MongoRepositories
 {
@@ -19,9 +20,9 @@ namespace Lykke.Service.Operations.MongoRepositories
             return await FilterBy(x => x.ClientId == clientId && x.Status == status);
         }
 
-        public async Task Create(Guid id, Guid clientId, OperationType operationType, string context)
+        public async Task Save(Operation operation)
         {
-            await Add(new Operation { Id = id, ClientId = clientId, Type = operationType, Context = context, Created = DateTime.UtcNow, Status = OperationStatus.Created });
+            await Add(operation);
         }
 
         public async Task UpdateStatus(Guid id, OperationStatus status)

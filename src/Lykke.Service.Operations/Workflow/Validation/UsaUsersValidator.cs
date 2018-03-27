@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
+using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
 
 namespace Lykke.Service.Operations.Workflow.Validation

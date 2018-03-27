@@ -20,7 +20,7 @@ namespace Lykke.Service.Operations.Workflow.Activities
             var result = m_Validator.Validate<TInput>(input);
             if (!result.IsValid)
             {
-                var validationErrors = JArray.FromObject(result.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }).ToArray());
+                var validationErrors = result.Errors.Select(e => new ValidationError { PropertyName = e.PropertyName, ErrorMessage = e.ErrorMessage }).ToArray();
                 processFailOutput(new ValidationResults
                 {
                     ErrorMessage = string.Empty,
@@ -39,5 +39,11 @@ namespace Lykke.Service.Operations.Workflow.Activities
         {
             return string.Format("{0} validation", typeof(TInput).Name);
         }
+    }
+
+    public class ValidationError
+    {
+        public string PropertyName { get; set; }
+        public string ErrorMessage { get; set; }
     }
 }

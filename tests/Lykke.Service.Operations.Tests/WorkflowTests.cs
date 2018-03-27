@@ -4,19 +4,21 @@ using System.Threading.Tasks;
 using Autofac;
 using Common.Log;
 using Lykke.Contracts.Operations;
-using Lykke.Service.Assets.Client;
-using Lykke.Service.Assets.Client.Models;
-using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
+using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Core.Settings;
 using Lykke.Service.Operations.Core.Settings.Assets;
 using Lykke.Service.Operations.Core.Settings.ServiceSettings;
+using Lykke.Service.Operations.Core.Settings.SlackNotifications;
 using Lykke.Service.Operations.Modules;
 using Lykke.Service.Operations.Workflow;
+using Lykke.SettingsReader;
 using Lykke.Workflow;
+using Moq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Xunit;
+using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
 namespace Lykke.Service.Operations.Tests
 {
@@ -27,75 +29,77 @@ namespace Lykke.Service.Operations.Tests
         {
             var builder = new ContainerBuilder();
 
+            var reloadingManager = new Mock<IReloadingManager<AppSettings>>();
+
+            reloadingManager.Setup(m => m.CurrentValue).Returns(new AppSettings
+            {
+                OperationsService = new OperationsSettings
+                {
+                    Services = new ServicesSettings
+                    {
+                        ClientAccountUrl = "http://client-account.lykke-service.svc.cluster.local",
+                        PushNotificationsUrl = "http://push-notifications.lykke-service.svc.cluster.local"
+                    }
+                },
+                Assets = new AssetsSettings
+                {
+                    ServiceUrl = "http://assets.lykke-service.svc.cluster.local"
+                },               
+                RateCalculatorServiceClient = new RateCalculatorSettings
+                {
+                    ServiceUrl = "http://rate-calculator.lykke-service.svc.cluster.local"
+                },
+                BalancesServiceClient = new BalancesSettings
+                {
+                    ServiceUrl = "http://balances.lykke-service.svc.cluster.local"
+                },
+                SlackNotifications = new SlackNotificationsSettings()
+            });
+
             builder.RegisterModule(new ServiceModule(new LogToConsole()));
-            builder.RegisterModule(new WorkflowModule());
+            builder.RegisterModule(new ClientsModule(reloadingManager.Object, new LogToConsole()));
+            builder.RegisterModule(new WorkflowModule());            
             
             var container = builder.Build();
             
-            var context = new
+            var context = new CreateTradeCommand
             {
-                Volume = 2.1m,
-                Asset = new
-                {
-                    Id = "LKK",
-                    IsTradable = true,
-                    IsTrusted = true,
-                    Blockchain = Blockchain.Bitcoin
-                },
-                AssetPair = new
-                {
-                    Id = "LKKBTC",
-                    BaseAsset = new { Id = "LKK", KycNeeded = false, LykkeEntityId = "Lykke UK", Blockchain = Blockchain.Bitcoin },
-                    QuotingAsset = new { Id = "BTC", KycNeeded = true, LykkeEntityId = "Lykke UK", Blockchain = Blockchain.Bitcoin },
-                    MinVolume = 2m,
-                    MinInvertedVolume = 0.00001m
-                },   
-                NeededAsset = new
-                {
-                    Id = "BTC",
-                    IsTrusted = true,
-                    NeededAmount = 1000m
-                },
-                Wallet = new
-                {
-                    Balance = 10000m
-                },
-                Client = new
+                AssetPairId = "BTCUSD",
+                AssetId = "BTC",
+                Volume = 10m,                                                              
+                Client = new ClientModel
                 {                   
-                    Id = Guid.NewGuid(),
+                    Id = new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"),
                     TradesBlocked = false,                    
                     BackupDone = true,                 
-                    KycStatus = KycStatus.Ok,                    
-                    PersonalData = new
+                    KycStatus = KycStatus.Ok.ToString(),                    
+                    PersonalData = new PersonalDataModel
                     {
                         Country = "RUS",
                         CountryFromID = "RUS",
                         CountryFromPOA = "RUS",
                     }
                 },
-                GlobalSettings = new
+                GlobalSettings = new GlobalSettingsModel
                 {
-                    BlockedAssetPairs = new[] { "BTCUSD" },
+                    BlockedAssetPairs = new[] { "BTCEUR" },
                     BitcoinBlockchainOperationsDisabled = false,
-                    BtcOperationsDisabled = false
-                },
-                IcoSettings = new
-                {
-                    RestrictedCountriesIso3 = new[] { "USA" },
-                    LKK2YAssetId = "LKK2Y"
-                }
+                    BtcOperationsDisabled = false,
+                    IcoSettings = new IcoSettingsModel
+                    {
+                        RestrictedCountriesIso3 = new[] { "USA" },
+                        LKK2YAssetId = "LKK2Y"
+                    }
+                }                
             };
-            
-            var operation = new Operation
-            {
-                Id = Guid.NewGuid(),
-                ClientId = new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"),
-                Context = JsonConvert.SerializeObject(context),
-                OperationValues = JObject.FromObject(context),
-                Created = DateTime.UtcNow,
-                Status = OperationStatus.Created,
-                Type = OperationType.Cashout
-            };
+
+            Trace.WriteLine(JsonConvert.SerializeObject(context, Formatting.Indented));
+
+            var operation = new Operation();
+
+            var inputValues = JsonConvert.SerializeObject(context);
+
+            operation.Create(Guid.NewGuid(), new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"), OperationType.Trade, inputValues);                        
 
             var wf = container.ResolveNamed<OperationWorkflow>("TradeWorkflow", new TypedParameter(typeof(Operation), operation));            
 

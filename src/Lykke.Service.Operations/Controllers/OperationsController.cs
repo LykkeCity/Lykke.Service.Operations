@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Autofac.Features.Indexed;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
@@ -10,28 +11,40 @@ using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
+using Lykke.Service.Operations.Workflow;
+using Lykke.Service.Operations.Workflow.Activities;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
+using Lykke.Workflow;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
 namespace Lykke.Service.Operations.Controllers
 {
     [Route("api/operations")]
     public class OperationsController : Controller
-    {
+    {        
         private readonly IOperationsRepository _operationsRepository;
         private readonly IClientAccountService _clientAccountService;
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
+        private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
 
-        public OperationsController(IOperationsRepository operationsRepository, IClientAccountService clientAccountService, IPushNotificationsAPI pushNotificationsApi, IAssetsServiceWithCache assetsServiceWithCache)
-        {
+        public OperationsController(            
+            IOperationsRepository operationsRepository, 
+            IClientAccountService clientAccountService, 
+            IPushNotificationsAPI pushNotificationsApi, 
+            IAssetsServiceWithCache assetsServiceWithCache,
+            Func<string, Operation, OperationWorkflow> workflowFactory)
+        {            
             _operationsRepository = operationsRepository;
             _clientAccountService = clientAccountService;
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
+            _workflowFactory = workflowFactory;
         }
 
         [HttpGet]
@@ -73,6 +86,49 @@ namespace Lykke.Service.Operations.Controllers
             });
 
             return result;
+        }
+
+        [HttpPost]
+        [Route("trade/{id}")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> Trade(Guid id, [FromBody] CreateTradeCommand command)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
+            if (!ModelState.IsValid)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+
+            operation = new Operation();
+            operation.Create(id, command.Client.Id, OperationType.Trade, JsonConvert.SerializeObject(command));
+
+            var wf = _workflowFactory("TradeWorkflow", operation);            
+            var wfResult = wf.Run(operation);
+
+            await _operationsRepository.Save(operation);
+
+            if (wfResult.State == WorkflowState.Corrupted)
+                return StatusCode(500);
+
+            if (operation.Status == OperationStatus.Failed)
+            {                
+                var modelState = new ModelStateDictionary();
+                JArray errors = operation.OperationValues.ValidationErrors;
+
+                foreach (var error in errors)
+                {
+                    modelState.AddModelError(error["PropertyName"].ToString(), error["ErrorMessage"].ToString());
+                }
+
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
+            }
+
+            return Created(Url.Action("Get", new { id }), id);
         }
 
         [HttpPost]
@@ -139,7 +195,10 @@ namespace Lykke.Service.Operations.Controllers
                 TransferType = transferType
             };
 
-            await _operationsRepository.Create(id, cmd.ClientId, OperationType.Transfer, JsonConvert.SerializeObject(context));
+            operation = new Operation();
+            operation.Create(id, cmd.ClientId, OperationType.Transfer, JsonConvert.SerializeObject(context, Formatting.Indented));
+
+            await _operationsRepository.Save(operation);
 
             await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId }, "Operation"));
 

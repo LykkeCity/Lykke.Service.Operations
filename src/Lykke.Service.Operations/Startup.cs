@@ -63,7 +63,8 @@ namespace Lykke.Service.Operations
                 Log = CreateLogWithSlack(services, appSettings);
 
                 builder.RegisterModule(new ServiceModule(Log));
-                builder.RegisterModule(new ClientsModule(appSettings.CurrentValue.OperationsService, appSettings.CurrentValue.Assets));
+                builder.RegisterModule(new ClientsModule(appSettings, Log));
+                builder.RegisterModule(new WorkflowModule());
                 builder.RegisterModule(new MongoDbModule(appSettings.Nested(x => x.OperationsService.Db)));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();

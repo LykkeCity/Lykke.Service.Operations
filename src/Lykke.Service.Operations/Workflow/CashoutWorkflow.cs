@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Extensions;
+using Lykke.Service.RateCalculator.Client.AutorestClient.Models;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
 
@@ -145,11 +146,11 @@ namespace Lykke.Service.Operations.Workflow
         public string Id { get; set; }
         public bool IsTradable { get; set; }
         public bool IsTrusted { get; set; }
-        public string NeededAssetId { get; set; }
-        public bool NeededAssetIsTrusted { get; set; }
+        public string NeededAssetId { get; set; }        
         public decimal NeededAmount { get; set; }
         public double WalletBalance { get; set; }
         public OrderAction OrderAction { get; set; }
+        public OperationResult? NeededConversionResult { get; set; }
     }
 
     internal class GlobalInput
