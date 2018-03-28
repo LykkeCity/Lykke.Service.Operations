@@ -5,6 +5,7 @@ using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Core.Extensions;
 using Lykke.Workflow;
 using MongoDB.Bson.Serialization.Attributes;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
@@ -22,11 +23,11 @@ namespace Lykke.Service.Operations.Core.Domain
         public string Context { get; set; }        
         [BsonIgnore]
         public dynamic OperationValues { get; set; }
+        [BsonIgnore]
         public JObject OperationValuesJObject
         {
-            get => (JObject)OperationValues;
-            set => OperationValues = value;
-        }
+            get => (JObject)OperationValues;            
+        }        
 
         public WorkflowState WorkflowState { get; set; }
         public string InputValues { get; set; }
@@ -46,6 +47,7 @@ namespace Lykke.Service.Operations.Core.Domain
             Status = OperationStatus.Created;
             Type = type;
             InputValues = inputValues;
+            Context = inputValues;
             OperationValues = JObject.Parse(inputValues);
         }
 
@@ -114,7 +116,7 @@ namespace Lykke.Service.Operations.Core.Domain
 
         public void ApplyValuesChanges()
         {
-            
+            Context = OperationValuesJObject.ToString(Formatting.Indented);
         }
 
         public void Accept()
