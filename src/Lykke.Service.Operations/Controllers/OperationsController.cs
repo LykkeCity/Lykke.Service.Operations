@@ -114,9 +114,9 @@ namespace Lykke.Service.Operations.Controllers
         }
 
 		[HttpPost]
-        [Route("trade/{id}")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> Trade(Guid id, [FromBody] CreateTradeCommand command)
+        [Route("order/{id}")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]		
+        public async Task<IActionResult> Order(Guid id, [FromBody] CreateOrderCommand command)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));

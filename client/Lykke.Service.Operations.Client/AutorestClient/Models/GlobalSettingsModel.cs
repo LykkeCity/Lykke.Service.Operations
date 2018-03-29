@@ -13,26 +13,25 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using System.Collections.Generic;
     using System.Linq;
 
-    public partial class IsAliveResponse
+    public partial class GlobalSettingsModel
     {
         /// <summary>
-        /// Initializes a new instance of the IsAliveResponse class.
+        /// Initializes a new instance of the GlobalSettingsModel class.
         /// </summary>
-        public IsAliveResponse()
+        public GlobalSettingsModel()
         {
           CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the IsAliveResponse class.
+        /// Initializes a new instance of the GlobalSettingsModel class.
         /// </summary>
-        public IsAliveResponse(bool isDebug, string name = default(string), string version = default(string), string env = default(string), IList<IssueIndicator> issueIndicators = default(IList<IssueIndicator>))
+        public GlobalSettingsModel(bool bitcoinBlockchainOperationsDisabled, bool btcOperationsDisabled, IList<string> blockedAssetPairs = default(IList<string>), IcoSettingsModel icoSettings = default(IcoSettingsModel))
         {
-            Name = name;
-            Version = version;
-            Env = env;
-            IsDebug = isDebug;
-            IssueIndicators = issueIndicators;
+            BlockedAssetPairs = blockedAssetPairs;
+            BitcoinBlockchainOperationsDisabled = bitcoinBlockchainOperationsDisabled;
+            BtcOperationsDisabled = btcOperationsDisabled;
+            IcoSettings = icoSettings;
             CustomInit();
         }
 
@@ -43,28 +42,23 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Name")]
-        public string Name { get; set; }
+        [JsonProperty(PropertyName = "BlockedAssetPairs")]
+        public IList<string> BlockedAssetPairs { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Version")]
-        public string Version { get; set; }
+        [JsonProperty(PropertyName = "BitcoinBlockchainOperationsDisabled")]
+        public bool BitcoinBlockchainOperationsDisabled { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Env")]
-        public string Env { get; set; }
+        [JsonProperty(PropertyName = "BtcOperationsDisabled")]
+        public bool BtcOperationsDisabled { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "IsDebug")]
-        public bool IsDebug { get; set; }
-
-        /// <summary>
-        /// </summary>
-        [JsonProperty(PropertyName = "IssueIndicators")]
-        public IList<IssueIndicator> IssueIndicators { get; set; }
+        [JsonProperty(PropertyName = "IcoSettings")]
+        public IcoSettingsModel IcoSettings { get; set; }
 
         /// <summary>
         /// Validate the object.

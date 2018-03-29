@@ -9,30 +9,28 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
     using Newtonsoft.Json;
-    using System.Collections;
-    using System.Collections.Generic;
     using System.Linq;
 
-    public partial class IsAliveResponse
+    public partial class ClientModel
     {
         /// <summary>
-        /// Initializes a new instance of the IsAliveResponse class.
+        /// Initializes a new instance of the ClientModel class.
         /// </summary>
-        public IsAliveResponse()
+        public ClientModel()
         {
           CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the IsAliveResponse class.
+        /// Initializes a new instance of the ClientModel class.
         /// </summary>
-        public IsAliveResponse(bool isDebug, string name = default(string), string version = default(string), string env = default(string), IList<IssueIndicator> issueIndicators = default(IList<IssueIndicator>))
+        public ClientModel(System.Guid id, bool tradesBlocked, bool backupDone, string kycStatus = default(string), PersonalDataModel personalData = default(PersonalDataModel))
         {
-            Name = name;
-            Version = version;
-            Env = env;
-            IsDebug = isDebug;
-            IssueIndicators = issueIndicators;
+            Id = id;
+            TradesBlocked = tradesBlocked;
+            BackupDone = backupDone;
+            KycStatus = kycStatus;
+            PersonalData = personalData;
             CustomInit();
         }
 
@@ -43,28 +41,28 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Name")]
-        public string Name { get; set; }
+        [JsonProperty(PropertyName = "Id")]
+        public System.Guid Id { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Version")]
-        public string Version { get; set; }
+        [JsonProperty(PropertyName = "TradesBlocked")]
+        public bool TradesBlocked { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Env")]
-        public string Env { get; set; }
+        [JsonProperty(PropertyName = "BackupDone")]
+        public bool BackupDone { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "IsDebug")]
-        public bool IsDebug { get; set; }
+        [JsonProperty(PropertyName = "KycStatus")]
+        public string KycStatus { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "IssueIndicators")]
-        public IList<IssueIndicator> IssueIndicators { get; set; }
+        [JsonProperty(PropertyName = "PersonalData")]
+        public PersonalDataModel PersonalData { get; set; }
 
         /// <summary>
         /// Validate the object.

@@ -24,7 +24,7 @@ namespace Lykke.Service.Operations.Tests
 {
     public class WorkflowTests
     {
-        [Fact]
+        [Fact(Skip = "integration tests")]
         public async Task RunWorkflow()
         {
             var builder = new ContainerBuilder();
@@ -62,7 +62,7 @@ namespace Lykke.Service.Operations.Tests
             
             var container = builder.Build();
             
-            var context = new CreateTradeCommand
+            var context = new CreateOrderCommand
             {
                 AssetPairId = "BTCUSD",
                 AssetId = "BTC",

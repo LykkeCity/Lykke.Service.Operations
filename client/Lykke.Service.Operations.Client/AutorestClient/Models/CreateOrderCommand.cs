@@ -11,26 +11,26 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class CreateTransferCommand
+    public partial class CreateOrderCommand
     {
         /// <summary>
-        /// Initializes a new instance of the CreateTransferCommand class.
+        /// Initializes a new instance of the CreateOrderCommand class.
         /// </summary>
-        public CreateTransferCommand()
+        public CreateOrderCommand()
         {
           CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the CreateTransferCommand class.
+        /// Initializes a new instance of the CreateOrderCommand class.
         /// </summary>
-        public CreateTransferCommand(System.Guid clientId, double amount, System.Guid sourceWalletId, System.Guid walletId, string assetId = default(string))
+        public CreateOrderCommand(double volume, string assetPairId = default(string), string assetId = default(string), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
         {
-            ClientId = clientId;
+            AssetPairId = assetPairId;
             AssetId = assetId;
-            Amount = amount;
-            SourceWalletId = sourceWalletId;
-            WalletId = walletId;
+            Volume = volume;
+            Client = client;
+            GlobalSettings = globalSettings;
             CustomInit();
         }
 
@@ -41,8 +41,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "ClientId")]
-        public System.Guid ClientId { get; set; }
+        [JsonProperty(PropertyName = "AssetPairId")]
+        public string AssetPairId { get; set; }
 
         /// <summary>
         /// </summary>
@@ -51,18 +51,18 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Amount")]
-        public double Amount { get; set; }
+        [JsonProperty(PropertyName = "Volume")]
+        public double Volume { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "SourceWalletId")]
-        public System.Guid SourceWalletId { get; set; }
+        [JsonProperty(PropertyName = "Client")]
+        public ClientModel Client { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "WalletId")]
-        public System.Guid WalletId { get; set; }
+        [JsonProperty(PropertyName = "GlobalSettings")]
+        public GlobalSettingsModel GlobalSettings { get; set; }
 
         /// <summary>
         /// Validate the object.
@@ -72,7 +72,14 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            //Nothing to validate
+            if (Client != null)
+            {
+                Client.Validate();
+            }
+            if (GlobalSettings != null)
+            {
+                GlobalSettings.Validate();
+            }
         }
     }
 }

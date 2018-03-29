@@ -11,23 +11,24 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class IssueIndicator
+    public partial class PersonalDataModel
     {
         /// <summary>
-        /// Initializes a new instance of the IssueIndicator class.
+        /// Initializes a new instance of the PersonalDataModel class.
         /// </summary>
-        public IssueIndicator()
+        public PersonalDataModel()
         {
           CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the IssueIndicator class.
+        /// Initializes a new instance of the PersonalDataModel class.
         /// </summary>
-        public IssueIndicator(string type = default(string), string value = default(string))
+        public PersonalDataModel(string country = default(string), string countryFromID = default(string), string countryFromPOA = default(string))
         {
-            Type = type;
-            Value = value;
+            Country = country;
+            CountryFromID = countryFromID;
+            CountryFromPOA = countryFromPOA;
             CustomInit();
         }
 
@@ -38,13 +39,18 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Type")]
-        public string Type { get; set; }
+        [JsonProperty(PropertyName = "Country")]
+        public string Country { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Value")]
-        public string Value { get; set; }
+        [JsonProperty(PropertyName = "CountryFromID")]
+        public string CountryFromID { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "CountryFromPOA")]
+        public string CountryFromPOA { get; set; }
 
     }
 }

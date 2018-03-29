@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using JetBrains.Annotations;
@@ -43,7 +44,7 @@ namespace Lykke.Service.Operations.Client
         {
             return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, _mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(_mapper.Map<OperationModel>);
         }
-
+        
         public async Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand)
         {
             return (await _operationsApi.ApiOperationsTransferByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateTransferCommand>(transferCommand))).Value;
@@ -52,6 +53,11 @@ namespace Lykke.Service.Operations.Client
         public async Task<Guid> NewOrder(Guid id, CreateNewOrderCommand newOrderCommand)
         {
             return (await _operationsApi.ApiOperationsNewOrderByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateNewOrderCommand>(newOrderCommand))).Value;
+        }
+
+        public async Task<Guid> PlaceOrder(Guid id, CreateOrderCommand orderCommand)
+        {
+            return (await _operationsApi.ApiOperationsOrderByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateOrderCommand>(orderCommand))).Value;            
         }
 
         public Task Cancel(Guid id)

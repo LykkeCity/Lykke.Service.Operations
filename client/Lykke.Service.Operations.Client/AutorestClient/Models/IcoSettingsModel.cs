@@ -9,25 +9,27 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
     using Newtonsoft.Json;
+    using System.Collections;
+    using System.Collections.Generic;
     using System.Linq;
 
-    public partial class IssueIndicator
+    public partial class IcoSettingsModel
     {
         /// <summary>
-        /// Initializes a new instance of the IssueIndicator class.
+        /// Initializes a new instance of the IcoSettingsModel class.
         /// </summary>
-        public IssueIndicator()
+        public IcoSettingsModel()
         {
           CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the IssueIndicator class.
+        /// Initializes a new instance of the IcoSettingsModel class.
         /// </summary>
-        public IssueIndicator(string type = default(string), string value = default(string))
+        public IcoSettingsModel(IList<string> restrictedCountriesIso3 = default(IList<string>), string lKK2YAssetId = default(string))
         {
-            Type = type;
-            Value = value;
+            RestrictedCountriesIso3 = restrictedCountriesIso3;
+            LKK2YAssetId = lKK2YAssetId;
             CustomInit();
         }
 
@@ -38,13 +40,13 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Type")]
-        public string Type { get; set; }
+        [JsonProperty(PropertyName = "RestrictedCountriesIso3")]
+        public IList<string> RestrictedCountriesIso3 { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Value")]
-        public string Value { get; set; }
+        [JsonProperty(PropertyName = "LKK2YAssetId")]
+        public string LKK2YAssetId { get; set; }
 
     }
 }
