@@ -3,7 +3,7 @@ using Lykke.Contracts.Operations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Lykke.Service.Operations.Core.Domain
+namespace Lykke.Service.Operations.Contracts
 {
     public class TransferContext
     {

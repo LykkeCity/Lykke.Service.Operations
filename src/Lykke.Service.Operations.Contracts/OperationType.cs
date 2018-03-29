@@ -4,6 +4,7 @@
     {
         Transfer,        
         VisaCardPayment,
-        Trade
+        Trade,
+        NewOrder
     }
 }

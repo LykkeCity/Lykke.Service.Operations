@@ -16,20 +16,29 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Models\**" />
+    <EmbeddedResource Remove="Models\**" />
+    <None Remove="Models\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.2.0" />
     <PackageReference Include="AutoMapper" Version="6.2.2" />
-    <PackageReference Include="Lykke.Common" Version="4.1.0" />
+    <PackageReference Include="Lykke.Common" Version="4.4.2" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.10" />
-    <PackageReference Include="refit" Version="4.0.1" />
+    <PackageReference Include="refit" Version="4.1.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="AutorestClient\" />
-    <Folder Include="Models\" />
+    <ProjectReference Include="..\..\src\Lykke.Service.Operations.Contracts\Lykke.Service.Operations.Contracts.csproj" PrivateAssets="All">
+    </ProjectReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Lykke.Service.Operations.Contracts\Lykke.Service.Operations.Contracts.csproj" />
+  <ItemGroup Label="dotnet pack instructions">
+    <Content Include="$(OutputPath)Lykke.Service.Operations.Contracts.dll">
+      <Pack>true</Pack>
+      <PackagePath>lib/netstandard2.0</PackagePath>
+    </Content>
   </ItemGroup>
 
 </Project>

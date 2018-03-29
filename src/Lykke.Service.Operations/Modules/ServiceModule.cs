@@ -35,7 +35,7 @@ namespace Lykke.Service.Operations.Modules
 
             builder.RegisterType<OperationsRepository>()
                 .As<IOperationsRepository>()
-                .SingleInstance();            
+                .SingleInstance();
         }
     }
 }

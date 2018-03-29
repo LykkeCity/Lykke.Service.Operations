@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lykke.Common" Version="4.1.0" />
-    <PackageReference Include="Lykke.Contracts" Version="1.0.40" />
+    <PackageReference Include="Lykke.Common" Version="4.4.2" />
+    <PackageReference Include="Lykke.Contracts" Version="1.0.43" />
     <PackageReference Include="Lykke.Workflow" Version="0.1.6" />
     <PackageReference Include="MongoDB.Driver" Version="2.5.0" />
   </ItemGroup>
