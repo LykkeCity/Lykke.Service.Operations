@@ -4,7 +4,8 @@
     {
         Transfer,        
         VisaCardPayment,
-        Trade,
+        MarketOrder,
+        LimitOrder,
         NewOrder
     }
 }

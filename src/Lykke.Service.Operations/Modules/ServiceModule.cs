@@ -1,19 +1,27 @@
 ﻿using Autofac;
+using AzureStorage.Tables;
 using Common.Log;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Core.Services;
+using Lykke.Service.Operations.Core.Settings;
+using Lykke.Service.Operations.Core.Settings.ServiceSettings;
 using Lykke.Service.Operations.MongoRepositories;
 using Lykke.Service.Operations.Services;
+using Lykke.Service.Operations.Workflow;
 using Lykke.Service.RateCalculator.Client;
+using Lykke.SettingsReader;
 
 namespace Lykke.Service.Operations.Modules
 {
     public class ServiceModule : Module
     {
+        private readonly IReloadingManager<AppSettings> _settings;
         private readonly ILog _log;
 
-        public ServiceModule(ILog log)
+        public ServiceModule(IReloadingManager<AppSettings> settings, ILog log)
         {
+            _settings = settings;
             _log = log;
         }
 
@@ -36,6 +44,12 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterType<OperationsRepository>()
                 .As<IOperationsRepository>()
                 .SingleInstance();
+
+            builder.RegisterType<WorkflowService>().As<IWorkflowService>().SingleInstance();
+
+            builder.RegisterInstance<IOffchainOrdersRepository>(
+                new OffchainOrderRepository(
+                    AzureTableStorage<OffchainOrder>.Create(_settings.ConnectionString(x => x.OperationsService.Db.OffchainConnString), "OffchainOrders", _log)));
         }
     }
 }

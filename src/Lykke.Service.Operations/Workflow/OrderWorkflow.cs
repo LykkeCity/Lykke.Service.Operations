@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Common.Log;
 using JetBrains.Annotations;
-using Lykke.Service.Assets.Client;
-using Lykke.Service.Balances.AutorestClient.Models;
-using Lykke.Service.Balances.Client;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
-using Lykke.Service.RateCalculator.Client;
 using Lykke.Service.RateCalculator.Client.AutorestClient.Models;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
@@ -18,32 +12,36 @@ using Newtonsoft.Json.Linq;
 namespace Lykke.Service.Operations.Workflow
 {
     [UsedImplicitly]
-    public class TradeWorkflow : OperationWorkflow
+    public class OrderWorkflow : OperationWorkflow
     {
-        private readonly IRateCalculatorClient _rateCalculatorClient;
-        private readonly IBalancesClient _balancesClient;
-        private readonly IAssetsServiceWithCache _assetsService;
-
-        public TradeWorkflow(Operation operation, ILog log, IActivityFactory activityFactory, IRateCalculatorClient rateCalculatorClient, IBalancesClient balancesClient, IAssetsServiceWithCache assetsService) : base(operation, log, activityFactory)
-        {
-            _rateCalculatorClient = rateCalculatorClient;
-            _balancesClient = balancesClient;
-            _assetsService = assetsService;
+        public OrderWorkflow(
+            Operation operation, 
+            ILog log, 
+            IActivityFactory activityFactory, 
+            IWorkflowService workflowService) : base(operation, log, activityFactory)
+        {            
             Configure(cfg => 
                 cfg
-                    .Do("Client validation").OnFail("Fail operation")
-                    .Do("Get asset").OnFail("Fail operation")
-                    .Do("Get asset pair").OnFail("Fail operation")
+                    .Do("Client validation").OnFail("Fail operation")                                        
                     .Do("Determine needed asset").OnFail("Fail operation")
                     .Do("Determine needed amount").OnFail("Fail operation")
                     .Do("Get wallet").OnFail("Fail operation")
                     .Do("Asset validation").OnFail("Fail operation")
+                    .Do("Adjust needed amount").OnFail("Fail operation")
                     .Do("Asset pair validation").OnFail("Fail operation")
                     .Do("AssetPair: base asset kyc validation").OnFail("Fail operation")
                     .Do("AssetPair: quoting asset kyc validation").OnFail("Fail operation")                    
                     .Do("USA users restrictions validation").OnFail("Fail operation")
                     .Do("LKK2Y restrictions validation").OnFail("Fail operation")
-                    .Do("Disclaimers validation").OnFail("Fail operation")
+                    .Do("Disclaimers validation").OnFail("Fail operation")                    
+                    .On("Fee enabled").DeterminedAs(context => (bool)context.OperationValues.GlobalSettings.FeeSettings.FeeEnabled).ContinueWith("Calculate fee")
+                    .On("Fee disabled").DeterminedAs(context => !(bool)context.OperationValues.GlobalSettings.FeeSettings.FeeEnabled).ContinueWith("Save order")
+                    .WithBranch()
+                        .Do("Calculate fee").OnFail("Fail operation")
+                        .ContinueWith("Save order").OnFail("Fail operation")
+                    .WithBranch()
+                        .Do("Save order").OnFail("Fail operation")
+                        .Do("Send to ME").OnFail("Fail operation")
                     .ContinueWith("Accept operation")
                     .WithBranch()
                         .Do("Fail operation")
@@ -53,6 +51,39 @@ namespace Lykke.Service.Operations.Workflow
                     .End()
             );
 
+            DelegateNode("Save order", input => workflowService.SaveOrder(input))
+                .MergeFailOutput(output => output);
+
+            DelegateNode<CalculateFeeInput, object>("Calculate fee", input => workflowService.CalculateFee(input))
+                .WithInput(context => new CalculateFeeInput
+                {
+                    ClientId = context.OperationValues.Client.Id,
+                    OperationType = context.Type,
+                    AssetPairId = context.OperationValues.AssetPairId,
+                    BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
+                    AssetId = context.OperationValues.AssetId,
+                    OrderAction = context.OperationValues.OrderAction,
+                    TargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClientId
+                })
+                .MergeOutput(output => new { Fee = output })
+                .MergeFailOutput(output => output);
+
+            DelegateNode<MeOrderInput, object>("Send to ME", input => workflowService.SendToMe(input))
+                .WithInput(context => new MeOrderInput
+                {
+                    Id = context.Id.ToString(),
+                    OperationType = context.Type,
+                    AssetPairId = context.OperationValues.AssetPairId,
+                    ClientId = context.OperationValues.Client.Id,                    
+                    Straight = (string)context.OperationValues.AssetId == (string)context.OperationValues.AssetPair.BaseAsset.Id,
+                    Volume = (double)context.OperationValues.Volume,
+                    Price = (double?)context.OperationValues.Price,
+                    OrderAction = (OrderAction)context.OperationValues.OrderAction,
+                    Fee = context.OperationValues.Fee
+                })
+                .MergeOutput(output => new { Me = output })
+                .MergeFailOutput(output => output);
+
             ValidationNode<ClientInput>("Client validation")
                 .WithInput(context => new ClientInput
                 {
@@ -60,33 +91,27 @@ namespace Lykke.Service.Operations.Workflow
                     BackupDone = context.OperationValues.Client.BackupDone
                 })
                 .MergeFailOutput(output => output);
-
-            DelegateNode<string, object>("Get asset", assetId => GetAsset(assetId))
-                .WithInput(context => (string)context.OperationValues.AssetId)
-                .MergeOutput(output => new { Asset = output })
-                .MergeFailOutput(output => output);
-
-            DelegateNode<string, object>("Get asset pair", assetPairId => GetAssetPair(assetPairId))
-                .WithInput(context => (string)context.OperationValues.AssetPairId)
-                .MergeOutput(output => new { AssetPair = output })
-                .MergeFailOutput(output => output);
-
-            DelegateNode("Determine needed asset", context => GetNeededAsset(context))
+            
+            DelegateNode("Determine needed asset", context => workflowService.GetNeededAsset(context))
                 .MergeOutput(output => output)
                 .MergeFailOutput(output => output);
 
-            DelegateNode<NeededAmountInput, object>("Determine needed amount", input => GetNeededAmount(input))
+            DelegateNode<NeededAmountInput, object>("Determine needed amount", input => workflowService.GetNeededAmount(input))
                 .WithInput(context => new NeededAmountInput
                 {
+                    OperationType = context.Type,
                     OrderAction = context.OperationValues.OrderAction,
                     Volume = context.OperationValues.Volume,
+                    Price = context.OperationValues.Price,
+                    AssetId = context.OperationValues.AssetId,
+                    BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
                     NeededAssetId = context.OperationValues.NeededAssetId,
                     ReceivedAssetId = context.OperationValues.ReceivedAssetId
                 })
                 .MergeOutput(output => new { NeededAmount = output })
                 .MergeFailOutput(output => output);
 
-            DelegateNode("Get wallet", context => GetWalletBalance(context))
+            DelegateNode("Get wallet", context => workflowService.GetWalletBalance(context))
                 .MergeOutput(output => new
                 {
                     Wallet = output
@@ -101,10 +126,14 @@ namespace Lykke.Service.Operations.Workflow
                     IsTrusted = context.OperationValues.Asset.IsTrusted,
                     NeededAssetId = context.OperationValues.NeededAssetId,                    
                     NeededAmount = context.OperationValues.NeededAmount.Amount,
-                    NeededConversionResult = context.OperationValues.NeededAmount.ConversionResult[0].Result,
+                    NeededConversionResult = ((JArray)context.OperationValues.NeededAmount?.ConversionResult)?.Select(v => v.ToObject<ConversionResult>()).Select(r => r.Result).ToArray(),
                     WalletBalance = context.OperationValues.Wallet.Balance,
                     OrderAction = context.OperationValues.OrderAction
                 })
+                .MergeFailOutput(output => output);
+
+            DelegateNode("Adjust needed amount", context => workflowService.AdjustNeededAmount(context))
+                .MergeOutput(output => output)
                 .MergeFailOutput(output => output);
 
             ValidationNode<AssetPairInput>("Asset pair validation")
@@ -179,141 +208,7 @@ namespace Lykke.Service.Operations.Workflow
 
             DelegateNode("Fail operation", context => context.Fail());
             DelegateNode("Accept operation", context => context.Accept());
-        }
-
-        private object GetAssetPair(string assetPairId)
-        {
-            var assetPair = _assetsService.TryGetAssetPairAsync(assetPairId).ConfigureAwait(false).GetAwaiter().GetResult();
-
-            if (assetPair == null)
-                throw new InvalidOperationException($"Asset pair '{assetPairId}' not found");
-
-            var baseAsset = _assetsService.TryGetAssetAsync(assetPair.BaseAssetId).ConfigureAwait(false).GetAwaiter().GetResult();
-            var quotingAsset = _assetsService.TryGetAssetAsync(assetPair.QuotingAssetId).ConfigureAwait(false).GetAwaiter().GetResult();
-
-            return new
-            {
-                Id = assetPairId,
-                BaseAsset = new
-                {
-                    baseAsset.Id,
-                    baseAsset.Accuracy,
-                    baseAsset.KycNeeded,
-                    baseAsset.IsTrusted,
-                    baseAsset.LykkeEntityId,
-                    Blockchain = baseAsset.Blockchain.ToString()
-                },
-                QuotingAsset = new
-                {
-                    quotingAsset.Id,
-                    quotingAsset.Accuracy,
-                    quotingAsset.KycNeeded,
-                    quotingAsset.IsTrusted,
-                    quotingAsset.LykkeEntityId,
-                    Blockchain = quotingAsset.Blockchain.ToString()
-                },
-                assetPair.MinVolume,
-                assetPair.MinInvertedVolume
-            };
-        }
-
-        private object GetAsset(string assetId)
-        {            
-            var asset = _assetsService.TryGetAssetAsync(assetId).ConfigureAwait(false).GetAwaiter().GetResult();
-
-            if (asset == null)
-                throw new InvalidOperationException($"Asset '{assetId}' not found");
-
-            return new
-            {
-                asset.Id,
-                asset.IsTradable,
-                asset.IsTrusted,
-                Blockchain = asset.Blockchain.ToString()
-            };
-        }
-
-        private object GetNeededAsset(Operation context)
-        {
-            var orderAction = (decimal)context.OperationValues.Volume > 0 ? OrderAction.Buy : OrderAction.Sell;
-            string assetId = context.OperationValues.Asset.Id;
-            string baseAssetId = context.OperationValues.AssetPair.BaseAsset.Id;
-            string quotingAssetId = context.OperationValues.AssetPair.QuotingAsset.Id;
-            
-            if (orderAction == OrderAction.Buy)
-            {
-                return new
-                {            
-                    OrderAction = orderAction.ToString(),
-                    NeededAssetId = baseAssetId == assetId
-                        ? quotingAssetId
-                        : baseAssetId,
-                    ReceivedAssetId = baseAssetId == assetId
-                        ? baseAssetId
-                        : quotingAssetId
-                };
-            }
-            else
-            {
-                return new
-                {
-                    OrderAction = orderAction.ToString(),
-                    NeededAssetId = baseAssetId == assetId
-                        ? baseAssetId
-                        : quotingAssetId
-                };
-            }            
-        }
-
-        private object GetNeededAmount(NeededAmountInput input)
-        {
-            var orderAction = (OrderAction) input.OrderAction;
-            var neededAmount = 0m;
-
-            if (orderAction == OrderAction.Buy)
-            {
-                var result = _rateCalculatorClient.GetMarketAmountInBaseAsync(
-                        new List<AssetWithAmount>
-                        {
-                            new AssetWithAmount
-                            {
-                                AssetId = input.ReceivedAssetId,
-                                Amount = (double)input.Volume
-                            }
-                        },
-                        input.NeededAssetId,
-                        orderAction == OrderAction.Buy
-                            ? RateCalculator.Client.AutorestClient.Models.OrderAction.Buy
-                            : RateCalculator.Client.AutorestClient.Models.OrderAction.Sell)
-                    .ConfigureAwait(false).GetAwaiter().GetResult().ToArray();
-
-                var item = result.FirstOrDefault();
-
-                if (item != null)
-                    neededAmount = (decimal)(item.To?.Amount ?? 0);
-
-                return new
-                {
-                    Amount = neededAmount,
-                    ConversionResult = result
-                };
-            }
-            else
-            {
-                return new
-                {
-                    Amount = Math.Abs(input.Volume)
-                };
-            }            
-        }
-
-        private object GetWalletBalance(Operation context)
-        {
-            var clientId = (string) context.OperationValues.Client.Id;
-            var neededAssetId = (string) context.OperationValues.NeededAssetId;
-
-            return _balancesClient.GetClientBalanceByAssetId(new ClientBalanceByAssetIdModel(neededAssetId, clientId)).ConfigureAwait(false).GetAwaiter().GetResult();
-        }
+        }        
     }
 
     public enum OrderAction

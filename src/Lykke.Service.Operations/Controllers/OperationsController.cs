@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using Autofac.Features.Indexed;
 using AutoMapper;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Assets.Client;
@@ -12,7 +11,6 @@ using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
 using Lykke.Service.Operations.Workflow;
-using Lykke.Service.Operations.Workflow.Activities;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
 using Lykke.Workflow;
@@ -114,9 +112,26 @@ namespace Lykke.Service.Operations.Controllers
         }
 
 		[HttpPost]
-        [Route("order/{id}")]
+        [Route("order/{id}/market")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]		
-        public async Task<IActionResult> Order(Guid id, [FromBody] CreateOrderCommand command)
+        public async Task<IActionResult> MarketOrder(Guid id, [FromBody] CreateMarketOrderCommand command)
+		{
+		    await HandleOrder(id, command.Client.Id,  OperationType.MarketOrder, JsonConvert.SerializeObject(command, Formatting.Indented));
+
+		    return Created(Url.Action("Get", new { id }), id);
+		}
+
+        [HttpPost]
+        [Route("order/{id}/limit")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> LimitOrder(Guid id, [FromBody] CreateLimitOrderCommand command)
+        {
+            await HandleOrder(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(command, Formatting.Indented));
+
+            return Created(Url.Action("Get", new { id }), id);
+        }
+
+        private async Task HandleOrder(Guid id, Guid clientId, OperationType operationType, string command)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -130,18 +145,18 @@ namespace Lykke.Service.Operations.Controllers
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
 
             operation = new Operation();
-            operation.Create(id, command.Client.Id, OperationType.Trade, JsonConvert.SerializeObject(command));
+            operation.Create(id, clientId, operationType, command);
 
-            var wf = _workflowFactory("TradeWorkflow", operation);            
+            var wf = _workflowFactory("OrderWorkflow", operation);
             var wfResult = wf.Run(operation);
 
             await _operationsRepository.Save(operation);
 
             if (wfResult.State == WorkflowState.Corrupted)
-                return StatusCode(500);
+                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult("_", "Technical problem"));
 
             if (operation.Status == OperationStatus.Failed)
-            {                
+            {
                 var modelState = new ModelStateDictionary();
                 JArray errors = operation.OperationValues.ValidationErrors;
 
@@ -152,8 +167,6 @@ namespace Lykke.Service.Operations.Controllers
 
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
             }
-
-            return Created(Url.Action("Get", new { id }), id);
         }
 
         [HttpPost]

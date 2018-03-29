@@ -150,7 +150,7 @@ namespace Lykke.Service.Operations.Workflow
         public decimal NeededAmount { get; set; }
         public double WalletBalance { get; set; }
         public OrderAction OrderAction { get; set; }
-        public OperationResult? NeededConversionResult { get; set; }
+        public OperationResult[] NeededConversionResult { get; set; }
     }
 
     internal class GlobalInput

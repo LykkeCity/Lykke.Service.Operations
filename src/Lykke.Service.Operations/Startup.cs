@@ -62,7 +62,7 @@ namespace Lykke.Service.Operations
                 var appSettings = Configuration.LoadSettings<AppSettings>();
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(Log));
+                builder.RegisterModule(new ServiceModule(appSettings, Log));
                 builder.RegisterModule(new ClientsModule(appSettings, Log));
                 builder.RegisterModule(new WorkflowModule());
                 builder.RegisterModule(new MongoDbModule(appSettings.Nested(x => x.OperationsService.Db)));
@@ -93,11 +93,11 @@ namespace Lykke.Service.Operations
 
                 app.UseMvc();
                 app.UseSwagger(c =>
-                {
+                {                    
                     c.PreSerializeFilters.Add((swagger, httpReq) => swagger.Host = httpReq.Host.Value);
                 });
                 app.UseSwaggerUI(x =>
-                {
+                {                    
                     x.RoutePrefix = "swagger/ui";
                     x.SwaggerEndpoint("/swagger/v1/swagger.json", ApiVersion);
                 });
