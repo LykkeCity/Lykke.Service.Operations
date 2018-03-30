@@ -97,7 +97,7 @@ namespace Lykke.Service.Operations.Tests
             {
                 AssetPairId = "BTCUSD",
                 AssetId = "BTC",
-                Volume = 0.001m,
+                Volume = 0.001,
                 Price = 6000,
                 Asset = new AssetShortModel
                 {
