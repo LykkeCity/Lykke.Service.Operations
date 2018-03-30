@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OperationStatus = Lykke.Service.Operations.Contracts.OperationStatus;
 using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
 namespace Lykke.Service.Operations.Controllers
@@ -160,10 +161,16 @@ namespace Lykke.Service.Operations.Controllers
                 var modelState = new ModelStateDictionary();
                 JArray errors = operation.OperationValues.ValidationErrors;
 
-                foreach (var error in errors)
-                {
-                    modelState.AddModelError(error["PropertyName"].ToString(), error["ErrorMessage"].ToString());
-                }
+                if (errors != null)
+                    foreach (var error in errors)
+                    {
+                        modelState.AddModelError(error["PropertyName"].ToString(), error["ErrorMessage"].ToString());
+                    }
+
+                string errorMessage = operation.OperationValues.ErrorMessage;
+
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                    modelState.AddModelError("_", errorMessage);
 
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
             }

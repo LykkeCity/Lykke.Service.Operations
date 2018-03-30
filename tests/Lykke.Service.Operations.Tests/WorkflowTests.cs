@@ -3,10 +3,12 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Autofac;
 using Common.Log;
-using Lykke.Contracts.Operations;
+using Lykke.Cqrs;
+using Lykke.Cqrs.Configuration;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Settings;
 using Lykke.Service.Operations.Core.Settings.Assets;
@@ -25,8 +27,10 @@ namespace Lykke.Service.Operations.Tests
 {
     public class WorkflowTests
     {
-        [Fact()]
-        public async Task RunWorkflow()
+        [Theory]
+        [InlineData(OperationType.LimitOrder, "LimitOrderWorkflow")]
+        [InlineData(OperationType.MarketOrder, "MarketOrderWorkflow")]
+        public async Task RunWorkflow(OperationType type, string workflowType)
         {
             var builder = new ContainerBuilder();
 
@@ -34,11 +38,17 @@ namespace Lykke.Service.Operations.Tests
 
             reloadingManager.Setup(m => m.CurrentValue).Returns(new AppSettings
             {
+                Transports = new TransportSettings
+                {
+                    ClientRabbitMqConnectionString = "amqp://lykke.user:123qwe123qwe123@rabbit-registration.lykke-service.svc.cluster.local:5672",
+                    MeRabbitMqConnectionString = "amqp://lykke.history:lykke.history@rabbit-me.lykke-me.svc.cluster.local:5672"
+                },
                 OperationsService = new OperationsSettings
                 {
                     Db = new DbSettings
                     {
-                        OffchainConnString = "DefaultEndpointsProtocol=https;AccountName=lkedevmain;AccountKey=l0W0CaoNiRZQIqJ536sIScSV5fUuQmPYRQYohj/UjO7+ZVdpUiEsRLtQMxD+1szNuAeJ351ndkOsdWFzWBXmdw=="
+                        OffchainConnString = "DefaultEndpointsProtocol=https;AccountName=lkedevmain;AccountKey=l0W0CaoNiRZQIqJ536sIScSV5fUuQmPYRQYohj/UjO7+ZVdpUiEsRLtQMxD+1szNuAeJ351ndkOsdWFzWBXmdw==",
+                        HMarketOrdersConnString = "DefaultEndpointsProtocol=https;AccountName=lkedevmain;AccountKey=l0W0CaoNiRZQIqJ536sIScSV5fUuQmPYRQYohj/UjO7+ZVdpUiEsRLtQMxD+1szNuAeJ351ndkOsdWFzWBXmdw=="
                     },
                     Services = new ServicesSettings
                     {
@@ -76,6 +86,9 @@ namespace Lykke.Service.Operations.Tests
 
             builder.RegisterModule(new ServiceModule(reloadingManager.Object, new LogToConsole()));
             builder.RegisterModule(new ClientsModule(reloadingManager.Object, new LogToConsole()));
+            builder.Register(ctx => new InMemoryCqrsEngine(Register.BoundedContext("operations")
+                .PublishingEvents(typeof(LimitOrderCreatedEvent), typeof(LimitOrderRejectedEvent)).With("events"))).As<ICqrsEngine>().SingleInstance();
+            //builder.RegisterModule(new CqrsModule(reloadingManager.Object, new LogToConsole()));
             builder.RegisterModule(new WorkflowModule());            
             
             var container = builder.Build();
@@ -84,7 +97,7 @@ namespace Lykke.Service.Operations.Tests
             {
                 AssetPairId = "BTCUSD",
                 AssetId = "BTC",
-                Volume = 0.1m,
+                Volume = 0.001m,
                 Price = 6000,
                 Asset = new AssetShortModel
                 {
@@ -154,9 +167,9 @@ namespace Lykke.Service.Operations.Tests
 
             var inputValues = JsonConvert.SerializeObject(context);
 
-            operation.Create(Guid.NewGuid(), new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"), OperationType.LimitOrder, inputValues);                        
+            operation.Create(Guid.NewGuid(), new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"), type, inputValues);                        
 
-            var wf = container.ResolveNamed<OperationWorkflow>("OrderWorkflow", new TypedParameter(typeof(Operation), operation));            
+            var wf = container.ResolveNamed<OperationWorkflow>(workflowType, new TypedParameter(typeof(Operation), operation));            
 
             var result = wf.Run(operation);
 

@@ -26,12 +26,13 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the GlobalSettingsModel class.
         /// </summary>
-        public GlobalSettingsModel(bool bitcoinBlockchainOperationsDisabled, bool btcOperationsDisabled, IList<string> blockedAssetPairs = default(IList<string>), IcoSettingsModel icoSettings = default(IcoSettingsModel))
+        public GlobalSettingsModel(bool bitcoinBlockchainOperationsDisabled, bool btcOperationsDisabled, IList<string> blockedAssetPairs = default(IList<string>), IcoSettingsModel icoSettings = default(IcoSettingsModel), FeeSettingsModel feeSettings = default(FeeSettingsModel))
         {
             BlockedAssetPairs = blockedAssetPairs;
             BitcoinBlockchainOperationsDisabled = bitcoinBlockchainOperationsDisabled;
             BtcOperationsDisabled = btcOperationsDisabled;
             IcoSettings = icoSettings;
+            FeeSettings = feeSettings;
             CustomInit();
         }
 
@@ -61,6 +62,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         public IcoSettingsModel IcoSettings { get; set; }
 
         /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "FeeSettings")]
+        public FeeSettingsModel FeeSettings { get; set; }
+
+        /// <summary>
         /// Validate the object.
         /// </summary>
         /// <exception cref="Microsoft.Rest.ValidationException">
@@ -68,6 +74,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
+            if (FeeSettings != null)
+            {
+                FeeSettings.Validate();
+            }
         }
     }
 }

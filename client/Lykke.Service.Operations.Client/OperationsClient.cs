@@ -5,7 +5,6 @@ using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using JetBrains.Annotations;
-using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Client.AutorestClient;
 using Lykke.Service.Operations.Contracts;
 
@@ -55,9 +54,14 @@ namespace Lykke.Service.Operations.Client
             return (await _operationsApi.ApiOperationsNewOrderByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateNewOrderCommand>(newOrderCommand))).Value;
         }
 
-        public async Task<Guid> PlaceOrder(Guid id, CreateMarketOrderCommand marketOrderCommand)
+        public async Task<Guid> PlaceMarketOrder(Guid id, CreateMarketOrderCommand marketOrderCommand)
         {
-            return (await _operationsApi.ApiOperationsOrderByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateOrderCommand>(marketOrderCommand))).Value;            
+            return (await _operationsApi.ApiOperationsOrderByIdMarketPostAsync(id, _mapper.Map<AutorestClient.Models.CreateMarketOrderCommand>(marketOrderCommand))).Value;            
+        }
+
+        public async Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand marketOrderCommand)
+        {
+            return (await _operationsApi.ApiOperationsOrderByIdLimitPostAsync(id, _mapper.Map<AutorestClient.Models.CreateLimitOrderCommand>(marketOrderCommand))).Value;
         }
 
         public Task Cancel(Guid id)

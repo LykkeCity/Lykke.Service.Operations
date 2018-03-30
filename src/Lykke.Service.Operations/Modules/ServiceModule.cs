@@ -50,6 +50,10 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterInstance<IOffchainOrdersRepository>(
                 new OffchainOrderRepository(
                     AzureTableStorage<OffchainOrder>.Create(_settings.ConnectionString(x => x.OperationsService.Db.OffchainConnString), "OffchainOrders", _log)));
+
+            builder.RegisterInstance<ILimitOrdersRepository>(
+                new LimitOrdersRepository(AzureTableStorage<LimitOrderEntity>.Create(_settings.ConnectionString(x => x.OperationsService.Db.HMarketOrdersConnString),
+                    "LimitOrders", _log)));
         }
     }
 }

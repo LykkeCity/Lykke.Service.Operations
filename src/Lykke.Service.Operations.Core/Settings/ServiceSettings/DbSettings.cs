@@ -5,5 +5,6 @@
         public string LogsConnString { get; set; }
         public string OffchainConnString { get; set; }
         public string MongoConnectionString { get; set; }
+        public string HMarketOrdersConnString { get; set; }
     }
 }

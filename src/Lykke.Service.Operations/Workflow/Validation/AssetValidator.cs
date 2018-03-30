@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using FluentValidation;
 using Lykke.Service.RateCalculator.Client.AutorestClient.Models;
+using OrderAction = Lykke.Service.Operations.Contracts.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow.Validation
 {

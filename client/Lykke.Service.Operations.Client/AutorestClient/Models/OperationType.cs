@@ -23,8 +23,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         Transfer,
         [EnumMember(Value = "VisaCardPayment")]
         VisaCardPayment,
-        [EnumMember(Value = "Trade")]
-        Trade,
+        [EnumMember(Value = "MarketOrder")]
+        MarketOrder,
+        [EnumMember(Value = "LimitOrder")]
+        LimitOrder,
         [EnumMember(Value = "NewOrder")]
         NewOrder
     }
@@ -41,8 +43,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
                     return "Transfer";
                 case OperationType.VisaCardPayment:
                     return "VisaCardPayment";
-                case OperationType.Trade:
-                    return "Trade";
+                case OperationType.MarketOrder:
+                    return "MarketOrder";
+                case OperationType.LimitOrder:
+                    return "LimitOrder";
                 case OperationType.NewOrder:
                     return "NewOrder";
             }
@@ -57,8 +61,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
                     return OperationType.Transfer;
                 case "VisaCardPayment":
                     return OperationType.VisaCardPayment;
-                case "Trade":
-                    return OperationType.Trade;
+                case "MarketOrder":
+                    return OperationType.MarketOrder;
+                case "LimitOrder":
+                    return OperationType.LimitOrder;
                 case "NewOrder":
                     return OperationType.NewOrder;
             }

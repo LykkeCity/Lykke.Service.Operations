@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Contracts.Operations;
+using Lykke.Service.Operations.Contracts;
 
 namespace Lykke.Service.Operations.Core.Domain
 {

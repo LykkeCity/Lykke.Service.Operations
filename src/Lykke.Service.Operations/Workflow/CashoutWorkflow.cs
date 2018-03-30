@@ -7,6 +7,7 @@ using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Service.RateCalculator.Client.AutorestClient.Models;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
+using OrderAction = Lykke.Service.Operations.Contracts.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow
 {

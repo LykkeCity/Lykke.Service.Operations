@@ -1,17 +1,26 @@
-﻿using Lykke.Service.Operations.Contracts;
+﻿using Lykke.MatchingEngine.Connector.Abstractions.Models;
+using OrderAction = Lykke.Service.Operations.Contracts.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow.Data
 {
-    public class MeOrderInput
+    public class MeMoOrderInput
     {
-        public string Id { get; set; }
-        public OperationType OperationType { get; set; }
+        public string Id { get; set; }        
         public string AssetPairId { get; set; }
         public string ClientId { get; set; }
         public bool Straight { get; set; }
-        public double Volume { get; set; }
-        public double? Price { get; set; }
+        public double Volume { get; set; }        
         public OrderAction OrderAction { get; set; }
-        public object Fee { get; set; }        
+        public MarketOrderFeeModel Fee { get; set; }        
+    }
+
+    public class MeLoOrderInput
+    {
+        public string Id { get; set; }        
+        public string AssetPairId { get; set; }
+        public string ClientId { get; set; }        
+        public double Volume { get; set; }
+        public double Price { get; set; }        
+        public LimitOrderFeeModel Fee { get; set; }
     }
 }

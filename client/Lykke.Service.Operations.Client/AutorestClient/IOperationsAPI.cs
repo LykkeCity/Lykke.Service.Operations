@@ -97,7 +97,19 @@ namespace Lykke.Service.Operations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse<System.Guid?>> ApiOperationsOrderByIdPostWithHttpMessagesAsync(System.Guid id, CreateOrderCommand command = default(CreateOrderCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse<System.Guid?>> ApiOperationsOrderByIdMarketPostWithHttpMessagesAsync(System.Guid id, CreateMarketOrderCommand command = default(CreateMarketOrderCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <param name='id'>
+        /// </param>
+        /// <param name='command'>
+        /// </param>
+        /// <param name='customHeaders'>
+        /// The headers that will be added to request.
+        /// </param>
+        /// <param name='cancellationToken'>
+        /// The cancellation token.
+        /// </param>
+        Task<HttpOperationResponse<System.Guid?>> ApiOperationsOrderByIdLimitPostWithHttpMessagesAsync(System.Guid id, CreateLimitOrderCommand command = default(CreateLimitOrderCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='id'>
         /// </param>

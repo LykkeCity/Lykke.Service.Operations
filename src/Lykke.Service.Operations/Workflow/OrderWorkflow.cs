@@ -41,48 +41,20 @@ namespace Lykke.Service.Operations.Workflow
                         .ContinueWith("Save order").OnFail("Fail operation")
                     .WithBranch()
                         .Do("Save order").OnFail("Fail operation")
-                        .Do("Send to ME").OnFail("Fail operation")
-                    .ContinueWith("Accept operation")
+                        .SubConfigure(ConfigurePreMeNodes)
+                        .Do("Send to ME").OnFail("Fail operation on Me fail")                        
+                        .SubConfigure(ConfigurePostMeNodes)
+                        .ContinueWith("Accept operation")
+                    .WithBranch()
+                        .Do("Fail operation on Me fail")
+                        .ContinueWith("Fail operation")
                     .WithBranch()
                         .Do("Fail operation")
                         .ContinueWith("end")
                     .WithBranch()
                         .Do("Accept operation")
                     .End()
-            );
-
-            DelegateNode("Save order", input => workflowService.SaveOrder(input))
-                .MergeFailOutput(output => output);
-
-            DelegateNode<CalculateFeeInput, object>("Calculate fee", input => workflowService.CalculateFee(input))
-                .WithInput(context => new CalculateFeeInput
-                {
-                    ClientId = context.OperationValues.Client.Id,
-                    OperationType = context.Type,
-                    AssetPairId = context.OperationValues.AssetPairId,
-                    BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
-                    AssetId = context.OperationValues.AssetId,
-                    OrderAction = context.OperationValues.OrderAction,
-                    TargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClientId
-                })
-                .MergeOutput(output => new { Fee = output })
-                .MergeFailOutput(output => output);
-
-            DelegateNode<MeOrderInput, object>("Send to ME", input => workflowService.SendToMe(input))
-                .WithInput(context => new MeOrderInput
-                {
-                    Id = context.Id.ToString(),
-                    OperationType = context.Type,
-                    AssetPairId = context.OperationValues.AssetPairId,
-                    ClientId = context.OperationValues.Client.Id,                    
-                    Straight = (string)context.OperationValues.AssetId == (string)context.OperationValues.AssetPair.BaseAsset.Id,
-                    Volume = (double)context.OperationValues.Volume,
-                    Price = (double?)context.OperationValues.Price,
-                    OrderAction = (OrderAction)context.OperationValues.OrderAction,
-                    Fee = context.OperationValues.Fee
-                })
-                .MergeOutput(output => new { Me = output })
-                .MergeFailOutput(output => output);
+            );                    
 
             ValidationNode<ClientInput>("Client validation")
                 .WithInput(context => new ClientInput
@@ -94,21 +66,6 @@ namespace Lykke.Service.Operations.Workflow
             
             DelegateNode("Determine needed asset", context => workflowService.GetNeededAsset(context))
                 .MergeOutput(output => output)
-                .MergeFailOutput(output => output);
-
-            DelegateNode<NeededAmountInput, object>("Determine needed amount", input => workflowService.GetNeededAmount(input))
-                .WithInput(context => new NeededAmountInput
-                {
-                    OperationType = context.Type,
-                    OrderAction = context.OperationValues.OrderAction,
-                    Volume = context.OperationValues.Volume,
-                    Price = context.OperationValues.Price,
-                    AssetId = context.OperationValues.AssetId,
-                    BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
-                    NeededAssetId = context.OperationValues.NeededAssetId,
-                    ReceivedAssetId = context.OperationValues.ReceivedAssetId
-                })
-                .MergeOutput(output => new { NeededAmount = output })
                 .MergeFailOutput(output => output);
 
             DelegateNode("Get wallet", context => workflowService.GetWalletBalance(context))
@@ -205,14 +162,24 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeFailOutput(output => output);
 
-
+            DelegateNode("Fail operation on Me fail", context => OnMeFail(context));                
             DelegateNode("Fail operation", context => context.Fail());
             DelegateNode("Accept operation", context => context.Accept());
-        }        
-    }
+        }
 
-    public enum OrderAction
-    {
-        Buy, Sell
+        protected virtual void OnMeFail(Operation context)
+        {
+            
+        }
+
+        protected virtual WorkflowConfiguration<Operation> ConfigurePostMeNodes(WorkflowConfiguration<Operation> configuration)
+        {
+            return configuration;
+        }
+
+        protected virtual WorkflowConfiguration<Operation> ConfigurePreMeNodes(WorkflowConfiguration<Operation> configuration)
+        {
+            return configuration;
+        }
     }
 }

@@ -15,6 +15,13 @@ namespace Lykke.Service.Operations.Core.Settings
 
         public FeeCalculatorSettings FeeCalculatorServiceClient { get; set; }
         public MatchingEngineSettings MatchingEngineClient { set; get; }
+        public TransportSettings Transports { get; set; }
+    }
+
+    public class TransportSettings
+    {
+        public string ClientRabbitMqConnectionString { get; set; }
+        public string MeRabbitMqConnectionString { get; set; }
     }
 
     public class FeeCalculatorSettings

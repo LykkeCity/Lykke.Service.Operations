@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Contracts;
 
 namespace Lykke.Service.Operations.Client
@@ -24,7 +23,8 @@ namespace Lykke.Service.Operations.Client
         /// <param name="newOrderCommand">Order related information</param>
         /// <returns>A path to the new context</returns>
         Task<Guid> NewOrder(Guid id, CreateNewOrderCommand newOrderCommand);
-
-        Task<Guid> PlaceOrder(Guid id, CreateMarketOrderCommand marketOrderCommand);
+        
+        Task<Guid> PlaceMarketOrder(Guid id, CreateMarketOrderCommand marketOrderCommand);
+        Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand marketOrderCommand);
     }
 }

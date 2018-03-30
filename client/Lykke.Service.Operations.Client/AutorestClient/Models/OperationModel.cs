@@ -25,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// Initializes a new instance of the OperationModel class.
         /// </summary>
         /// <param name="type">Possible values include: 'Transfer',
-        /// 'VisaCardPayment', 'Trade', 'NewOrder'</param>
+        /// 'VisaCardPayment', 'MarketOrder', 'LimitOrder', 'NewOrder'</param>
         /// <param name="status">Possible values include: 'Created',
         /// 'Accepted', 'Confirmed', 'Completed', 'Canceled', 'Failed'</param>
         public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context = default(object), string contextJson = default(string))
@@ -57,7 +57,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// Gets or sets possible values include: 'Transfer',
-        /// 'VisaCardPayment', 'Trade', 'NewOrder'
+        /// 'VisaCardPayment', 'MarketOrder', 'LimitOrder', 'NewOrder'
         /// </summary>
         [JsonProperty(PropertyName = "Type")]
         public OperationType Type { get; set; }

@@ -1,6 +1,7 @@
 ﻿using System;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Workflow;
+using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Workflow.Extensions
@@ -51,6 +52,12 @@ namespace Lykke.Service.Operations.Workflow.Extensions
             where TContext : Operation
         {
             return slot.ProcessFailOutput((context, output) => JsonStringExtensions.Merge(((JObject)context.OperationValues), JObject.FromObject(getContextMapFromOutput(context, output))));
+        }
+
+        public static WorkflowConfiguration<TContext> SubConfigure<TContext>(this WorkflowConfiguration<TContext> configuration,
+            Func<WorkflowConfiguration<TContext>, WorkflowConfiguration<TContext>> configure)
+        {
+            return configure(configuration);
         }
     }
 }

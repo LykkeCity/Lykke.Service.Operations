@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Contracts.Operations;
+using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using MongoDB.Driver;
-using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
 namespace Lykke.Service.Operations.MongoRepositories
 {

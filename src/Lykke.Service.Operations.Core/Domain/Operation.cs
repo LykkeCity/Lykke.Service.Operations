@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Lykke.Contracts.Operations;
+using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Extensions;
 using Lykke.Workflow;
 using MongoDB.Bson.Serialization.Attributes;

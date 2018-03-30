@@ -11,24 +11,26 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class CreateTradeCommand
+    public partial class CreateMarketOrderCommand
     {
         /// <summary>
-        /// Initializes a new instance of the CreateTradeCommand class.
+        /// Initializes a new instance of the CreateMarketOrderCommand class.
         /// </summary>
-        public CreateTradeCommand()
+        public CreateMarketOrderCommand()
         {
           CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the CreateTradeCommand class.
+        /// Initializes a new instance of the CreateMarketOrderCommand class.
         /// </summary>
-        public CreateTradeCommand(double volume, string assetPairId = default(string), string assetId = default(string), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
+        public CreateMarketOrderCommand(double volume, string assetPairId = default(string), string assetId = default(string), AssetShortModel asset = default(AssetShortModel), AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
         {
             AssetPairId = assetPairId;
             AssetId = assetId;
             Volume = volume;
+            Asset = asset;
+            AssetPair = assetPair;
             Client = client;
             GlobalSettings = globalSettings;
             CustomInit();
@@ -56,6 +58,16 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
+        [JsonProperty(PropertyName = "Asset")]
+        public AssetShortModel Asset { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "AssetPair")]
+        public AssetPairModel AssetPair { get; set; }
+
+        /// <summary>
+        /// </summary>
         [JsonProperty(PropertyName = "Client")]
         public ClientModel Client { get; set; }
 
@@ -72,6 +84,14 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
+            if (Asset != null)
+            {
+                Asset.Validate();
+            }
+            if (AssetPair != null)
+            {
+                AssetPair.Validate();
+            }
             if (Client != null)
             {
                 Client.Validate();
