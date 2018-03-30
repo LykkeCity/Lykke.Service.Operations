@@ -91,19 +91,19 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new UpdatePriceInput
                 {
                     Id = context.Id,
-                    Price = context.OperationValues.Price
+                    Price = context.OperationValues.Me.Price
                 })
                 .MergeFailOutput(output => new { ErrorMessage = output.Message });
+        }        
+
+        protected override WorkflowConfiguration<Operation> ConfigurePostMeNodes(WorkflowConfiguration<Operation> configuration)
+        {
+            return configuration.Do("Update order price").OnFail("Fail operation");
         }
 
         private void UpdateOrderPrice(UpdatePriceInput input)
         {
             _offchainOrdersRepository.UpdatePrice(input.Id.ToString(), input.Price).ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-
-        protected override WorkflowConfiguration<Operation> ConfigurePostMeNodes(WorkflowConfiguration<Operation> configuration)
-        {
-            return configuration.Do("Update order price").OnFail("Fail operation");
         }
 
         private object GetNeededAmount(NeededMoAmountInput input)

@@ -117,7 +117,7 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]		
         public async Task<IActionResult> MarketOrder(Guid id, [FromBody] CreateMarketOrderCommand command)
 		{
-		    await HandleOrder(id, command.Client.Id,  OperationType.MarketOrder, JsonConvert.SerializeObject(command, Formatting.Indented));
+		    await HandleOrder(id, command.Client.Id,  OperationType.MarketOrder, "MarketOrderWorkflow", JsonConvert.SerializeObject(command, Formatting.Indented));
 
 		    return Created(Url.Action("Get", new { id }), id);
 		}
@@ -127,12 +127,12 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
         public async Task<IActionResult> LimitOrder(Guid id, [FromBody] CreateLimitOrderCommand command)
         {
-            await HandleOrder(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(command, Formatting.Indented));
+            await HandleOrder(id, command.Client.Id, OperationType.LimitOrder, "LimitOrderWorkflow", JsonConvert.SerializeObject(command, Formatting.Indented));
 
             return Created(Url.Action("Get", new { id }), id);
         }
 
-        private async Task HandleOrder(Guid id, Guid clientId, OperationType operationType, string command)
+        private async Task HandleOrder(Guid id, Guid clientId, OperationType operationType, string workflowType, string command)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -148,7 +148,7 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, clientId, operationType, command);
 
-            var wf = _workflowFactory("OrderWorkflow", operation);
+            var wf = _workflowFactory(workflowType, operation);
             var wfResult = wf.Run(operation);
 
             await _operationsRepository.Save(operation);
