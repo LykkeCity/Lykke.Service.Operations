@@ -85,7 +85,7 @@ namespace Lykke.Service.Operations.Workflow
                     Fee = ((JObject)context.OperationValues.Fee).ToObject<MarketOrderFeeModel>()
                 })
                 .MergeOutput(output => new { Me = output })
-                .MergeFailOutput(output => output);
+                .MergeFailOutput(output => new { ErrorMessage = output.Message });
 
             DelegateNode<UpdatePriceInput>("Update order price", input => UpdateOrderPrice(input))
                 .WithInput(context => new UpdatePriceInput

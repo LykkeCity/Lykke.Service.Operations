@@ -66,6 +66,7 @@ namespace Lykke.Service.Operations.Core.Domain
             var activity = _activities.Single(om => om.ActivityId == activityExecutionId);
                 
             activity.Status = ActivityResult.Succeeded;
+            activity.Finished = DateTime.UtcNow;            
             activity.Output = outputValues.ToJsonString();
         }
 

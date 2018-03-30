@@ -12,6 +12,7 @@ namespace Lykke.Service.Operations.Core.Domain
             Type = type;
             Input = input;
             Status = ActivityResult.None;
+            Created = DateTime.UtcNow;
         }
 
         public Guid? ActivityId { get; private set; }
@@ -19,6 +20,8 @@ namespace Lykke.Service.Operations.Core.Domain
         public string Input { get; private set; }
         public string Output { get; internal set; }
         public string Type { get; private set; }
+        public DateTime Created { get; set; }
+        public DateTime Finished { get; set; }
         public ActivityResult Status { get; internal set; }
         public bool IsExecutedExternally { get; internal set; }
         public bool IsExecuting { get; set; }
