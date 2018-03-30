@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Log;
 using Lykke.Contracts.Operations;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
@@ -32,6 +33,7 @@ namespace Lykke.Service.Operations.Controllers
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
+        private readonly ILog _log;
         private readonly IMapper _mapper;
 
         public OperationsController(            
@@ -40,6 +42,7 @@ namespace Lykke.Service.Operations.Controllers
             IPushNotificationsAPI pushNotificationsApi, 
             IAssetsServiceWithCache assetsServiceWithCache,
             Func<string, Operation, OperationWorkflow> workflowFactory,
+            ILog log,
             IMapper mapper)
         {
             _operationsRepository = operationsRepository;
@@ -47,6 +50,7 @@ namespace Lykke.Service.Operations.Controllers
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
             _workflowFactory = workflowFactory;
+            _log = log;
             _mapper = mapper;
         }
 
@@ -154,7 +158,11 @@ namespace Lykke.Service.Operations.Controllers
             await _operationsRepository.Save(operation);
 
             if (wfResult.State == WorkflowState.Corrupted)
-                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult("_", "Technical problem"));
+            {
+                _log.WriteFatalError(nameof(MarketOrderWorkflow), JsonConvert.SerializeObject(wfResult, Formatting.Indented));
+
+                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult("_", wfResult.Error));
+            }
 
             if (operation.Status == OperationStatus.Failed)
             {
