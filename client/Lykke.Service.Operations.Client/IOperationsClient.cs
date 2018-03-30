@@ -24,7 +24,7 @@ namespace Lykke.Service.Operations.Client
         /// <returns>A path to the new context</returns>
         Task<Guid> NewOrder(Guid id, CreateNewOrderCommand newOrderCommand);
         
-        Task<Guid> PlaceMarketOrder(Guid id, CreateMarketOrderCommand marketOrderCommand);
+        Task<Guid> PlaceMarketOrder(Guid id, CreateOrderCommand marketOrderCommand);
         Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand marketOrderCommand);
     }
 }

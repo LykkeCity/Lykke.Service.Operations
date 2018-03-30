@@ -54,7 +54,7 @@ namespace Lykke.Service.Operations.Client
             return (await _operationsApi.ApiOperationsNewOrderByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateNewOrderCommand>(newOrderCommand))).Value;
         }
 
-        public async Task<Guid> PlaceMarketOrder(Guid id, CreateMarketOrderCommand marketOrderCommand)
+        public async Task<Guid> PlaceMarketOrder(Guid id, CreateOrderCommand marketOrderCommand)
         {
             return (await _operationsApi.ApiOperationsOrderByIdMarketPostAsync(id, _mapper.Map<AutorestClient.Models.CreateMarketOrderCommand>(marketOrderCommand))).Value;            
         }
