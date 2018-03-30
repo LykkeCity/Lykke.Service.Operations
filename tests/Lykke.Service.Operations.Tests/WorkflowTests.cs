@@ -127,8 +127,8 @@ namespace Lykke.Service.Operations.Tests
                         LykkeEntityId = "LYKKEUK",
                         Blockchain = "Bitcoin"
                     },
-                    MinVolume = 0.001m,
-                    MinInvertedVolume = 1.0m
+                    MinVolume = 0.001,
+                    MinInvertedVolume = 1.0
                 },
                 Client = new ClientModel
                 {
