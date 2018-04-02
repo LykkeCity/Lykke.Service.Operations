@@ -24,13 +24,14 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateMarketOrderCommand class.
         /// </summary>
-        public CreateMarketOrderCommand(double volume, string assetPairId = default(string), string assetId = default(string), AssetShortModel asset = default(AssetShortModel), AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
+        /// <param name="orderAction">Possible values include: 'Buy',
+        /// 'Sell'</param>
+        public CreateMarketOrderCommand(double volume, OrderAction orderAction, string assetId = default(string), AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
         {
-            AssetPairId = assetPairId;
             AssetId = assetId;
-            Volume = volume;
-            Asset = asset;
             AssetPair = assetPair;
+            Volume = volume;
+            OrderAction = orderAction;
             Client = client;
             GlobalSettings = globalSettings;
             CustomInit();
@@ -43,13 +44,13 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "AssetPairId")]
-        public string AssetPairId { get; set; }
+        [JsonProperty(PropertyName = "AssetId")]
+        public string AssetId { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "AssetId")]
-        public string AssetId { get; set; }
+        [JsonProperty(PropertyName = "AssetPair")]
+        public AssetPairModel AssetPair { get; set; }
 
         /// <summary>
         /// </summary>
@@ -57,14 +58,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         public double Volume { get; set; }
 
         /// <summary>
+        /// Gets or sets possible values include: 'Buy', 'Sell'
         /// </summary>
-        [JsonProperty(PropertyName = "Asset")]
-        public AssetShortModel Asset { get; set; }
-
-        /// <summary>
-        /// </summary>
-        [JsonProperty(PropertyName = "AssetPair")]
-        public AssetPairModel AssetPair { get; set; }
+        [JsonProperty(PropertyName = "OrderAction")]
+        public OrderAction OrderAction { get; set; }
 
         /// <summary>
         /// </summary>
@@ -84,10 +81,6 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Asset != null)
-            {
-                Asset.Validate();
-            }
             if (AssetPair != null)
             {
                 AssetPair.Validate();
