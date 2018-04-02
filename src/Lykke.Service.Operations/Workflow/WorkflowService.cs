@@ -25,7 +25,7 @@ namespace Lykke.Service.Operations.Workflow
         
         public object GetNeededAsset(Operation context)
         {
-            var orderAction = (decimal)context.OperationValues.Volume > 0 ? OrderAction.Buy : OrderAction.Sell;
+            var orderAction = (OrderAction)context.OperationValues.OrderAction;
             string assetId = context.OperationValues.Asset.Id;
             string baseAssetId = context.OperationValues.AssetPair.BaseAsset.Id;
             string quotingAssetId = context.OperationValues.AssetPair.QuotingAsset.Id;
@@ -33,8 +33,7 @@ namespace Lykke.Service.Operations.Workflow
             if (orderAction == OrderAction.Buy)
             {
                 return new
-                {
-                    OrderAction = orderAction.ToString(),
+                {                    
                     NeededAssetId = baseAssetId == assetId
                         ? quotingAssetId
                         : baseAssetId,
@@ -46,8 +45,7 @@ namespace Lykke.Service.Operations.Workflow
             else
             {
                 return new
-                {
-                    OrderAction = orderAction.ToString(),
+                {                    
                     NeededAssetId = baseAssetId == assetId
                         ? baseAssetId
                         : quotingAssetId

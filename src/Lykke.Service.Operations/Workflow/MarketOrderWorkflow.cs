@@ -50,7 +50,7 @@ namespace Lykke.Service.Operations.Workflow
                     OrderAction = context.OperationValues.OrderAction,
                     Volume = context.OperationValues.Volume,
                     Price = context.OperationValues.Price,
-                    AssetId = context.OperationValues.AssetId,
+                    AssetId = context.OperationValues.Asset.Id,
                     BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
                     NeededAssetId = context.OperationValues.NeededAssetId,
                     ReceivedAssetId = context.OperationValues.ReceivedAssetId
@@ -62,8 +62,8 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new CalculateMoFeeInput
                 {
                     ClientId = context.OperationValues.Client.Id,                    
-                    AssetPairId = context.OperationValues.AssetPairId,                    
-                    AssetId = context.OperationValues.AssetId,
+                    AssetPairId = context.OperationValues.AssetPair.Id,                    
+                    AssetId = context.OperationValues.Asset.Id,
                     OrderAction = context.OperationValues.OrderAction,
                     TargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClientId
                 })
@@ -77,9 +77,9 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new MeMoOrderInput
                 {
                     Id = context.Id.ToString(),                    
-                    AssetPairId = context.OperationValues.AssetPairId,
+                    AssetPairId = context.OperationValues.AssetPair.Id,
                     ClientId = context.OperationValues.Client.Id,
-                    Straight = (string)context.OperationValues.AssetId == (string)context.OperationValues.AssetPair.BaseAsset.Id,
+                    Straight = (string)context.OperationValues.Asset.Id == (string)context.OperationValues.AssetPair.BaseAsset.Id,
                     Volume = context.OperationValues.Volume,                    
                     OrderAction = context.OperationValues.OrderAction,
                     Fee = ((JObject)context.OperationValues.Fee).ToObject<MarketOrderFeeModel>()

@@ -133,6 +133,7 @@ namespace Lykke.Service.Operations.Tests
                 },
                 Volume = 0.001,
                 Price = 6000,
+                OrderAction = OrderAction.Buy,
                 Client = new ClientModel
                 {
                     Id = new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"),
