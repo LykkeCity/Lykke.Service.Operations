@@ -125,7 +125,8 @@ namespace Lykke.Service.Operations.Controllers
             {
                 Asset = command.AssetPair.BaseAsset.Id == command.AssetId ? command.AssetPair.BaseAsset : command.AssetPair.QuotingAsset,
                 command.AssetPair,
-                command.Volume,                
+                command.Volume,
+                command.OrderAction,
                 command.Client,
                 command.GlobalSettings
             };
@@ -146,6 +147,7 @@ namespace Lykke.Service.Operations.Controllers
                 command.AssetPair,                
                 command.Volume,
                 command.Price,
+                command.OrderAction,
                 command.Client,
                 command.GlobalSettings
             };
