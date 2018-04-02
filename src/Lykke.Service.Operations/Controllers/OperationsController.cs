@@ -119,9 +119,18 @@ namespace Lykke.Service.Operations.Controllers
 		[HttpPost]
         [Route("order/{id}/market")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]		
-        public async Task<IActionResult> MarketOrder(Guid id, [FromBody] CreateOrderCommand command)
+        public async Task<IActionResult> MarketOrder(Guid id, [FromBody] CreateMarketOrderCommand command)
 		{
-		    await HandleOrder(id, command.Client.Id,  OperationType.MarketOrder, "MarketOrderWorkflow", JsonConvert.SerializeObject(command, Formatting.Indented));
+            var context = new
+            {
+                Asset = command.AssetPair.BaseAsset.Id == command.AssetId ? command.AssetPair.BaseAsset : command.AssetPair.QuotingAsset,
+                command.AssetPair,
+                command.Volume,                
+                command.Client,
+                command.GlobalSettings
+            };
+
+            await HandleOrder(id, command.Client.Id,  OperationType.MarketOrder, "MarketOrderWorkflow", JsonConvert.SerializeObject(context, Formatting.Indented));
 
 		    return Created(Url.Action("Get", new { id }), id);
 		}
@@ -131,7 +140,17 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
         public async Task<IActionResult> LimitOrder(Guid id, [FromBody] CreateLimitOrderCommand command)
         {
-            await HandleOrder(id, command.Client.Id, OperationType.LimitOrder, "LimitOrderWorkflow", JsonConvert.SerializeObject(command, Formatting.Indented));
+            var context = new
+            {
+                Asset = command.AssetPair.BaseAsset,
+                command.AssetPair,                
+                command.Volume,
+                command.Price,
+                command.Client,
+                command.GlobalSettings
+            };
+
+            await HandleOrder(id, command.Client.Id, OperationType.LimitOrder, "LimitOrderWorkflow", JsonConvert.SerializeObject(context, Formatting.Indented));
 
             return Created(Url.Action("Get", new { id }), id);
         }

@@ -93,17 +93,16 @@ namespace Lykke.Service.Operations.Tests
             
             var container = builder.Build();
 
-            var context = new CreateLimitOrderCommand
-            {
-                AssetPairId = "BTCUSD",
-                AssetId = "BTC",
-                Volume = 0.001,
-                Price = 6000,
-                Asset = new AssetShortModel
+            var context = new
+            {          
+                Asset = new AssetModel
                 {
                     Id = "BTC",
-                    IsTradable = true,
+                    Accuracy = 8,
+                    KycNeeded = false,
                     IsTrusted = true,
+                    IsTradable = true,
+                    LykkeEntityId = "LYKKEUK",
                     Blockchain = "Bitcoin"
                 },
                 AssetPair = new AssetPairModel
@@ -115,6 +114,7 @@ namespace Lykke.Service.Operations.Tests
                         Accuracy = 8,
                         KycNeeded = false,
                         IsTrusted = true,
+                        IsTradable = true,
                         LykkeEntityId = "LYKKEUK",
                         Blockchain = "Bitcoin"
                     },
@@ -124,12 +124,15 @@ namespace Lykke.Service.Operations.Tests
                         Accuracy = 2,
                         KycNeeded = true,
                         IsTrusted = true,
+                        IsTradable = true,
                         LykkeEntityId = "LYKKEUK",
                         Blockchain = "Bitcoin"
                     },
                     MinVolume = 0.001,
                     MinInvertedVolume = 1.0
                 },
+                Volume = 0.001,
+                Price = 6000,
                 Client = new ClientModel
                 {
                     Id = new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"),

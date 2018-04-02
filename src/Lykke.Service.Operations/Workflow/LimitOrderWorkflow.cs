@@ -49,7 +49,7 @@ namespace Lykke.Service.Operations.Workflow
                     OrderAction = context.OperationValues.OrderAction,
                     Volume = context.OperationValues.Volume,
                     Price = context.OperationValues.Price,
-                    AssetId = context.OperationValues.AssetId,
+                    AssetId = context.OperationValues.Asset.Id,
                     BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id                    
                 })
                 .MergeOutput(output => new { NeededAmount = output })
@@ -59,7 +59,7 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new CalculateLoFeeInput
                 {
                     ClientId = context.OperationValues.Client.Id,
-                    AssetPairId = context.OperationValues.AssetPairId,                    
+                    AssetPairId = context.OperationValues.AssetPair.Id,                    
                     BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
                     OrderAction = context.OperationValues.OrderAction,
                     TargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClientId
@@ -74,7 +74,7 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new MeLoOrderInput
                 {
                     Id = context.Id.ToString(),                    
-                    AssetPairId = context.OperationValues.AssetPairId,
+                    AssetPairId = context.OperationValues.AssetPair.Id,
                     ClientId = context.OperationValues.Client.Id,                    
                     Volume = (double)context.OperationValues.Volume,
                     Price = (double)context.OperationValues.Price,                    
@@ -104,7 +104,7 @@ namespace Lykke.Service.Operations.Workflow
             _limitOrdersRepository.CreateAsync(LimitOrder.Create(
                 input.Id.ToString(), 
                 input.ClientId.ToString(), 
-                (string)input.OperationValues.AssetPairId, 
+                (string)input.OperationValues.AssetPair.Id, 
                 (double)input.OperationValues.Volume, 
                 (double)input.OperationValues.Price, 
                 (double)input.OperationValues.Volume)).ConfigureAwait(false).GetAwaiter().GetResult();
@@ -113,7 +113,7 @@ namespace Lykke.Service.Operations.Workflow
             {
                 Id = input.Id,
                 OrderAction = input.OperationValues.OrderAction,
-                AssetPairId = input.OperationValues.AssetPairId,
+                AssetPairId = input.OperationValues.AssetPair.Id,
                 Volume = input.OperationValues.Volume,
                 Price = input.OperationValues.Price
             }, "operations");
@@ -131,7 +131,7 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     Id = input.Id,
                     OrderAction = input.OperationValues.OrderAction,
-                    AssetPairId = input.OperationValues.AssetPairId,
+                    AssetPairId = input.OperationValues.AssetPair.Id,
                     Volume = input.OperationValues.Volume,
                     Price = input.OperationValues.Price
                 }, "operations");
@@ -180,11 +180,11 @@ namespace Lykke.Service.Operations.Workflow
         {
             _offchainOrdersRepository.CreateLimitOrder(
                     context.ClientId.ToString(),
-                    (string)context.OperationValues.AssetId,
-                    (string)context.OperationValues.AssetPairId,
+                    (string)context.OperationValues.Asset.Id,
+                    (string)context.OperationValues.AssetPair.Id,
                     (decimal)context.OperationValues.Volume,
                     (decimal)context.OperationValues.NeededAmount.Amount,
-                    (bool)(context.OperationValues.AssetPair.BaseAsset.Id == context.OperationValues.AssetId),
+                    (bool)(context.OperationValues.AssetPair.BaseAsset.Id == context.OperationValues.Asset.Id),
                     (decimal)context.OperationValues.Price)
                 .ConfigureAwait(false).GetAwaiter().GetResult();
         }
