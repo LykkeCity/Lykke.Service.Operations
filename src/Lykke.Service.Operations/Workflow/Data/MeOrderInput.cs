@@ -18,9 +18,10 @@ namespace Lykke.Service.Operations.Workflow.Data
     {
         public string Id { get; set; }        
         public string AssetPairId { get; set; }
-        public string ClientId { get; set; }        
+        public string ClientId { get; set; }
+        public OrderAction OrderAction { get; set; }
         public double Volume { get; set; }
         public double Price { get; set; }        
-        public LimitOrderFeeModel Fee { get; set; }
+        public LimitOrderFeeModel Fee { get; set; }        
     }
 }

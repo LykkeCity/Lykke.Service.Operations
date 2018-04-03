@@ -75,7 +75,8 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     Id = context.Id.ToString(),                    
                     AssetPairId = context.OperationValues.AssetPair.Id,
-                    ClientId = context.OperationValues.Client.Id,                    
+                    ClientId = context.OperationValues.Client.Id,     
+                    OrderAction = context.OperationValues.OrderAction,
                     Volume = (double)context.OperationValues.Volume,
                     Price = (double)context.OperationValues.Price,                    
                     Fee = ((JObject)context.OperationValues.Fee).ToObject<LimitOrderFeeModel>()
@@ -195,7 +196,10 @@ namespace Lykke.Service.Operations.Workflow
             {
                 Id = input.Id,
                 ClientId = input.ClientId,
-                AssetPairId = input.AssetPairId,
+                AssetPairId = input.AssetPairId,           
+                OrderAction = input.OrderAction == OrderAction.Buy 
+                    ? MatchingEngine.Connector.Abstractions.Models.OrderAction.Buy 
+                    : MatchingEngine.Connector.Abstractions.Models.OrderAction.Sell,
                 Price = input.Price,
                 Volume = Math.Abs(input.Volume),
                 Fee = input.Fee,
