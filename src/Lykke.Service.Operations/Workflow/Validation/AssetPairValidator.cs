@@ -1,12 +1,14 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation;
+using JetBrains.Annotations;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
 
 namespace Lykke.Service.Operations.Workflow.Validation
 {
+    [UsedImplicitly]
     public class AssetPairValidator : AbstractValidator<AssetPairInput>
     {
         public AssetPairValidator()

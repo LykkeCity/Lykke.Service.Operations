@@ -2,13 +2,12 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common.Log;
+using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Balances.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.FeeCalculator.Client;
-using Lykke.Service.Operations.Core.Settings;
-using Lykke.Service.Operations.Core.Settings.Assets;
-using Lykke.Service.Operations.Core.Settings.ServiceSettings;
+using Lykke.Service.Operations.Settings;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.RateCalculator.Client;
 using Lykke.SettingsReader;
@@ -48,7 +47,7 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl, _log);
             builder.RegisterBalancesClient(_settings.CurrentValue.BalancesServiceClient.ServiceUrl, _log);
             builder.RegisterFeeCalculatorClient(_settings.CurrentValue.FeeCalculatorServiceClient.ServiceUrl, _log);
-
+            builder.RegisterInstance<IAssetDisclaimersClient>(new AssetDisclaimersClient(_settings.CurrentValue.AssetDisclaimersServiceClient));
             builder.BindMeClient(_settings.CurrentValue.MatchingEngineClient.IpEndpoint.GetClientIpEndPoint(), socketLog: null, ignoreErrors: true);
 
             builder.Populate(_services);

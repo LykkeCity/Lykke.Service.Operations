@@ -4,12 +4,10 @@ using Common.Log;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Core.Services;
-using Lykke.Service.Operations.Core.Settings;
-using Lykke.Service.Operations.Core.Settings.ServiceSettings;
 using Lykke.Service.Operations.MongoRepositories;
 using Lykke.Service.Operations.Services;
+using Lykke.Service.Operations.Settings;
 using Lykke.Service.Operations.Workflow;
-using Lykke.Service.RateCalculator.Client;
 using Lykke.SettingsReader;
 
 namespace Lykke.Service.Operations.Modules

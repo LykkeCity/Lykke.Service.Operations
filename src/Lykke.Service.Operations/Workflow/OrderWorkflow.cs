@@ -156,9 +156,17 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeFailOutput(output => output);
 
             ValidationNode<DisclaimerInput>("Disclaimers validation")
-                .WithInput(context => new DisclaimerInput
+                .WithInput(context =>
                 {
+                    string baseEntityId = context.OperationValues.AssetPair.BaseAsset.LykkeEntityId;
+                    string quotingEntityId = context.OperationValues.AssetPair.QuotingAsset.LykkeEntityId;
 
+                    return new DisclaimerInput
+                    {
+                        ClientId = context.OperationValues.Client.Id,
+                        LykkeEntityId1 = baseEntityId ?? quotingEntityId,
+                        LykkeEntityId2 = quotingEntityId ?? baseEntityId
+                    };
                 })
                 .MergeFailOutput(output => output);
 

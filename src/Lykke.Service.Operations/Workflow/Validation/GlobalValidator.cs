@@ -1,7 +1,9 @@
 ﻿using FluentValidation;
+using JetBrains.Annotations;
 
 namespace Lykke.Service.Operations.Workflow.Validation
 {
+    [UsedImplicitly]
     internal class GlobalValidator : AbstractValidator<GlobalInput>
     {
         public GlobalValidator()

@@ -5,16 +5,17 @@ using Autofac;
 using Common.Log;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
+using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
-using Lykke.Service.Operations.Core.Settings;
-using Lykke.Service.Operations.Core.Settings.Assets;
-using Lykke.Service.Operations.Core.Settings.ServiceSettings;
-using Lykke.Service.Operations.Core.Settings.SlackNotifications;
 using Lykke.Service.Operations.Modules;
+using Lykke.Service.Operations.Settings;
+using Lykke.Service.Operations.Settings.Assets;
+using Lykke.Service.Operations.Settings.ServiceSettings;
+using Lykke.Service.Operations.Settings.SlackNotifications;
 using Lykke.Service.Operations.Workflow;
 using Lykke.SettingsReader;
 using Lykke.Workflow;
@@ -71,6 +72,10 @@ namespace Lykke.Service.Operations.Tests
                 FeeCalculatorServiceClient = new FeeCalculatorSettings
                 {
                     ServiceUrl = "http://fee-calculator.lykke-service.svc.cluster.local"
+                },
+                AssetDisclaimersServiceClient = new AssetDisclaimersServiceClientSettings
+                {
+                    ServiceUrl = "http://asset-disclaimers.lykke-service.svc.cluster.local/"
                 },
                 MatchingEngineClient = new MatchingEngineSettings
                 {

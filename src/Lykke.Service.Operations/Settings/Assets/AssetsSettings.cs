@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lykke.Service.Operations.Core.Settings.Assets
+namespace Lykke.Service.Operations.Settings.Assets
 {
     public class AssetsSettings
     {

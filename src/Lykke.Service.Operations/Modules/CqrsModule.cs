@@ -9,7 +9,7 @@ using Lykke.Cqrs.Configuration;
 using Lykke.Messaging;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Service.Operations.Contracts.Events;
-using Lykke.Service.Operations.Core.Settings;
+using Lykke.Service.Operations.Settings;
 using Lykke.SettingsReader;
 
 namespace Lykke.Service.Operations.Modules
