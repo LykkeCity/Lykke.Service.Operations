@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using Lykke.Service.AssetDisclaimers.Client;
-using Lykke.Service.Operations.Core.Settings.Assets;
-using Lykke.Service.Operations.Core.Settings.ServiceSettings;
-using Lykke.Service.Operations.Core.Settings.SlackNotifications;
+using Lykke.Service.Operations.Settings.Assets;
+using Lykke.Service.Operations.Settings.ServiceSettings;
+using Lykke.Service.Operations.Settings.SlackNotifications;
 
 namespace Lykke.Service.Operations.Settings
 {

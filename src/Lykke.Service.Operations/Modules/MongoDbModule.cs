@@ -1,5 +1,5 @@
 ﻿using Autofac;
-using Lykke.Service.Operations.Core.Settings.ServiceSettings;
+using Lykke.Service.Operations.Settings.ServiceSettings;
 using Lykke.SettingsReader;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
