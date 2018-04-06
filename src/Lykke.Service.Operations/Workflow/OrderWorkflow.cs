@@ -33,7 +33,8 @@ namespace Lykke.Service.Operations.Workflow
                     .Do("AssetPair: quoting asset kyc validation").OnFail("Fail operation")                    
                     .Do("USA users restrictions validation").OnFail("Fail operation")
                     .Do("LKK2Y restrictions validation").OnFail("Fail operation")
-                    .Do("Disclaimers validation").OnFail("Fail operation")                    
+                    .Do("Disclaimers validation").OnFail("Fail operation")
+                    .Do("Wait").OnFail("Fail operation")
                     .On("Fee enabled").DeterminedAs(context => (bool)context.OperationValues.GlobalSettings.FeeSettings.FeeEnabled).ContinueWith("Calculate fee")
                     .On("Fee disabled").DeterminedAs(context => !(bool)context.OperationValues.GlobalSettings.FeeSettings.FeeEnabled).ContinueWith("Save order")
                     .WithBranch()
@@ -44,7 +45,7 @@ namespace Lykke.Service.Operations.Workflow
                         .SubConfigure(ConfigurePreMeNodes)
                         .Do("Send to ME").OnFail("Fail operation on Me fail")                        
                         .SubConfigure(ConfigurePostMeNodes)
-                        .ContinueWith("Accept operation")
+                        .ContinueWith("Confirm operation")
                     .WithBranch()
                         .Do("Fail operation on Me fail")
                         .ContinueWith("Fail operation")
@@ -52,7 +53,7 @@ namespace Lykke.Service.Operations.Workflow
                         .Do("Fail operation")
                         .ContinueWith("end")
                     .WithBranch()
-                        .Do("Accept operation")
+                        .Do("Confirm operation")
                     .End()
             );                    
 
@@ -169,10 +170,10 @@ namespace Lykke.Service.Operations.Workflow
                     };
                 })
                 .MergeFailOutput(output => output);
-
+            
             DelegateNode("Fail operation on Me fail", context => OnMeFail(context));                
             DelegateNode("Fail operation", context => context.Fail());
-            DelegateNode("Accept operation", context => context.Accept());
+            DelegateNode("Confirm operation", context => context.Confirm());
         }
 
         protected virtual void OnMeFail(Operation context)
@@ -189,5 +190,13 @@ namespace Lykke.Service.Operations.Workflow
         {
             return configuration;
         }
+    }
+
+    public class WaitOutput
+    {
+    }
+
+    public class WaitInput
+    {
     }
 }

@@ -27,7 +27,7 @@ namespace Lykke.Service.Operations.Workflow
             
             return result;
         }
-
+        
         protected ISlotCreationHelper<Operation, ValidationActivity<TInput>> ValidationNode<TInput>(string name)
             where TInput : class
         {

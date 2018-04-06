@@ -2,6 +2,7 @@
 {
     public class CreateMarketOrderCommand
     {
+        public bool ConfirmationRequired { get; set; }
         public string AssetId { get; set; }
         public AssetPairModel AssetPair { get; set; }
         public double Volume { get; set; }

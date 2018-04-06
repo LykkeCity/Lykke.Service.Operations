@@ -9,7 +9,9 @@ namespace Lykke.Service.Operations.Core.Domain
     {        
         Task<Operation> Get(Guid id);
         Task<IEnumerable<Operation>> Get(Guid clientId, OperationStatus status);
+        Task Create(Operation operation);
+        Task UpdateStatus(Guid id, OperationStatus status);
+        Task Update(Operation operation);
         Task Save(Operation operation);
-        Task UpdateStatus(Guid id, OperationStatus status);        
     }
 }

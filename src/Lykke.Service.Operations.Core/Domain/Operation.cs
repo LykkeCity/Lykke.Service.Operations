@@ -120,7 +120,7 @@ namespace Lykke.Service.Operations.Core.Domain
             Context = OperationValuesJObject.ToString(Formatting.Indented);
         }
 
-        public void Accept()
+        public void Confirm()
         {
             Status = OperationStatus.Confirmed;
         }

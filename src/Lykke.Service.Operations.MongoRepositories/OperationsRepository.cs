@@ -19,11 +19,11 @@ namespace Lykke.Service.Operations.MongoRepositories
             return await FilterBy(x => x.ClientId == clientId && x.Status == status);
         }
 
-        public async Task Save(Operation operation)
-        {
+        public async Task Create(Operation operation)
+        {            
             await Add(operation);
         }
-
+        
         public async Task UpdateStatus(Guid id, OperationStatus status)
         {
             await GetCollection().UpdateOneAsync(x => x.Id == id, Builders<Operation>.Update.Set("Status", status));

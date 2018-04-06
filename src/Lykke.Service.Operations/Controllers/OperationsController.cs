@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
 using Lykke.Contracts.Operations;
+using Lykke.Cqrs;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
 using Lykke.Service.Operations.Workflow;
@@ -33,6 +35,7 @@ namespace Lykke.Service.Operations.Controllers
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
+        private readonly ICqrsEngine _cqrsEngine;
         private readonly ILog _log;
         private readonly IMapper _mapper;
 
@@ -42,6 +45,7 @@ namespace Lykke.Service.Operations.Controllers
             IPushNotificationsAPI pushNotificationsApi, 
             IAssetsServiceWithCache assetsServiceWithCache,
             Func<string, Operation, OperationWorkflow> workflowFactory,
+            ICqrsEngine cqrsEngine,
             ILog log,
             IMapper mapper)
         {
@@ -50,6 +54,7 @@ namespace Lykke.Service.Operations.Controllers
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
             _workflowFactory = workflowFactory;
+            _cqrsEngine = cqrsEngine;
             _log = log;
             _mapper = mapper;
         }
@@ -80,7 +85,7 @@ namespace Lykke.Service.Operations.Controllers
 
             return result;
         }
-
+        
         /// <summary>
         /// Registers a new order with attached client order Id.
         /// </summary>
@@ -111,7 +116,7 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, cmd.WalletId, OperationType.NewOrder, JsonConvert.SerializeObject(context));
 
-            await _operationsRepository.Save(operation);
+            await _operationsRepository.Create(operation);
 
             return Created(Url.Action("Get", new { id }), id);
         }
@@ -121,6 +126,17 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]		
         public async Task<IActionResult> MarketOrder(Guid id, [FromBody] CreateMarketOrderCommand command)
 		{
+		    if (id == Guid.Empty)
+		        throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
+		    if (!ModelState.IsValid)
+		        throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+		    var operation = await _operationsRepository.Get(id);
+
+		    if (operation != null)
+		        throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+
             var context = new
             {
                 Asset = command.AssetPair.BaseAsset.Id == command.AssetId ? command.AssetPair.BaseAsset : command.AssetPair.QuotingAsset,
@@ -131,7 +147,19 @@ namespace Lykke.Service.Operations.Controllers
                 command.GlobalSettings
             };
 
-            await HandleOrder(id, command.Client.Id,  OperationType.MarketOrder, "MarketOrderWorkflow", JsonConvert.SerializeObject(context, Formatting.Indented));
+		    operation = new Operation();
+		    operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+
+		    _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id, ConfirmationRequired = command.ConfirmationRequired }, "operations");
+
+		    if (command.ConfirmationRequired)
+		    {
+		        await _operationsRepository.Save(operation);
+            }
+            else
+		    {
+		        await HandleOrder("MarketOrderWorkflow", operation);
+		    }
 
 		    return Created(Url.Action("Get", new { id }), id);
 		}
@@ -140,25 +168,7 @@ namespace Lykke.Service.Operations.Controllers
         [Route("order/{id}/limit")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
         public async Task<IActionResult> LimitOrder(Guid id, [FromBody] CreateLimitOrderCommand command)
-        {
-            var context = new
-            {
-                Asset = command.AssetPair.BaseAsset,
-                command.AssetPair,                
-                command.Volume,
-                command.Price,
-                command.OrderAction,
-                command.Client,
-                command.GlobalSettings
-            };
-
-            await HandleOrder(id, command.Client.Id, OperationType.LimitOrder, "LimitOrderWorkflow", JsonConvert.SerializeObject(context, Formatting.Indented));
-
-            return Created(Url.Action("Get", new { id }), id);
-        }
-
-        private async Task HandleOrder(Guid id, Guid clientId, OperationType operationType, string workflowType, string command)
-        {
+        {           
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
 
@@ -170,12 +180,39 @@ namespace Lykke.Service.Operations.Controllers
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
 
-            operation = new Operation();
-            operation.Create(id, clientId, operationType, command);
+            var context = new
+            {
+                Asset = command.AssetPair.BaseAsset,
+                command.AssetPair,
+                command.Volume,
+                command.Price,
+                command.OrderAction,
+                command.Client,
+                command.GlobalSettings
+            };
 
+            operation = new Operation();
+            operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+
+            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id, ConfirmationRequired = command.ConfirmationRequired }, "operations");
+
+            if (command.ConfirmationRequired)
+            {
+                await _operationsRepository.Save(operation);
+            }
+            else
+            {
+                await HandleOrder("LimitOrderWorkflow", operation);
+            }
+
+            return Created(Url.Action("Get", new { id }), id);
+        }
+
+        private async Task HandleOrder(string workflowType, Operation operation)
+        {           
             var wf = _workflowFactory(workflowType, operation);
             var wfResult = wf.Run(operation);
-
+            
             await _operationsRepository.Save(operation);
 
             if (wfResult.State == WorkflowState.Corrupted)
@@ -272,7 +309,7 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, cmd.ClientId, OperationType.Transfer, JsonConvert.SerializeObject(context, Formatting.Indented));
 
-            await _operationsRepository.Save(operation);
+            await _operationsRepository.Create(operation);
 
             await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId }, "Operation"));
 
@@ -352,7 +389,20 @@ namespace Lykke.Service.Operations.Controllers
             if (operation.Status != OperationStatus.Created) // todo: accepted?
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be confirmed"));
 
-            await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
+            operation.OperationValues = JObject.Parse(operation.Context);
+
+            switch (operation.Type)
+            {
+                case OperationType.MarketOrder:
+                    await HandleOrder("MarketOrderWorkflow", operation);
+                    break;
+                case OperationType.LimitOrder:
+                    await HandleOrder("LimitOrderWorkflow", operation);
+                    break;
+                default:
+                    await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
+                    break;
+            }            
         }
     }
 }

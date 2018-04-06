@@ -1,7 +1,8 @@
 ﻿namespace Lykke.Service.Operations.Contracts
 {
     public class CreateLimitOrderCommand
-    {        
+    {
+        public bool ConfirmationRequired { get; set; }
         public AssetPairModel AssetPair { get; set; }
         public double Volume { get; set; }
         public decimal Price { get; set; }
