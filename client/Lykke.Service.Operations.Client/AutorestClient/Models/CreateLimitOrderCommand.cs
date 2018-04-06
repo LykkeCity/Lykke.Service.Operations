@@ -26,8 +26,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         /// <param name="orderAction">Possible values include: 'Buy',
         /// 'Sell'</param>
-        public CreateLimitOrderCommand(double volume, double price, OrderAction orderAction, AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
+        public CreateLimitOrderCommand(bool confirmationRequired, double volume, double price, OrderAction orderAction, AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
         {
+            ConfirmationRequired = confirmationRequired;
             AssetPair = assetPair;
             Volume = volume;
             Price = price;
@@ -41,6 +42,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// An initialization method that performs custom operations like setting defaults
         /// </summary>
         partial void CustomInit();
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "ConfirmationRequired")]
+        public bool ConfirmationRequired { get; set; }
 
         /// <summary>
         /// </summary>
