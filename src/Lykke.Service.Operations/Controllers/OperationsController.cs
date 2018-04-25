@@ -150,17 +150,10 @@ namespace Lykke.Service.Operations.Controllers
 		    operation = new Operation();
 		    operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
 
-		    _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id, ConfirmationRequired = command.ConfirmationRequired }, "operations");
-
-		    if (command.ConfirmationRequired)
-		    {
-		        await _operationsRepository.Save(operation);
-            }
-            else
-		    {
-		        await HandleOrder("MarketOrderWorkflow", operation);
-		    }
-
+		    _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
+            
+		    await HandleOrder("MarketOrderWorkflow", operation);
+		    
 		    return Created(Url.Action("Get", new { id }), id);
 		}
 
@@ -194,16 +187,10 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
 
-            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id, ConfirmationRequired = command.ConfirmationRequired }, "operations");
-
-            if (command.ConfirmationRequired)
-            {
-                await _operationsRepository.Save(operation);
-            }
-            else
-            {
-                await HandleOrder("LimitOrderWorkflow", operation);
-            }
+            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
+            
+            await HandleOrder("LimitOrderWorkflow", operation);
+            
 
             return Created(Url.Action("Get", new { id }), id);
         }
