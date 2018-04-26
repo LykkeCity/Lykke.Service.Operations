@@ -24,6 +24,7 @@ namespace Lykke.Service.Operations.Workflow.Validation
                 When(m => m.NeededConversionResult != null && m.NeededConversionResult.Length > 0, () =>
                 {
                     RuleFor(m => m.NeededConversionResult)
+                        .Cascade(CascadeMode.StopOnFirstFailure)
                         .Must(m => m.Any(x => x == OperationResult.Ok))
                         .WithMessage("There is not enough liquidity in the order book. Please try to send smaller order.");
                 });
