@@ -4,7 +4,6 @@ using JetBrains.Annotations;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
-using Lykke.Service.RateCalculator.Client.AutorestClient.Models;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
