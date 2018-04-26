@@ -17,13 +17,13 @@ namespace Lykke.Service.Operations.Workflow
 
         public override Execution<Operation> Run(Operation operation)
         {
-            Log.WriteInfo(nameof(CashoutWorkflow), null, $"Operation [{operation.Id}] Run - running operation of type '{operation.Type}'");
+            Log.WriteInfo(GetType().Name, null, $"Operation [{operation.Id}] Run - running operation of type '{operation.Type}'");
 
             var state = operation.WorkflowState;
             var result = base.Run(operation);
             operation.ApplyValuesChanges();
 
-            Log.WriteInfo(nameof(CashoutWorkflow), null, $"Operation [{operation.Id}] of type '{operation.Type}' Run - state changed from {state} to {operation.WorkflowState}");
+            Log.WriteInfo(GetType().Name, null, $"Operation [{operation.Id}] of type '{operation.Type}' Run - state changed from {state} to {operation.WorkflowState}");
             
             return result;
         }

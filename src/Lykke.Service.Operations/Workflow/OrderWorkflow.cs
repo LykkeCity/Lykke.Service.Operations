@@ -17,31 +17,25 @@ namespace Lykke.Service.Operations.Workflow
         public OrderWorkflow(
             Operation operation, 
             ILog log, 
-            IActivityFactory activityFactory, 
-            IWorkflowService workflowService) : base(operation, log, activityFactory)
+            IActivityFactory activityFactory) : base(operation, log, activityFactory)
         {            
             Configure(cfg => 
                 cfg
                     .Do("Client validation").OnFail("Fail operation")                                        
-                    .Do("Determine needed asset").OnFail("Fail operation")
-                    .Do("Determine needed amount").OnFail("Fail operation")
-                    .Do("Get wallet").OnFail("Fail operation")
                     .Do("Asset validation").OnFail("Fail operation")
-                    .Do("Adjust needed amount").OnFail("Fail operation")
                     .Do("Asset pair validation").OnFail("Fail operation")
                     .Do("AssetPair: base asset kyc validation").OnFail("Fail operation")
                     .Do("AssetPair: quoting asset kyc validation").OnFail("Fail operation")                    
                     .Do("USA users restrictions validation").OnFail("Fail operation")
                     .Do("LKK2Y restrictions validation").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
-                    .Do("Wait").OnFail("Fail operation")
                     .On("Fee enabled").DeterminedAs(context => (bool)context.OperationValues.GlobalSettings.FeeSettings.FeeEnabled).ContinueWith("Calculate fee")
-                    .On("Fee disabled").DeterminedAs(context => !(bool)context.OperationValues.GlobalSettings.FeeSettings.FeeEnabled).ContinueWith("Save order")
+                    .On("Fee disabled").DeterminedAs(context => !(bool)context.OperationValues.GlobalSettings.FeeSettings.FeeEnabled).ContinueWith("Prepare to send to ME")
                     .WithBranch()
                         .Do("Calculate fee").OnFail("Fail operation")
-                        .ContinueWith("Save order").OnFail("Fail operation")
+                        .ContinueWith("Prepare to send to ME").OnFail("Fail operation")
                     .WithBranch()
-                        .Do("Save order").OnFail("Fail operation")
+                        .Do("Prepare to send to ME")
                         .SubConfigure(ConfigurePreMeNodes)
                         .Do("Send to ME").OnFail("Fail operation on Me fail")                        
                         .SubConfigure(ConfigurePostMeNodes)
@@ -65,35 +59,16 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeFailOutput(output => output);
             
-            DelegateNode("Determine needed asset", context => workflowService.GetNeededAsset(context))
-                .MergeOutput(output => output)
-                .MergeFailOutput(output => output);
-
-            DelegateNode("Get wallet", context => workflowService.GetWalletBalance(context))
-                .MergeOutput(output => new
-                {
-                    Wallet = output
-                })
-                .MergeFailOutput(output => output);
-
             ValidationNode<AssetInput>("Asset validation")
                 .WithInput(context => new AssetInput
                 {
                     Id = context.OperationValues.Asset.Id,
                     IsTradable = context.OperationValues.Asset.IsTradable,
                     IsTrusted = context.OperationValues.Asset.IsTrusted,
-                    NeededAssetId = context.OperationValues.NeededAssetId,                    
-                    NeededAmount = context.OperationValues.NeededAmount.Amount,
-                    NeededConversionResult = ((JArray)context.OperationValues.NeededAmount?.ConversionResult)?.Select(v => v.ToObject<ConversionResult>()).Select(r => r.Result).ToArray(),
-                    WalletBalance = context.OperationValues.Wallet.Balance,
                     OrderAction = context.OperationValues.OrderAction
                 })
                 .MergeFailOutput(output => output);
-
-            DelegateNode("Adjust needed amount", context => workflowService.AdjustNeededAmount(context))
-                .MergeOutput(output => output)
-                .MergeFailOutput(output => output);
-
+            
             ValidationNode<AssetPairInput>("Asset pair validation")
                 .WithInput(context => new AssetPairInput
                 {
@@ -190,13 +165,5 @@ namespace Lykke.Service.Operations.Workflow
         {
             return configuration;
         }
-    }
-
-    public class WaitOutput
-    {
-    }
-
-    public class WaitInput
-    {
-    }
+    }    
 }

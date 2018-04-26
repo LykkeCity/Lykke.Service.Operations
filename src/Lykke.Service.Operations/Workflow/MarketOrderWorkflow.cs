@@ -1,20 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.MatchingEngine.Connector.Abstractions.Models;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.Service.FeeCalculator.Client;
-using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
-using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
-using Lykke.Service.RateCalculator.Client;
-using Lykke.Service.RateCalculator.Client.AutorestClient.Models;
 using Lykke.Workflow;
-using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 using OrderAction = Lykke.Service.Operations.Contracts.OrderAction;
@@ -25,39 +18,18 @@ namespace Lykke.Service.Operations.Workflow
     public class MarketOrderWorkflow : OrderWorkflow
     {
         private readonly IFeeCalculatorClient _feeCalculatorClient;
-        private readonly IOffchainOrdersRepository _offchainOrdersRepository;
         private readonly IMatchingEngineClient _matchingEngineClient;
-        private readonly IRateCalculatorClient _rateCalculatorClient;
-
+        
         public MarketOrderWorkflow(
             Operation operation, 
             ILog log, 
-            IActivityFactory activityFactory, 
-            IWorkflowService workflowService, 
+            IActivityFactory activityFactory,
             IFeeCalculatorClient feeCalculatorClient,
-            IOffchainOrdersRepository offchainOrdersRepository,
-            IMatchingEngineClient matchingEngineClient,
-            IRateCalculatorClient rateCalculatorClient) : base(operation, log, activityFactory, workflowService)
+            IMatchingEngineClient matchingEngineClient) : base(operation, log, activityFactory)
         {
             _feeCalculatorClient = feeCalculatorClient;
-            _offchainOrdersRepository = offchainOrdersRepository;
             _matchingEngineClient = matchingEngineClient;
-            _rateCalculatorClient = rateCalculatorClient;
-
-            DelegateNode<NeededMoAmountInput, object>("Determine needed amount", input => GetNeededAmount(input))
-                .WithInput(context => new NeededMoAmountInput
-                {                    
-                    OrderAction = context.OperationValues.OrderAction,
-                    Volume = context.OperationValues.Volume,
-                    Price = context.OperationValues.Price,
-                    AssetId = context.OperationValues.Asset.Id,
-                    BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
-                    NeededAssetId = context.OperationValues.NeededAssetId,
-                    ReceivedAssetId = context.OperationValues.ReceivedAssetId
-                })
-                .MergeOutput(output => new { NeededAmount = output })
-                .MergeFailOutput(output => output);
-
+            
             DelegateNode<CalculateMoFeeInput, MarketOrderFeeModel>("Calculate fee", input => CalculateFee(input))
                 .WithInput(context => new CalculateMoFeeInput
                 {
@@ -69,10 +41,7 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeOutput(output => new { Fee = output })
                 .MergeFailOutput(output => output);
-
-            DelegateNode("Save order", input => SaveOrder(input))
-                .MergeFailOutput(output => output);
-
+            
             DelegateNode<MeMoOrderInput, object>("Send to ME", input => SendToMe(input))
                 .WithInput(context => new MeMoOrderInput
                 {
@@ -86,67 +55,7 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeOutput(output => new { Me = output })
                 .MergeFailOutput(output => new { ErrorMessage = output.Message });
-
-            DelegateNode<UpdatePriceInput>("Update order price", input => UpdateOrderPrice(input))
-                .WithInput(context => new UpdatePriceInput
-                {
-                    Id = context.Id,
-                    Price = context.OperationValues.Me.Price
-                })
-                .MergeFailOutput(output => new { ErrorMessage = output.Message });
         }        
-
-        protected override WorkflowConfiguration<Operation> ConfigurePostMeNodes(WorkflowConfiguration<Operation> configuration)
-        {
-            return configuration.Do("Update order price").OnFail("Fail operation");
-        }
-
-        private void UpdateOrderPrice(UpdatePriceInput input)
-        {
-            _offchainOrdersRepository.UpdatePrice(input.Id.ToString(), input.Price).ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-
-        private object GetNeededAmount(NeededMoAmountInput input)
-        {
-            var orderAction = input.OrderAction;
-            var neededAmount = 0m;
-
-            if (orderAction == OrderAction.Buy)
-            {
-                var result = _rateCalculatorClient.GetMarketAmountInBaseAsync(
-                        new List<AssetWithAmount>
-                        {
-                            new AssetWithAmount
-                            {
-                                AssetId = input.ReceivedAssetId,
-                                Amount = (double) input.Volume
-                            }
-                        },
-                        input.NeededAssetId,
-                        orderAction == OrderAction.Buy
-                            ? RateCalculator.Client.AutorestClient.Models.OrderAction.Buy
-                            : RateCalculator.Client.AutorestClient.Models.OrderAction.Sell)
-                    .ConfigureAwait(false).GetAwaiter().GetResult().ToArray();
-
-                var item = result.FirstOrDefault();
-
-                if (item != null)
-                    neededAmount = (decimal)(item.To?.Amount ?? 0);
-
-                return new
-                {
-                    Amount = neededAmount,
-                    ConversionResult = result
-                };                
-            }
-            else
-            {
-                return new
-                {
-                    Amount = Math.Abs(input.Volume)
-                };
-            }
-        }
 
         private MarketOrderFeeModel CalculateFee(CalculateMoFeeInput input)
         {
@@ -174,19 +83,7 @@ namespace Lykke.Service.Operations.Workflow
                     : new[] { fee.TargetAssetId }
             };
         }
-
-        private void SaveOrder(Operation context)
-        {
-            _offchainOrdersRepository.CreateOrder(
-                    context.ClientId.ToString(),
-                    (string)context.OperationValues.AssetId,
-                    (string)context.OperationValues.AssetPairId,
-                    (decimal)context.OperationValues.Volume,
-                    (decimal)context.OperationValues.NeededAmount.Amount,
-                    (bool)(context.OperationValues.AssetPair.BaseAsset.Id == context.OperationValues.AssetId))
-                .ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-
+        
         private object SendToMe(MeMoOrderInput input)
         {
             var marketOrderModel = new MarketOrderModel

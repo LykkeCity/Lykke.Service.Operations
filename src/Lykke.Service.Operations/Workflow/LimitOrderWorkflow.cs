@@ -21,7 +21,6 @@ namespace Lykke.Service.Operations.Workflow
     public class LimitOrderWorkflow : OrderWorkflow
     {
         private readonly IFeeCalculatorClient _feeCalculatorClient;
-        private readonly IOffchainOrdersRepository _offchainOrdersRepository;
         private readonly ILimitOrdersRepository _limitOrdersRepository;
         private readonly IMatchingEngineClient _matchingEngineClient;
         private readonly ICqrsEngine _cqrsEngine;
@@ -30,31 +29,16 @@ namespace Lykke.Service.Operations.Workflow
             Operation operation, 
             ILog log, 
             IActivityFactory activityFactory, 
-            IFeeCalculatorClient feeCalculatorClient, 
-            IWorkflowService workflowService,
-            IOffchainOrdersRepository offchainOrdersRepository,
+            IFeeCalculatorClient feeCalculatorClient,
             ILimitOrdersRepository limitOrdersRepository,
             IMatchingEngineClient matchingEngineClient,
-            ICqrsEngine cqrsEngine) : base(operation, log, activityFactory, workflowService)
+            ICqrsEngine cqrsEngine) : base(operation, log, activityFactory)
         {
             _feeCalculatorClient = feeCalculatorClient;
-            _offchainOrdersRepository = offchainOrdersRepository;
             _limitOrdersRepository = limitOrdersRepository;
             _matchingEngineClient = matchingEngineClient;
             _cqrsEngine = cqrsEngine;
-
-            DelegateNode<NeededLoAmountInput, object>("Determine needed amount", input => GetNeededAmount(input))
-                .WithInput(context => new NeededLoAmountInput
-                {                    
-                    OrderAction = context.OperationValues.OrderAction,
-                    Volume = context.OperationValues.Volume,
-                    Price = context.OperationValues.Price,
-                    AssetId = context.OperationValues.Asset.Id,
-                    BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id                    
-                })
-                .MergeOutput(output => new { NeededAmount = output })
-                .MergeFailOutput(output => output);
-
+            
             DelegateNode<CalculateLoFeeInput, LimitOrderFeeModel>("Calculate fee", input => CalculateFee(input))
                 .WithInput(context => new CalculateLoFeeInput
                 {
@@ -66,10 +50,7 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeOutput(output => new { Fee = output })
                 .MergeFailOutput(output => output);
-
-            DelegateNode("Save order", input => SaveOrder(input))
-                .MergeFailOutput(output => output);
-
+            
             DelegateNode<MeLoOrderInput, object>("Send to ME", input => SendToMe(input))
                 .WithInput(context => new MeLoOrderInput
                 {
@@ -138,27 +119,7 @@ namespace Lykke.Service.Operations.Workflow
                 }, "operations");
             }
         }
-
-        private object GetNeededAmount(NeededLoAmountInput input)
-        {
-            var orderAction = input.OrderAction;
-            
-            if (orderAction == OrderAction.Buy)
-            {                
-                return new
-                {
-                    Amount = input.BaseAssetId == input.AssetId ? input.Volume * input.Price.Value : input.Volume / input.Price.Value
-                };                                
-            }
-            else
-            {
-                return new
-                {
-                    Amount = Math.Abs(input.Volume)
-                };
-            }
-        }
-
+        
         private LimitOrderFeeModel CalculateFee(CalculateLoFeeInput input)
         {
             var orderAction = input.OrderAction == OrderAction.Buy
@@ -176,20 +137,7 @@ namespace Lykke.Service.Operations.Workflow
                 Type = fee.MakerFeeSize == 0m && fee.TakerFeeSize == 0m ? (int)LimitOrderFeeType.NO_FEE : (int)LimitOrderFeeType.CLIENT_FEE
             };
         }
-
-        private void SaveOrder(Operation context)
-        {
-            _offchainOrdersRepository.CreateLimitOrder(
-                    context.ClientId.ToString(),
-                    (string)context.OperationValues.Asset.Id,
-                    (string)context.OperationValues.AssetPair.Id,
-                    (decimal)context.OperationValues.Volume,
-                    (decimal)context.OperationValues.NeededAmount.Amount,
-                    (bool)(context.OperationValues.AssetPair.BaseAsset.Id == context.OperationValues.Asset.Id),
-                    (decimal)context.OperationValues.Price)
-                .ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-
+        
         private object SendToMe(MeLoOrderInput input)
         {
             var limitOrderModel = new LimitOrderModel
