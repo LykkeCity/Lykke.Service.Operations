@@ -21,17 +21,18 @@ namespace Lykke.Service.Operations.Workflow.Validation
             
             When(m => m.OrderAction == OrderAction.Buy, () =>
             {
-                When(m => m.NeededConversionResult != null && m.NeededConversionResult.Length > 0, () =>
-                {
-                    RuleFor(m => m.NeededConversionResult)
-                        .Cascade(CascadeMode.StopOnFirstFailure)
-                        .Must(m => m.Any(x => x == OperationResult.Ok))
-                        .WithMessage("There is not enough liquidity in the order book. Please try to send smaller order.");
-                });
-
                 RuleFor(m => m.NeededAmount)                    
                     .Must((input, neededAmount) => input.WalletBalance >= (double) neededAmount)
-                    .WithMessage(asset => $"{asset.NeededAssetId}:  Not enough funds");
+                    .WithMessage(asset => $"{asset.NeededAssetId}:  Not enough funds")
+                    .DependentRules(() =>
+                    {
+                        When(m => m.NeededConversionResult != null && m.NeededConversionResult.Length > 0, () =>
+                        {
+                            RuleFor(m => m.NeededConversionResult)                                
+                                .Must(m => m.Any(x => x == OperationResult.Ok))
+                                .WithMessage("There is not enough liquidity in the order book. Please try to send smaller order.");
+                        });
+                    });
             });
         }
     }

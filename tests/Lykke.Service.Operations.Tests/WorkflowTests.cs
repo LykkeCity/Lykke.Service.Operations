@@ -28,10 +28,10 @@ namespace Lykke.Service.Operations.Tests
 {
     public class WorkflowTests
     {
-        [Theory]
+        //[Theory]
         [InlineData(OperationType.LimitOrder, "LimitOrderWorkflow")]
         [InlineData(OperationType.MarketOrder, "MarketOrderWorkflow")]
-        public async Task RunWorkflow(OperationType type, string workflowType)
+        public void RunWorkflow(OperationType type, string workflowType)
         {
             var builder = new ContainerBuilder();
 
@@ -136,7 +136,7 @@ namespace Lykke.Service.Operations.Tests
                     MinVolume = 0.001,
                     MinInvertedVolume = 1.0
                 },
-                Volume = 0.001,
+                Volume = 1000000000,
                 Price = 6000,
                 OrderAction = OrderAction.Buy,
                 Client = new ClientModel
