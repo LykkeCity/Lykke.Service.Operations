@@ -14,6 +14,8 @@ namespace Lykke.Service.Operations.Workflow.Extensions
                     return "Not enough funds.";
                 case MeStatusCodes.LeadToNegativeSpread:
                     return "This order has a negative spread with you orders.";
+                case MeStatusCodes.InvalidPrice:
+                    return "Price must be greather than zero";
                 default:
                     return "We are experiencing technical problems. Please try again.";
             }
