@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Contracts.Operations;
+using Lykke.Service.Operations.Contracts;
 
 namespace Lykke.Service.Operations.Core.Domain
 {
@@ -9,7 +9,9 @@ namespace Lykke.Service.Operations.Core.Domain
     {        
         Task<Operation> Get(Guid id);
         Task<IEnumerable<Operation>> Get(Guid clientId, OperationStatus status);
-        Task Create(Guid id, Guid clientId, OperationType operationType, string context);
-        Task UpdateStatus(Guid id, OperationStatus status);        
+        Task Create(Operation operation);
+        Task UpdateStatus(Guid id, OperationStatus status);
+        Task Update(Operation operation);
+        Task Save(Operation operation);
     }
 }

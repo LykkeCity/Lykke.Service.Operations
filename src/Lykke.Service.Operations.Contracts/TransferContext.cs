@@ -5,6 +5,9 @@ using Newtonsoft.Json.Converters;
 
 namespace Lykke.Service.Operations.Contracts
 {
+    /// <summary>
+    /// Transfer context
+    /// </summary>
     public class TransferContext
     {
         public string AssetId { get; set; }

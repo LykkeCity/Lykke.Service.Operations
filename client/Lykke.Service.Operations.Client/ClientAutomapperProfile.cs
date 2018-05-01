@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Lykke.Contracts.Operations;
 using Lykke.Service.Operations.Contracts;
 using Newtonsoft.Json.Linq;
 

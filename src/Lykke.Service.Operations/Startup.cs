@@ -9,8 +9,8 @@ using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
 using Lykke.Service.Operations.Core.Services;
-using Lykke.Service.Operations.Core.Settings;
 using Lykke.Service.Operations.Modules;
+using Lykke.Service.Operations.Settings;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
 using Microsoft.AspNetCore.Builder;
@@ -62,8 +62,10 @@ namespace Lykke.Service.Operations
                 var appSettings = Configuration.LoadSettings<AppSettings>();
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(Log));
-                builder.RegisterModule(new ClientsModule(appSettings.CurrentValue.OperationsService, appSettings.CurrentValue.Assets));
+                builder.RegisterModule(new ServiceModule(appSettings, Log));
+                builder.RegisterModule(new ClientsModule(appSettings, Log));
+                builder.RegisterModule(new CqrsModule(appSettings, Log));
+                builder.RegisterModule(new WorkflowModule());
                 builder.RegisterModule(new MongoDbModule(appSettings.Nested(x => x.OperationsService.Db)));
                 builder.RegisterModule<AutoMapperModules>();
                 builder.Populate(services);
@@ -92,11 +94,11 @@ namespace Lykke.Service.Operations
 
                 app.UseMvc();
                 app.UseSwagger(c =>
-                {
+                {                    
                     c.PreSerializeFilters.Add((swagger, httpReq) => swagger.Host = httpReq.Host.Value);
                 });
                 app.UseSwaggerUI(x =>
-                {
+                {                    
                     x.RoutePrefix = "swagger/ui";
                     x.SwaggerEndpoint("/swagger/v1/swagger.json", ApiVersion);
                 });

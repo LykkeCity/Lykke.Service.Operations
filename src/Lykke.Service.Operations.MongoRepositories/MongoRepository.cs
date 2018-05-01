@@ -70,6 +70,11 @@ namespace Lykke.Service.Operations.MongoRepositories
             await GetCollection().ReplaceOneAsync(new BsonDocument("_id", entity.Id), entity).ConfigureAwait(false);
         }
 
+        public async Task Save(T entity)
+        {
+            await GetCollection().ReplaceOneAsync(new BsonDocument("_id", entity.Id), entity, new UpdateOptions { IsUpsert = true }).ConfigureAwait(false);
+        }
+
         public async Task Update(IEnumerable<T> items)
         {
             await items.ParallelForEachAsync(async item =>
