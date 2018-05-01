@@ -2,6 +2,9 @@
 
 namespace Lykke.Service.Operations.Contracts
 {
+    /// <summary>
+    /// Client model
+    /// </summary>
     public class ClientModel
     {
         public Guid Id { get; set; }

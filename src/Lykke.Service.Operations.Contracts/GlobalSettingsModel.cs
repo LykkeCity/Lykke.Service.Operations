@@ -1,5 +1,8 @@
 ﻿namespace Lykke.Service.Operations.Contracts
 {
+    /// <summary>
+    /// Global settings model
+    /// </summary>
     public class GlobalSettingsModel
     {
         public string[] BlockedAssetPairs { get; set; }

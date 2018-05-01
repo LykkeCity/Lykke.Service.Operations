@@ -27,6 +27,9 @@ namespace Lykke.Service.Operations.Core.Domain
         bool ShowIcoBanner { get; set; }
     }
 
+    /// <summary>
+    /// Global app settings
+    /// </summary>
     public class AppGlobalSettings : IAppGlobalSettings
     {
         public static AppGlobalSettings CreateDefault()

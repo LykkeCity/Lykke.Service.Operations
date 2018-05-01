@@ -1,5 +1,8 @@
 ﻿namespace Lykke.Service.Operations.Contracts
 {
+    /// <summary>
+    /// Asset pair model
+    /// </summary>
     public class AssetPairModel
     {
         public string Id { get; set; }

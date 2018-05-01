@@ -2,6 +2,9 @@
 
 namespace Lykke.Service.Operations.Contracts.Events
 {
+    /// <summary>
+    /// Fired when limit order is created
+    /// </summary>
     public class LimitOrderCreatedEvent
     {
         public Guid Id { get; set; }

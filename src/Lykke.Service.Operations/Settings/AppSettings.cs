@@ -3,6 +3,7 @@ using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Operations.Settings.Assets;
 using Lykke.Service.Operations.Settings.ServiceSettings;
 using Lykke.Service.Operations.Settings.SlackNotifications;
+using Lykke.SettingsReader.Attributes;
 
 namespace Lykke.Service.Operations.Settings
 {
@@ -22,22 +23,27 @@ namespace Lykke.Service.Operations.Settings
     
     public class TransportSettings
     {
+        [AmqpCheck]
         public string ClientRabbitMqConnectionString { get; set; }
+        [AmqpCheck]
         public string MeRabbitMqConnectionString { get; set; }
     }
 
     public class FeeCalculatorSettings
     {
+        [HttpCheck("/api/isalive")]
         public string ServiceUrl { get; set; }
     }
 
     public class BalancesSettings
     {
+        [HttpCheck("/api/isalive")]
         public string ServiceUrl { get; set; }
     }
 
     public class RateCalculatorSettings
     {
+        [HttpCheck("/api/isalive")]
         public string ServiceUrl { get; set; }
     }
 
@@ -48,18 +54,15 @@ namespace Lykke.Service.Operations.Settings
 
     public class IpEndpointSettings
     {
-        public string InternalHost { get; set; }
         public string Host { get; set; }
         public int Port { get; set; }
 
-        public IPEndPoint GetClientIpEndPoint(bool useInternal = false)
+        public IPEndPoint GetClientIpEndPoint()
         {
-            string host = useInternal ? InternalHost : Host;
-
-            if (IPAddress.TryParse(host, out var ipAddress))
+            if (IPAddress.TryParse(Host, out var ipAddress))
                 return new IPEndPoint(ipAddress, Port);
 
-            var addresses = Dns.GetHostAddressesAsync(host).Result;
+            var addresses = Dns.GetHostAddressesAsync(Host).Result;
             return new IPEndPoint(addresses[0], Port);
         }
     }

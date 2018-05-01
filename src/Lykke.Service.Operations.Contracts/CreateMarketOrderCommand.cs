@@ -1,5 +1,8 @@
 ﻿namespace Lykke.Service.Operations.Contracts
 {
+    /// <summary>
+    /// Command to create market order
+    /// </summary>
     public class CreateMarketOrderCommand
     {
         public string AssetId { get; set; }

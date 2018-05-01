@@ -1,5 +1,8 @@
 ﻿namespace Lykke.Service.Operations.Contracts
 {
+    /// <summary>
+    /// Personal data model
+    /// </summary>
     public class PersonalDataModel
     {
         public string Country { get; set; }

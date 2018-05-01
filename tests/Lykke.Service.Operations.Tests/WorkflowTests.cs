@@ -82,8 +82,7 @@ namespace Lykke.Service.Operations.Tests
                     IpEndpoint = new IpEndpointSettings
                     {
                         Port = 8888,
-                        Host = "me.lykke-me.svc.cluster.local",
-                        InternalHost = "me.lykke-me.svc.cluster.local"                       
+                        Host = "me.lykke-me.svc.cluster.local"                  
                     }
                 },
                 SlackNotifications = new SlackNotificationsSettings()

@@ -2,6 +2,9 @@
 
 namespace Lykke.Service.Operations.Contracts.Events
 {
+    /// <summary>
+    /// Fired when limit order is rejected
+    /// </summary>
     public class LimitOrderRejectedEvent
     {
         public Guid Id { get; set; }

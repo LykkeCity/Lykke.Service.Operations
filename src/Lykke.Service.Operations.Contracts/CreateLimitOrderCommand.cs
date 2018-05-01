@@ -1,5 +1,8 @@
 ﻿namespace Lykke.Service.Operations.Contracts
 {
+    /// <summary>
+    /// Command to create limit order
+    /// </summary>
     public class CreateLimitOrderCommand
     {
         public AssetPairModel AssetPair { get; set; }
