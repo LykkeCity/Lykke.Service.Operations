@@ -41,15 +41,14 @@ namespace Lykke.Service.Operations.Tests
             {
                 Transports = new TransportSettings
                 {
-                    ClientRabbitMqConnectionString = "amqp://lykke.user:123qwe123qwe123@rabbit-registration.lykke-service.svc.cluster.local:5672",
-                    MeRabbitMqConnectionString = "amqp://lykke.history:lykke.history@rabbit-me.lykke-me.svc.cluster.local:5672"
+                    ClientRabbitMqConnectionString = "",
+                    MeRabbitMqConnectionString = ""
                 },
                 OperationsService = new OperationsSettings
                 {
                     Db = new DbSettings
                     {
-                        OffchainConnString = "DefaultEndpointsProtocol=https;AccountName=lkedevmain;AccountKey=l0W0CaoNiRZQIqJ536sIScSV5fUuQmPYRQYohj/UjO7+ZVdpUiEsRLtQMxD+1szNuAeJ351ndkOsdWFzWBXmdw==",
-                        HMarketOrdersConnString = "DefaultEndpointsProtocol=https;AccountName=lkedevmain;AccountKey=l0W0CaoNiRZQIqJ536sIScSV5fUuQmPYRQYohj/UjO7+ZVdpUiEsRLtQMxD+1szNuAeJ351ndkOsdWFzWBXmdw=="
+                        HMarketOrdersConnString = ""
                     },
                     Services = new ServicesSettings
                     {
