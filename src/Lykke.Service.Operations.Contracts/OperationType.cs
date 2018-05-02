@@ -9,6 +9,7 @@
         VisaCardPayment,
         MarketOrder,
         LimitOrder,
-        NewOrder
+        NewOrder,
+        Payment
     }
 }

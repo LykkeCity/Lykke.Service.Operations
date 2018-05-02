@@ -46,6 +46,11 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterInstance<ILimitOrdersRepository>(
                 new LimitOrdersRepository(AzureTableStorage<LimitOrderEntity>.Create(_settings.ConnectionString(x => x.OperationsService.Db.HMarketOrdersConnString),
                     "LimitOrders", _log)));
+            
+            builder.Register(x => _settings.CurrentValue.OperationsService.Payments)
+                .AsSelf()
+                .SingleInstance();
+
         }
     }
 }

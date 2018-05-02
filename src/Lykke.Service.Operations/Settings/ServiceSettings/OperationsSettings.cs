@@ -7,6 +7,8 @@ namespace Lykke.Service.Operations.Settings.ServiceSettings
         public DbSettings Db { get; set; }
 
         public ServicesSettings Services { get; set; }
+        
+        public PaymentsSettings Payments { get; set; }
     }
 
     public class ServicesSettings
@@ -15,5 +17,10 @@ namespace Lykke.Service.Operations.Settings.ServiceSettings
         public string ClientAccountUrl { get; set; }
         [HttpCheck("/api/isalive")]
         public string PushNotificationsUrl { get; set; }
+    }
+    
+    public class PaymentsSettings
+    {
+        public string HotWalletId { set; get; }
     }
 }

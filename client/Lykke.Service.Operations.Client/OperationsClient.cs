@@ -65,6 +65,16 @@ namespace Lykke.Service.Operations.Client
             return (await _operationsApi.ApiOperationsOrderByIdLimitPostAsync(id, _mapper.Map<AutorestClient.Models.CreateLimitOrderCommand>(marketOrderCommand))).Value;
         }
 
+        public async Task<Guid> Payment(Guid id, CreatePaymentCommand createPaymentCommand)
+        {
+            return (await _operationsApi.ApiOperationsPaymentByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreatePaymentCommand>(createPaymentCommand))).Value;
+        }
+
+        public async Task<bool> SetPaymentClientId(Guid id, SetPaymenClientIdCommand setPaymenClientIdCommand)
+        {
+            return (await _operationsApi.ApiOperationsPaymentByIdPutAsync(id, _mapper.Map<AutorestClient.Models.SetPaymenClientIdCommand>(setPaymenClientIdCommand))).Value;
+        }
+
         public Task Cancel(Guid id)
         {
             return _operationsApi.ApiOperationsCancelByIdPostAsync(id);
