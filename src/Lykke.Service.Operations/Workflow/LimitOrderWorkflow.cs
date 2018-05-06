@@ -60,7 +60,7 @@ namespace Lykke.Service.Operations.Workflow
                     OrderAction = context.OperationValues.OrderAction,
                     Volume = (double)context.OperationValues.Volume,
                     Price = (double)context.OperationValues.Price,                    
-                    Fee = ((JObject)context.OperationValues.Fee).ToObject<LimitOrderFeeModel>()
+                    Fee = ((JObject)context.OperationValues.Fee)?.ToObject<LimitOrderFeeModel>()
                 })
                 .MergeOutput(output => new { Me = output })
                 .MergeFailOutput(output => new { ErrorMessage = output.Message });
@@ -89,7 +89,8 @@ namespace Lykke.Service.Operations.Workflow
                 (string)input.OperationValues.AssetPair.Id, 
                 (double)input.OperationValues.Volume, 
                 (double)input.OperationValues.Price, 
-                (double)input.OperationValues.Volume)).ConfigureAwait(false).GetAwaiter().GetResult();
+                (double)input.OperationValues.Volume,
+                (OrderAction)input.OperationValues.OrderAction)).ConfigureAwait(false).GetAwaiter().GetResult();
 
             _cqrsEngine.PublishEvent(new LimitOrderCreatedEvent
             {

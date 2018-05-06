@@ -51,7 +51,7 @@ namespace Lykke.Service.Operations.Workflow
                     Straight = (string)context.OperationValues.Asset.Id == (string)context.OperationValues.AssetPair.BaseAsset.Id,
                     Volume = context.OperationValues.Volume,                    
                     OrderAction = context.OperationValues.OrderAction,
-                    Fee = ((JObject)context.OperationValues.Fee).ToObject<MarketOrderFeeModel>()
+                    Fee = ((JObject)context.OperationValues.Fee)?.ToObject<MarketOrderFeeModel>()
                 })
                 .MergeOutput(output => new { Me = output })
                 .MergeFailOutput(output => new { ErrorMessage = output.Message });
