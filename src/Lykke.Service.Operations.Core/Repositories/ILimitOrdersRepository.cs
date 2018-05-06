@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Contracts.Exchange;
+using Lykke.Service.Operations.Contracts;
 
 namespace Lykke.Service.Operations.Core.Repositories
 {
@@ -79,7 +79,7 @@ namespace Lykke.Service.Operations.Core.Repositories
         public double RemainingVolume { get; set; }
         public string MatchingId { get; set; }
 
-        public static LimitOrder Create(string id, string clientId, string assetPairId, double volume, double price, double remainigVolume)
+        public static LimitOrder Create(string id, string clientId, string assetPairId, double volume, double price, double remainigVolume, OrderAction orderAction)
         {
             return new LimitOrder
             {
@@ -89,7 +89,8 @@ namespace Lykke.Service.Operations.Core.Repositories
                 Volume = volume,
                 Price = price,
                 RemainingVolume = remainigVolume,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                OrderAction = orderAction
             };
         }
     }
