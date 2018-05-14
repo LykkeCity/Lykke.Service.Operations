@@ -62,6 +62,7 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new AssetInput
                 {
                     Id = context.OperationValues.Asset.Id,
+                    DisplayId = context.OperationValues.Asset.DisplayId,
                     IsTradable = context.OperationValues.Asset.IsTradable,
                     IsTrusted = context.OperationValues.Asset.IsTrusted,
                     OrderAction = context.OperationValues.OrderAction
@@ -73,7 +74,9 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     Id = context.OperationValues.AssetPair.Id,
                     BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
+                    BaseAssetDisplayId = context.OperationValues.AssetPair.BaseAsset.DisplayId,
                     QuotingAssetId = context.OperationValues.AssetPair.QuotingAsset.Id,
+                    QuotingAssetDisplayId = context.OperationValues.AssetPair.QuotingAsset.DisplayId,
                     MinVolume = context.OperationValues.AssetPair.MinVolume,
                     MinInvertedVolume = context.OperationValues.AssetPair.MinInvertedVolume,
                     AssetId = context.OperationValues.Asset.Id,

@@ -12,7 +12,7 @@ namespace Lykke.Service.Operations.Workflow.Validation
         {
             RuleFor(m => m.AssetKycNeeded)
                 .Must((input, kycNeeded) => input.KycStatus.IsKycOkOrReviewDone() || !kycNeeded)
-                .WithMessage(input => $"Asset: kyc needed. Client kyc status is {input.KycStatus.ToString()}. Asset kyc required: {input.AssetKycNeeded}");
+                .WithMessage(input => $"Asset: kyc needed. Client kyc status is {input.GetMappedKycStatus().ToString()}. Asset kyc required: {input.AssetKycNeeded}");
         }
     }
 }

@@ -6,6 +6,7 @@
     public class AssetModel
     {
         public string Id { get; set; }
+        public string DisplayId { get; set; }
         public int Accuracy { get; set; }
         public bool IsTradable { get; set; }
         public bool IsTrusted { get; set; }
