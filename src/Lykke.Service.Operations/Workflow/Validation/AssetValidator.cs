@@ -1,8 +1,6 @@
-﻿using System.Linq;
-using FluentValidation;
+﻿using FluentValidation;
 using JetBrains.Annotations;
-using Lykke.Service.RateCalculator.Client.AutorestClient.Models;
-using OrderAction = Lykke.Service.Operations.Contracts.OrderAction;
+using Lykke.Service.Operations.Workflow.Data;
 
 namespace Lykke.Service.Operations.Workflow.Validation
 {
@@ -13,11 +11,11 @@ namespace Lykke.Service.Operations.Workflow.Validation
         {
             RuleFor(m => m.IsTradable)
                 .Equal(true)
-                .WithMessage(asset => $"Asset '{asset.Id}' must be tradable");
+                .WithMessage(asset => $"Asset '{asset.DisplayId}' must be tradable");
 
             RuleFor(m => m.IsTrusted)
                 .Equal(true)
-                .WithMessage(asset => $"Asset '{asset.Id}' must be trusted");
+                .WithMessage(asset => $"Asset '{asset.DisplayId}' must be trusted");
         }
     }
 }

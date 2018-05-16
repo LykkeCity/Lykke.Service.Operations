@@ -142,14 +142,6 @@ namespace Lykke.Service.Operations.Workflow
         public bool BackupDone { get; set; }        
     }
 
-    public class AssetInput
-    {
-        public string Id { get; set; }
-        public bool IsTradable { get; set; }
-        public bool IsTrusted { get; set; }
-        public OrderAction OrderAction { get; set; }        
-    }
-
     internal class GlobalInput
     {
         public bool CashOutBlocked { get; set; }

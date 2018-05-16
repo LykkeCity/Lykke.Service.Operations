@@ -19,24 +19,24 @@ namespace Lykke.Service.Operations.Workflow.Validation
 
             RuleFor(m => m.BaseAssetId)
                 .Must((input, id) => !IsOperationForAssetDisabled(id, input.BaseAssetBlockain, input.BitcoinBlockchainOperationsDisabled, input.BtcOperationsDisabled))
-                .WithMessage((input, id) => $"Operation for the asset '{id}' is disabled.");
+                .WithMessage(input => $"Operation for the asset '{input.BaseAssetDisplayId}' is disabled.");
 
             When(input => input.AssetId == input.BaseAssetId, () =>
             {
                 RuleFor(m => m.BaseAssetId)
                     .Must((input, id) => input.Volume >= input.MinVolume)
-                    .WithMessage(input => $"Asset {input.BaseAssetId}. Volume '{input.Volume}' must be greater than minimum volume '{input.MinVolume}'");
+                    .WithMessage(input => $"Asset {input.BaseAssetDisplayId}. Volume '{input.Volume}' must be greater than minimum volume '{input.MinVolume}'");
             });
 
             RuleFor(m => m.QuotingAssetId)
                 .Must((input, id) => !IsOperationForAssetDisabled(id, input.QuotingAssetBlockchain, input.BitcoinBlockchainOperationsDisabled, input.BtcOperationsDisabled))
-                .WithMessage((input, id) => $"Operation for the asset '{id}' is disabled.");
+                .WithMessage(input => $"Operation for the asset '{input.QuotingAssetDisplayId}' is disabled.");
 
             When(input => input.AssetId == input.QuotingAssetId, () =>
             {
                 RuleFor(m => m.QuotingAssetId)
                     .Must((input, id) => input.Volume >= input.MinInvertedVolume)
-                    .WithMessage(input => $"Asset {input.QuotingAssetId}. Volume '{input.Volume}' must be greater than minimum inverted volume '{input.MinInvertedVolume}'");
+                    .WithMessage(input => $"Asset {input.QuotingAssetDisplayId}. Volume '{input.Volume}' must be greater than minimum inverted volume '{input.MinInvertedVolume}'");
             });
         }
 
