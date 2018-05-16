@@ -63,7 +63,7 @@ namespace Lykke.Service.Operations.Modules
                         Register.DefaultEndpointResolver(clientEndpointResolver),
                         
                         Register.BoundedContext("operations")
-                            .PublishingEvents(typeof(LimitOrderCreatedEvent), typeof(LimitOrderRejectedEvent), typeof(OperationCreatedEvent)).With("events"));
+                            .PublishingEvents(typeof(LimitOrderCreatedEvent), typeof(LimitOrderRejectedEvent), typeof(OperationCreatedEvent), typeof(OperationCompletedEvent)).With("events"));
                 })
             .As<ICqrsEngine>()
             .SingleInstance()

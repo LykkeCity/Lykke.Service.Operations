@@ -339,6 +339,8 @@ namespace Lykke.Service.Operations.Controllers
                 return;
 
             await _operationsRepository.UpdateStatus(id, OperationStatus.Completed);
+
+            _cqrsEngine.PublishEvent(new OperationCompletedEvent {Id = id}, "operations");
         }
 
         [HttpPost]
