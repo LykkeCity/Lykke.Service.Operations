@@ -141,6 +141,9 @@ namespace Lykke.Service.Operations.Controllers
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
             
+            if (await _assetsServiceWithCache.TryGetAssetAsync(command.AssetId) == null)
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("assetId", "Asset doens't exist"));
+            
             var newOperation = new Operation();
             
             var context = new PaymentContext
@@ -167,6 +170,9 @@ namespace Lykke.Service.Operations.Controllers
             
             if (cmd.ClientId == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Client id must be non empty"));
+            
+            if(await _clientAccountService.GetClientByIdAsync(cmd.ClientId.ToString()) == null)
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("clientId", "Client doesn't exist"));
             
             var operation = await _operationsRepository.Get(id);
 
