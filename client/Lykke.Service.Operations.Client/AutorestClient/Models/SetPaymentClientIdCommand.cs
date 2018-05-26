@@ -9,12 +9,12 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class SetPaymenClientIdCommand
+    public partial class SetPaymentClientIdCommand
     {
         /// <summary>
         /// Initializes a new instance of the SetPaymenClientIdCommand class.
         /// </summary>
-        public SetPaymenClientIdCommand()
+        public SetPaymentClientIdCommand()
         {
             CustomInit();
         }
@@ -22,7 +22,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the SetPaymenClientIdCommand class.
         /// </summary>
-        public SetPaymenClientIdCommand(System.Guid clientId)
+        public SetPaymentClientIdCommand(System.Guid clientId)
         {
             ClientId = clientId;
             CustomInit();

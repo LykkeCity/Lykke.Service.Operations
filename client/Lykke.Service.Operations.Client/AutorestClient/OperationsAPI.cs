@@ -685,7 +685,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
         /// <return>
         /// A response object containing the response body and response headers.
         /// </return>
-        public async Task<HttpOperationResponse<bool?>> ApiOperationsPaymentByIdPutWithHttpMessagesAsync(System.Guid id, SetPaymenClientIdCommand cmd = default(SetPaymenClientIdCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<HttpOperationResponse<bool?>> ApiOperationsPaymentByIdPutWithHttpMessagesAsync(System.Guid id, SetPaymentClientIdCommand cmd = default(SetPaymentClientIdCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (cmd != null)
             {

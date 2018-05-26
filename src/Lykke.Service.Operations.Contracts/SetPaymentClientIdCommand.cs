@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Lykke.Service.Operations.Contracts
 {
-    public class SetPaymenClientIdCommand
+    public class SetPaymentClientIdCommand
     {
         public Guid ClientId { set; get; }
     }

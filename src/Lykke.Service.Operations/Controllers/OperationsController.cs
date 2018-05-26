@@ -163,7 +163,7 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPut]
         [Route("payment/{id}")]
         [ProducesResponseType(typeof(bool), (int) HttpStatusCode.OK)]
-        public async Task<bool> SetPaymentFrom(Guid id, [FromBody] SetPaymenClientIdCommand cmd)
+        public async Task<bool> SetPaymentFrom(Guid id, [FromBody] SetPaymentClientIdCommand cmd)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));

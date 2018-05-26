@@ -96,7 +96,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse<bool?>> ApiOperationsPaymentByIdPutWithHttpMessagesAsync(System.Guid id, SetPaymenClientIdCommand cmd = default(SetPaymenClientIdCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse<bool?>> ApiOperationsPaymentByIdPutWithHttpMessagesAsync(System.Guid id, SetPaymentClientIdCommand cmd = default(SetPaymentClientIdCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='id'>
         /// </param>

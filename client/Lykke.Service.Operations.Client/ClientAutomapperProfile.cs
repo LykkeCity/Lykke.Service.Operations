@@ -14,7 +14,7 @@ namespace Lykke.Service.Operations.Client
             CreateMap<CreateTransferCommand, AutorestClient.Models.CreateTransferCommand>();
             CreateMap<CreateNewOrderCommand, AutorestClient.Models.CreateNewOrderCommand>();
             CreateMap<CreateNewOrderCommand, AutorestClient.Models.CreatePaymentCommand>();
-            CreateMap<CreateNewOrderCommand, AutorestClient.Models.SetPaymenClientIdCommand>();
+            CreateMap<CreateNewOrderCommand, AutorestClient.Models.SetPaymentClientIdCommand>();
         }
     }
 }

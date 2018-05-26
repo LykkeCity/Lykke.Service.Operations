@@ -152,7 +152,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// </param>
             /// <param name='cmd'>
             /// </param>
-            public static bool? ApiOperationsPaymentByIdPut(this IOperationsAPI operations, System.Guid id, SetPaymenClientIdCommand cmd = default(SetPaymenClientIdCommand))
+            public static bool? ApiOperationsPaymentByIdPut(this IOperationsAPI operations, System.Guid id, SetPaymentClientIdCommand cmd = default(SetPaymentClientIdCommand))
             {
                 return operations.ApiOperationsPaymentByIdPutAsync(id, cmd).GetAwaiter().GetResult();
             }
@@ -167,7 +167,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task<bool?> ApiOperationsPaymentByIdPutAsync(this IOperationsAPI operations, System.Guid id, SetPaymenClientIdCommand cmd = default(SetPaymenClientIdCommand), CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task<bool?> ApiOperationsPaymentByIdPutAsync(this IOperationsAPI operations, System.Guid id, SetPaymentClientIdCommand cmd = default(SetPaymentClientIdCommand), CancellationToken cancellationToken = default(CancellationToken))
             {
                 using (var _result = await operations.ApiOperationsPaymentByIdPutWithHttpMessagesAsync(id, cmd, null, cancellationToken).ConfigureAwait(false))
                 {
