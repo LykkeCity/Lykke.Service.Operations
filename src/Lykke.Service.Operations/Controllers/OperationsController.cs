@@ -152,7 +152,7 @@ namespace Lykke.Service.Operations.Controllers
 
 		    _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
             
-		    await HandleOrder("MarketOrderWorkflow", operation);
+		    await HandleWorkflow("MarketOrderWorkflow", operation);
 		    
 		    return Created(Url.Action("Get", new { id }), id);
 		}
@@ -189,13 +189,47 @@ namespace Lykke.Service.Operations.Controllers
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
             
-            await HandleOrder("LimitOrderWorkflow", operation);
+            await HandleWorkflow("LimitOrderWorkflow", operation);
             
 
             return Created(Url.Action("Get", new { id }), id);
         }
 
-        private async Task HandleOrder(string workflowType, Operation operation)
+        [HttpPost]
+        [Route("cashout/{id}/swift")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> CashoutSwift(Guid id, [FromBody] CreateSwiftCashoutCommand command)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
+            if (!ModelState.IsValid)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+
+            var context = new
+            {
+                Asset = command.Asset,
+                command.Volume,
+                Client = command.Client,
+                Swift = command.Swift
+            };
+
+            operation = new Operation();
+            operation.Create(id, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(context, Formatting.Indented));
+
+            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
+
+            await HandleWorkflow("SwiftCashoutWorkflow", operation);
+
+            return Created(Url.Action("Get", "Operations", new { id }), id);
+        }
+
+        private async Task HandleWorkflow(string workflowType, Operation operation)
         {           
             var wf = _workflowFactory(workflowType, operation);
             var wfResult = wf.Run(operation);
@@ -204,9 +238,9 @@ namespace Lykke.Service.Operations.Controllers
 
             if (wfResult.State == WorkflowState.Corrupted)
             {
-                _log.WriteFatalError(nameof(MarketOrderWorkflow), JsonConvert.SerializeObject(wfResult, Formatting.Indented));
+                _log.WriteFatalError(workflowType, JsonConvert.SerializeObject(wfResult, Formatting.Indented));
 
-                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult("_", wfResult.Error));
+                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult("InternalError", wfResult.Error));
             }
 
             if (operation.Status == OperationStatus.Failed)
@@ -217,13 +251,14 @@ namespace Lykke.Service.Operations.Controllers
                 if (errors != null)
                     foreach (var error in errors)
                     {
-                        modelState.AddModelError(error["PropertyName"].ToString(), error["ErrorMessage"].ToString());
+                        modelState.AddModelError(error["ErrorCode"].ToString(), error["ErrorMessage"].ToString());
                     }
 
                 string errorMessage = operation.OperationValues.ErrorMessage;
+                string errorCode = operation.OperationValues.ErrorCode;
 
                 if (!string.IsNullOrWhiteSpace(errorMessage))
-                    modelState.AddModelError("_", errorMessage);
+                    modelState.AddModelError(errorCode, errorMessage);
 
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
             }
@@ -381,10 +416,10 @@ namespace Lykke.Service.Operations.Controllers
             switch (operation.Type)
             {
                 case OperationType.MarketOrder:
-                    await HandleOrder("MarketOrderWorkflow", operation);
+                    await HandleWorkflow("MarketOrderWorkflow", operation);
                     break;
                 case OperationType.LimitOrder:
-                    await HandleOrder("LimitOrderWorkflow", operation);
+                    await HandleWorkflow("LimitOrderWorkflow", operation);
                     break;
                 default:
                     await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);

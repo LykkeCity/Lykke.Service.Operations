@@ -10,6 +10,7 @@ using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Events;
+using Lykke.Service.Operations.Contracts.Orders;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Modules;
 using Lykke.Service.Operations.Settings;

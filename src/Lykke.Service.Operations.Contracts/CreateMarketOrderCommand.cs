@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.Operations.Contracts
+﻿using Lykke.Service.Operations.Contracts.Orders;
+
+namespace Lykke.Service.Operations.Contracts
 {
     /// <summary>
     /// Command to create market order

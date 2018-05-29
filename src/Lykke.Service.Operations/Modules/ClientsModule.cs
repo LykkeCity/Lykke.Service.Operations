@@ -6,7 +6,9 @@ using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Balances.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
+using Lykke.Service.ExchangeOperations.Client;
 using Lykke.Service.FeeCalculator.Client;
+using Lykke.Service.Limitations.Client;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.RateCalculator.Client;
@@ -19,7 +21,7 @@ namespace Lykke.Service.Operations.Modules
     {
         private readonly IReloadingManager<AppSettings> _settings;
         private readonly ILog _log;
-        private readonly IServiceCollection _services;        
+        private readonly IServiceCollection _services;
 
         public ClientsModule(IReloadingManager<AppSettings> settings, ILog log)
         {
@@ -49,6 +51,8 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterFeeCalculatorClient(_settings.CurrentValue.FeeCalculatorServiceClient.ServiceUrl, _log);
             builder.RegisterInstance<IAssetDisclaimersClient>(new AssetDisclaimersClient(_settings.CurrentValue.AssetDisclaimersServiceClient));
             builder.BindMeClient(_settings.CurrentValue.MatchingEngineClient.IpEndpoint.GetClientIpEndPoint(), socketLog: null, ignoreErrors: true);
+            builder.RegisterLimitationsServiceClient(_settings.CurrentValue.LimitationServiceClient.ServiceUrl);
+            builder.RegisterInstance<IExchangeOperationsServiceClient>(new ExchangeOperationsServiceClient(_settings.CurrentValue.ExchangeOperationsServiceClient.ServiceUrl));
 
             builder.Populate(_services);
         }

@@ -10,6 +10,7 @@ namespace Lykke.Service.Operations.Workflow.Extensions
             {
                 case MeStatusCodes.NoLiquidity:
                     return "There is not enough liquidity in the order book. Please try to send smaller order.";
+                case MeStatusCodes.LowBalance:
                 case MeStatusCodes.NotEnoughFunds:
                     return "Not enough funds.";
                 case MeStatusCodes.LeadToNegativeSpread:
@@ -18,6 +19,18 @@ namespace Lykke.Service.Operations.Workflow.Extensions
                     return "Price must be greather than zero";
                 default:
                     return "We are experiencing technical problems. Please try again.";
+            }
+        }
+
+        public static string GetStringCode(this MeStatusCodes status)
+        {
+            switch (status)
+            {
+                case MeStatusCodes.LowBalance:
+                case MeStatusCodes.NotEnoughFunds:
+                    return "NotEnoughFunds";
+                default:
+                    return "InternalError";
             }
         }
     }

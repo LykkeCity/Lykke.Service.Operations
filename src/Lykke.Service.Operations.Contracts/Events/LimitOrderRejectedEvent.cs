@@ -1,4 +1,5 @@
 ﻿using System;
+using Lykke.Service.Operations.Contracts.Orders;
 
 namespace Lykke.Service.Operations.Contracts.Events
 {

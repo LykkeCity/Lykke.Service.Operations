@@ -134,6 +134,24 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// </param>
             /// <param name='id'>
             /// </param>
+            /// <param name='command'>
+            /// </param>
+            /// <param name='cancellationToken'>
+            /// The cancellation token.
+            /// </param>
+            public static async Task<System.Guid?> ApiOperationsCashoutByIdSwiftPostAsync(this IOperationsAPI operations, System.Guid id, CreateSwiftCashoutCommand command = default(CreateSwiftCashoutCommand), CancellationToken cancellationToken = default(CancellationToken))
+            {
+                using (var _result = await operations.ApiOperationsCashoutByIdSwiftPostWithHttpMessagesAsync(id, command, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='id'>
+            /// </param>
             /// <param name='cmd'>
             /// </param>
             /// <param name='cancellationToken'>

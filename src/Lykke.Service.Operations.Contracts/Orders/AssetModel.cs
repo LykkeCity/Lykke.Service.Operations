@@ -1,4 +1,4 @@
-﻿namespace Lykke.Service.Operations.Contracts
+﻿namespace Lykke.Service.Operations.Contracts.Orders
 {
     /// <summary>
     /// Asset model
@@ -12,6 +12,6 @@
         public bool IsTrusted { get; set; }
         public bool KycNeeded { get; set; }
         public string LykkeEntityId { get; set; }
-        public string Blockchain { get; set; }        
+        public string Blockchain { get; set; }
     }
 }

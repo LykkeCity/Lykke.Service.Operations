@@ -24,7 +24,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         /// <param name="orderAction">Possible values include: 'Buy',
         /// 'Sell'</param>
-        public CreateLimitOrderCommand(double volume, double price, OrderAction orderAction, AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
+        public CreateLimitOrderCommand(double volume, decimal price, OrderAction orderAction, AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
         {
             AssetPair = assetPair;
             Volume = volume;
@@ -53,7 +53,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Price")]
-        public double Price { get; set; }
+        public decimal Price { get; set; }
 
         /// <summary>
         /// Gets or sets possible values include: 'Buy', 'Sell'

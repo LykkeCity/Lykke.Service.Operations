@@ -6,11 +6,12 @@ using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Data;
+using Lykke.Service.Operations.Workflow.Exceptions;
 using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Workflow;
 using Newtonsoft.Json.Linq;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
-using OrderAction = Lykke.Service.Operations.Contracts.OrderAction;
+using OrderAction = Lykke.Service.Operations.Contracts.Orders.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow
 {
@@ -54,7 +55,7 @@ namespace Lykke.Service.Operations.Workflow
                     Fee = ((JObject)context.OperationValues.Fee)?.ToObject<MarketOrderFeeModel>()
                 })
                 .MergeOutput(output => new { Me = output })
-                .MergeFailOutput(output => new { ErrorMessage = output.Message });
+                .MergeFailOutput(output => new { ErrorMessage = output.Message, ErrorCode = WorkflowException.GetExceptionCode(output) });
         }        
 
         private MarketOrderFeeModel CalculateFee(CalculateMoFeeInput input)

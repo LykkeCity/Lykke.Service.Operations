@@ -38,10 +38,11 @@
     <PackageReference Include="Lykke.Service.FeeCalculator.Client" Version="2.0.1" />
     <PackageReference Include="Lykke.Service.PushNotifications.Client" Version="1.1.8" />
     <PackageReference Include="Lykke.Service.RateCalculator.Client" Version="1.0.12" />
-    <PackageReference Include="Lykke.Service.ExchangeOperations.Client" Version="1.1.4" />
+    <PackageReference Include="Lykke.Service.ExchangeOperations.Client" Version="1.1.18" />
     <PackageReference Include="Lykke.Service.Kyc.Client" Version="1.0.40" />
     <PackageReference Include="Lykke.Service.Limitations.Client" Version="1.1.1" />
     <PackageReference Include="Lykke.Service.Session" Version="1.0.33" />
+    <PackageReference Include="Lykke.Service.SwiftWithdrawal.Contracts" Version="1.0.1" />
     <PackageReference Include="Lykke.SettingsReader" Version="2.2.0" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.4" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.2.1" />
