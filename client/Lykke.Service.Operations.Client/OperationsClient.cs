@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using AutoMapper;
 using JetBrains.Annotations;
@@ -27,7 +28,7 @@ namespace Lykke.Service.Operations.Client
                 cfg.AddProfile<ClientAutomapperProfile>();
             });
             _mapper = config.CreateMapper();
-            _operationsApi = new OperationsAPI(new Uri(serviceUrl));
+            _operationsApi = new OperationsAPI(new Uri(serviceUrl), new HttpClient());
         }
 
         public async Task<OperationModel> Get(Guid id)
