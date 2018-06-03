@@ -142,7 +142,7 @@ namespace Lykke.Service.Operations.Controllers
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
             
             if (await _assetsServiceWithCache.TryGetAssetAsync(command.AssetId) == null)
-                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("assetId", "Asset doens't exist"));
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("assetId", "Asset doesn't exist"));
             
             var newOperation = new Operation();
             
