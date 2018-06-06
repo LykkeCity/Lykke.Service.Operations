@@ -26,9 +26,9 @@ namespace Lykke.Service.Operations.Workflow
         private readonly ICqrsEngine _cqrsEngine;
 
         public LimitOrderWorkflow(
-            Operation operation, 
-            ILog log, 
-            IActivityFactory activityFactory, 
+            Operation operation,
+            ILog log,
+            IActivityFactory activityFactory,
             IFeeCalculatorClient feeCalculatorClient,
             ILimitOrdersRepository limitOrdersRepository,
             IMatchingEngineClient matchingEngineClient,
@@ -38,28 +38,28 @@ namespace Lykke.Service.Operations.Workflow
             _limitOrdersRepository = limitOrdersRepository;
             _matchingEngineClient = matchingEngineClient;
             _cqrsEngine = cqrsEngine;
-            
+
             DelegateNode<CalculateLoFeeInput, LimitOrderFeeModel>("Calculate fee", input => CalculateFee(input))
                 .WithInput(context => new CalculateLoFeeInput
                 {
                     ClientId = context.OperationValues.Client.Id,
-                    AssetPairId = context.OperationValues.AssetPair.Id,                    
+                    AssetPairId = context.OperationValues.AssetPair.Id,
                     BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
                     OrderAction = context.OperationValues.OrderAction,
                     TargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClientId
                 })
                 .MergeOutput(output => new { Fee = output })
                 .MergeFailOutput(output => output);
-            
+
             DelegateNode<MeLoOrderInput, object>("Send to ME", input => SendToMe(input))
                 .WithInput(context => new MeLoOrderInput
                 {
-                    Id = context.Id.ToString(),                    
+                    Id = context.Id.ToString(),
                     AssetPairId = context.OperationValues.AssetPair.Id,
-                    ClientId = context.OperationValues.Client.Id,     
+                    ClientId = context.OperationValues.Client.Id,
                     OrderAction = context.OperationValues.OrderAction,
                     Volume = (double)context.OperationValues.Volume,
-                    Price = (double)context.OperationValues.Price,                    
+                    Price = (double)context.OperationValues.Price,
                     Fee = ((JObject)context.OperationValues.Fee)?.ToObject<LimitOrderFeeModel>()
                 })
                 .MergeOutput(output => new { Me = output })
@@ -67,7 +67,7 @@ namespace Lykke.Service.Operations.Workflow
 
             DelegateNode("Create limit order", input => CreateLimitOrder(input));
             DelegateNode("Process limit order after Me", input => PostProcessLimitOrder(input));
-        }        
+        }
 
         protected override WorkflowConfiguration<Operation> ConfigurePreMeNodes(WorkflowConfiguration<Operation> configuration)
         {
@@ -83,14 +83,18 @@ namespace Lykke.Service.Operations.Workflow
 
         private void CreateLimitOrder(Operation input)
         {
+            var volume = Math.Abs((double)input.OperationValues.Volume);
+
+            if ((OrderAction)input.OperationValues.OrderAction == OrderAction.Sell)
+                volume = volume * -1;
+
             _limitOrdersRepository.CreateAsync(LimitOrder.Create(
-                input.Id.ToString(), 
-                input.ClientId.ToString(), 
-                (string)input.OperationValues.AssetPair.Id, 
-                (double)input.OperationValues.Volume, 
-                (double)input.OperationValues.Price, 
-                (double)input.OperationValues.Volume,
-                (OrderAction)input.OperationValues.OrderAction)).ConfigureAwait(false).GetAwaiter().GetResult();
+                input.Id.ToString(),
+                input.ClientId.ToString(),
+                (string)input.OperationValues.AssetPair.Id,
+                volume,
+                (double)input.OperationValues.Price,
+                volume)).ConfigureAwait(false).GetAwaiter().GetResult();
 
             _cqrsEngine.PublishEvent(new LimitOrderCreatedEvent
             {
@@ -120,7 +124,7 @@ namespace Lykke.Service.Operations.Workflow
                 }, "operations");
             }
         }
-        
+
         private LimitOrderFeeModel CalculateFee(CalculateLoFeeInput input)
         {
             var orderAction = input.OrderAction == OrderAction.Buy
@@ -138,30 +142,30 @@ namespace Lykke.Service.Operations.Workflow
                 Type = fee.MakerFeeSize == 0m && fee.TakerFeeSize == 0m ? (int)LimitOrderFeeType.NO_FEE : (int)LimitOrderFeeType.CLIENT_FEE
             };
         }
-        
+
         private object SendToMe(MeLoOrderInput input)
         {
             var limitOrderModel = new LimitOrderModel
             {
                 Id = input.Id,
                 ClientId = input.ClientId,
-                AssetPairId = input.AssetPairId,           
-                OrderAction = input.OrderAction == OrderAction.Buy 
-                    ? MatchingEngine.Connector.Abstractions.Models.OrderAction.Buy 
+                AssetPairId = input.AssetPairId,
+                OrderAction = input.OrderAction == OrderAction.Buy
+                    ? MatchingEngine.Connector.Abstractions.Models.OrderAction.Buy
                     : MatchingEngine.Connector.Abstractions.Models.OrderAction.Sell,
                 Price = input.Price,
                 Volume = Math.Abs(input.Volume),
                 Fee = input.Fee,
             };
-            
+
             var response = _matchingEngineClient.PlaceLimitOrderAsync(limitOrderModel).ConfigureAwait(false).GetAwaiter().GetResult();
 
             if (response == null)
                 throw new ApplicationException("Me is not available.");
 
-            if (response.Status != MeStatusCodes.Ok)            
-                throw new ApplicationException(response.Status.Format());                        
-            
+            if (response.Status != MeStatusCodes.Ok)
+                throw new ApplicationException(response.Status.Format());
+
             return new
             {
                 Status = response.Status.ToString(),

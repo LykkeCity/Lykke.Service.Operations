@@ -64,22 +64,17 @@ namespace Lykke.Service.Operations.Core.Repositories
     public class LimitOrder : ILimitOrder
     {
         public DateTime CreatedAt { get; set; }
-        public DateTime MatchedAt { get; set; }
         public string Id { get; set; }
-        public List<MatchedOrder> MatchedOrders { get; set; }
         public string ClientId { get; set; }
-        public string BaseAsset { get; set; }
         public string AssetPairId { get; set; }
         public string Status { get; set; }
         public bool Straight { get; set; }
-        public OrderAction OrderAction { get; set; }
-        public string BlockChain { get; set; }
         public double Volume { get; set; }
         public double Price { get; set; }
         public double RemainingVolume { get; set; }
         public string MatchingId { get; set; }
 
-        public static LimitOrder Create(string id, string clientId, string assetPairId, double volume, double price, double remainigVolume, OrderAction orderAction)
+        public static LimitOrder Create(string id, string clientId, string assetPairId, double volume, double price, double remainigVolume)
         {
             return new LimitOrder
             {
@@ -89,8 +84,7 @@ namespace Lykke.Service.Operations.Core.Repositories
                 Volume = volume,
                 Price = price,
                 RemainingVolume = remainigVolume,
-                CreatedAt = DateTime.UtcNow,
-                OrderAction = orderAction
+                CreatedAt = DateTime.UtcNow
             };
         }
     }
