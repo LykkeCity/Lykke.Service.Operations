@@ -26,7 +26,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         [EnumMember(Value = "LimitOrder")]
         LimitOrder,
         [EnumMember(Value = "NewOrder")]
-        NewOrder
+        NewOrder,
+        [EnumMember(Value = "Payment")]
+        Payment
     }
     internal static class OperationTypeEnumExtension
     {
@@ -49,6 +51,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
                     return "LimitOrder";
                 case OperationType.NewOrder:
                     return "NewOrder";
+                case OperationType.Payment:
+                    return "Payment";
             }
             return null;
         }
@@ -67,6 +71,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
                     return OperationType.LimitOrder;
                 case "NewOrder":
                     return OperationType.NewOrder;
+                case "Payment":
+                    return OperationType.Payment;
             }
             return null;
         }

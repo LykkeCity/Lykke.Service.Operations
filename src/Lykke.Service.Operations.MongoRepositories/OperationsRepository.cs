@@ -29,5 +29,18 @@ namespace Lykke.Service.Operations.MongoRepositories
             await GetCollection().UpdateOneAsync(x => x.Id == id, Builders<Operation>.Update.Set("Status", status));
         }
 
+        public async Task<bool> SetClientId(Guid id, Guid clientId)
+        {
+            var updateResult = await GetCollection().UpdateOneAsync(
+                x =>
+                    x.Id == id &&
+                    x.Status == OperationStatus.Created &&
+                    (!x.ClientId.HasValue || x.ClientId.Value == clientId),
+                Builders<Operation>.Update
+                    .Set("ClientId", clientId)
+            );
+
+            return updateResult.MatchedCount != 0;
+        }
     }
 }

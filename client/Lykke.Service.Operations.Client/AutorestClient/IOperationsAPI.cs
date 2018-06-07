@@ -88,6 +88,30 @@ namespace Lykke.Service.Operations.Client.AutorestClient
 
         /// <param name='id'>
         /// </param>
+        /// <param name='cmd'>
+        /// </param>
+        /// <param name='customHeaders'>
+        /// The headers that will be added to request.
+        /// </param>
+        /// <param name='cancellationToken'>
+        /// The cancellation token.
+        /// </param>
+        Task<HttpOperationResponse<bool?>> ApiOperationsPaymentByIdPutWithHttpMessagesAsync(System.Guid id, SetPaymentClientIdCommand cmd = default(SetPaymentClientIdCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <param name='id'>
+        /// </param>
+        /// <param name='command'>
+        /// </param>
+        /// <param name='customHeaders'>
+        /// The headers that will be added to request.
+        /// </param>
+        /// <param name='cancellationToken'>
+        /// The cancellation token.
+        /// </param>
+        Task<HttpOperationResponse<System.Guid?>> ApiOperationsPaymentByIdPostWithHttpMessagesAsync(System.Guid id, CreatePaymentCommand command = default(CreatePaymentCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <param name='id'>
+        /// </param>
         /// <param name='command'>
         /// </param>
         /// <param name='customHeaders'>

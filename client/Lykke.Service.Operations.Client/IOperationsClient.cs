@@ -26,5 +26,7 @@ namespace Lykke.Service.Operations.Client
         
         Task<Guid> PlaceMarketOrder(Guid id, CreateMarketOrderCommand marketOrderCommand);
         Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand marketOrderCommand);
+        Task<Guid> Payment(Guid id, CreatePaymentCommand createPaymentCommand);
+        Task<bool> SetPaymentClientId(Guid id, SetPaymentClientIdCommand setPaymentClientIdCommand);
     }
 }

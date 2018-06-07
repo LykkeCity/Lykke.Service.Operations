@@ -32,7 +32,7 @@ namespace Lykke.Service.Operations.Contracts
         /// <summary>
         /// A client ID
         /// </summary>
-        public Guid ClientId { get; set; }
+        public Guid? ClientId { get; set; }
 
         /// <summary>
         /// Addition information related to the operation. Currently <see cref="NewOrderContext"/> or <see cref="TransferContext"/>/>

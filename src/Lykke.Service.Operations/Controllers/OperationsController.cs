@@ -13,6 +13,7 @@ using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
+using Lykke.Service.Operations.Settings.ServiceSettings;
 using Lykke.Service.Operations.Workflow;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
@@ -35,6 +36,7 @@ namespace Lykke.Service.Operations.Controllers
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
+        private readonly Guid _paymentsHotWalletId;
         private readonly ICqrsEngine _cqrsEngine;
         private readonly ILog _log;
         private readonly IMapper _mapper;
@@ -45,6 +47,7 @@ namespace Lykke.Service.Operations.Controllers
             IPushNotificationsAPI pushNotificationsApi, 
             IAssetsServiceWithCache assetsServiceWithCache,
             Func<string, Operation, OperationWorkflow> workflowFactory,
+            PaymentsSettings paymentsSettings,
             ICqrsEngine cqrsEngine,
             ILog log,
             IMapper mapper)
@@ -53,6 +56,7 @@ namespace Lykke.Service.Operations.Controllers
             _clientAccountService = clientAccountService;
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
+            _paymentsHotWalletId = Guid.Parse(paymentsSettings.HotWalletId);
             _workflowFactory = workflowFactory;
             _cqrsEngine = cqrsEngine;
             _log = log;
@@ -120,6 +124,66 @@ namespace Lykke.Service.Operations.Controllers
 
             return Created(Url.Action("Get", new { id }), id);
         }
+
+        [HttpPost]
+        [Route("payment/{id}")]
+        [ProducesResponseType(typeof(Guid), (int) HttpStatusCode.Created)]
+        public async Task<IActionResult> Payment(Guid id, [FromBody] CreatePaymentCommand command)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+            
+            if (!ModelState.IsValid)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+            
+            if (await _assetsServiceWithCache.TryGetAssetAsync(command.AssetId) == null)
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("assetId", "Asset doesn't exist"));
+            
+            var newOperation = new Operation();
+            
+            var context = new PaymentContext
+            {
+                AssetId = command.AssetId,
+                Amount = command.Amount,
+                WalletId = _paymentsHotWalletId
+            };
+            
+            newOperation.Create(id, null, OperationType.Payment, JsonConvert.SerializeObject(context));
+
+            await _operationsRepository.Create(newOperation);
+            
+            return Created(Url.Action("Get", new { id }), id);
+        }
+        
+        [HttpPut]
+        [Route("payment/{id}")]
+        [ProducesResponseType(typeof(bool), (int) HttpStatusCode.OK)]
+        public async Task<bool> SetPaymentFrom(Guid id, [FromBody] SetPaymentClientIdCommand cmd)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+            
+            if (cmd.ClientId == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Client id must be non empty"));
+            
+            if(await _clientAccountService.GetClientByIdAsync(cmd.ClientId.ToString()) == null)
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("clientId", "Client doesn't exist"));
+            
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation == null)
+                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
+
+            var setSuccessfully = await _operationsRepository.SetClientId(id, cmd.ClientId);
+
+            return setSuccessfully;
+        }
+
 
 		[HttpPost]
         [Route("order/{id}/market")]
@@ -191,7 +255,6 @@ namespace Lykke.Service.Operations.Controllers
             
             await HandleOrder("LimitOrderWorkflow", operation);
             
-
             return Created(Url.Action("Get", new { id }), id);
         }
 

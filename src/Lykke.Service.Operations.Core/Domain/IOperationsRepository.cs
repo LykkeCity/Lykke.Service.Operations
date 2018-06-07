@@ -13,5 +13,6 @@ namespace Lykke.Service.Operations.Core.Domain
         Task UpdateStatus(Guid id, OperationStatus status);
         Task Update(Operation operation);
         Task Save(Operation operation);
+        Task<bool> SetClientId(Guid id, Guid clientId);
     }
 }
