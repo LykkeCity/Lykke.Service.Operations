@@ -26,5 +26,7 @@ namespace Lykke.Service.Operations.Client
         
         Task<Guid> PlaceMarketOrder(Guid id, CreateMarketOrderCommand marketOrderCommand);
         Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand marketOrderCommand);
+
+        Task<Guid> CreateSwiftCashout(Guid id, CreateSwiftCashoutCommand createSwiftCashoutCommand);
     }
 }

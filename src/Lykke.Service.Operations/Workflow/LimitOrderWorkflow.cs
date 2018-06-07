@@ -9,11 +9,12 @@ using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Workflow.Data;
+using Lykke.Service.Operations.Workflow.Exceptions;
 using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
-using OrderAction = Lykke.Service.Operations.Contracts.OrderAction;
+using OrderAction = Lykke.Service.Operations.Contracts.Orders.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow
 {
@@ -63,7 +64,7 @@ namespace Lykke.Service.Operations.Workflow
                     Fee = ((JObject)context.OperationValues.Fee)?.ToObject<LimitOrderFeeModel>()
                 })
                 .MergeOutput(output => new { Me = output })
-                .MergeFailOutput(output => new { ErrorMessage = output.Message });
+                .MergeFailOutput(output => new { ErrorMessage = output.Message, ErrorCode = WorkflowException.GetExceptionCode(output) });
 
             DelegateNode("Create limit order", input => CreateLimitOrder(input));
             DelegateNode("Process limit order after Me", input => PostProcessLimitOrder(input));

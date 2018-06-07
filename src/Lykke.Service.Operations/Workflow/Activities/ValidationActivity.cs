@@ -17,10 +17,18 @@ namespace Lykke.Service.Operations.Workflow.Activities
 
         public override ActivityResult Execute(Guid activityExecutionId, TInput input, Action<object> processOutput, Action<ValidationResults> processFailOutput)
         {
+            const string defaultErrorCode = "PredicateValidator";
+
             var result = m_Validator.Validate<TInput>(input);
             if (!result.IsValid)
             {
-                var validationErrors = result.Errors.Select(e => new ValidationError { PropertyName = e.PropertyName, ErrorMessage = e.ErrorMessage }).ToArray();
+                var validationErrors = result.Errors.Select(e => new ValidationError
+                {
+                    PropertyName = e.PropertyName,
+                    ErrorCode = e.ErrorCode.Equals(defaultErrorCode, StringComparison.InvariantCultureIgnoreCase) ? e.PropertyName : e.ErrorCode,
+                    ErrorMessage = e.ErrorMessage
+                }).ToArray();
+
                 processFailOutput(new ValidationResults
                 {
                     ErrorMessage = string.Empty,
@@ -44,6 +52,7 @@ namespace Lykke.Service.Operations.Workflow.Activities
     public class ValidationError
     {
         public string PropertyName { get; set; }
+        public string ErrorCode { get; set; }
         public string ErrorMessage { get; set; }
     }
 }

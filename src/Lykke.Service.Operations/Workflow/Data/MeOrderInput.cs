@@ -1,5 +1,5 @@
 ﻿using Lykke.MatchingEngine.Connector.Abstractions.Models;
-using OrderAction = Lykke.Service.Operations.Contracts.OrderAction;
+using OrderAction = Lykke.Service.Operations.Contracts.Orders.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow.Data
 {

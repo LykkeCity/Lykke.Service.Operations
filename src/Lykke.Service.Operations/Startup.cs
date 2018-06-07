@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace Lykke.Service.Operations
 {
@@ -56,6 +57,11 @@ namespace Lykke.Service.Operations
                 {
                     options.DefaultLykkeConfiguration(ApiVersion, ApiTitle);
                     options.DescribeAllEnumsAsStrings();
+                    options.MapType<decimal>(() => new Schema()
+                    {
+                        Type = "number",
+                        Format = "decimal"
+                    });
                 });
 
                 var builder = new ContainerBuilder();

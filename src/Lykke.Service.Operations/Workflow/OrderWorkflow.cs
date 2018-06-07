@@ -141,6 +141,7 @@ namespace Lykke.Service.Operations.Workflow
 
                     return new DisclaimerInput
                     {
+                        Type = context.Type,
                         ClientId = context.OperationValues.Client.Id,
                         LykkeEntityId1 = baseEntityId ?? quotingEntityId,
                         LykkeEntityId2 = quotingEntityId ?? baseEntityId

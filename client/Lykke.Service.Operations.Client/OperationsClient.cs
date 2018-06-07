@@ -44,7 +44,7 @@ namespace Lykke.Service.Operations.Client
         {
             return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, _mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(_mapper.Map<OperationModel>);
         }
-        
+
         public async Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand)
         {
             return (await _operationsApi.ApiOperationsTransferByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateTransferCommand>(transferCommand))).Value;
@@ -57,12 +57,17 @@ namespace Lykke.Service.Operations.Client
 
         public async Task<Guid> PlaceMarketOrder(Guid id, CreateMarketOrderCommand marketOrderCommand)
         {
-            return (await _operationsApi.ApiOperationsOrderByIdMarketPostAsync(id, _mapper.Map<AutorestClient.Models.CreateMarketOrderCommand>(marketOrderCommand))).Value;            
+            return (await _operationsApi.ApiOperationsOrderByIdMarketPostAsync(id, _mapper.Map<AutorestClient.Models.CreateMarketOrderCommand>(marketOrderCommand))).Value;
         }
 
         public async Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand marketOrderCommand)
         {
             return (await _operationsApi.ApiOperationsOrderByIdLimitPostAsync(id, _mapper.Map<AutorestClient.Models.CreateLimitOrderCommand>(marketOrderCommand))).Value;
+        }
+
+        public async Task<Guid> CreateSwiftCashout(Guid id, CreateSwiftCashoutCommand createSwiftCashoutCommand)
+        {
+            return (await _operationsApi.ApiOperationsCashoutByIdSwiftPostAsync(id, _mapper.Map<AutorestClient.Models.CreateSwiftCashoutCommand>(createSwiftCashoutCommand))).Value;
         }
 
         public Task Cancel(Guid id)

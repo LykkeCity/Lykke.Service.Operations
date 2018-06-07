@@ -10,6 +10,7 @@ using Lykke.Messaging;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Settings;
+using Lykke.Service.SwiftWithdrawal.Contracts;
 using Lykke.SettingsReader;
 
 namespace Lykke.Service.Operations.Modules
@@ -28,21 +29,21 @@ namespace Lykke.Service.Operations.Modules
         protected override void Load(ContainerBuilder builder)
         {
             Messaging.Serialization.MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
-            var rabbitMqMeSettings = new RabbitMQ.Client.ConnectionFactory { Uri = _settings.CurrentValue.Transports.ClientRabbitMqConnectionString };
+            var rabbitMqSagasSettings = new RabbitMQ.Client.ConnectionFactory { Uri = _settings.CurrentValue.SagasRabbitMq.RabbitConnectionString };
             var rabbitMqSettings = new RabbitMQ.Client.ConnectionFactory { Uri = _settings.CurrentValue.Transports.ClientRabbitMqConnectionString };
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>();
-            
+
             var messagingEngine = new MessagingEngine(_log,
                 new TransportResolver(new Dictionary<string, TransportInfo>
                 {
-                    { "MeRabbitMq", new TransportInfo(rabbitMqMeSettings.Endpoint.ToString(), rabbitMqMeSettings.UserName, rabbitMqMeSettings.Password, "None", "RabbitMq") },
+                    { "SagasRabbitMq", new TransportInfo(rabbitMqSagasSettings.Endpoint.ToString(), rabbitMqSagasSettings.UserName, rabbitMqSagasSettings.Password, "None", "RabbitMq") },
                     { "ClientRabbitMq", new TransportInfo(rabbitMqSettings.Endpoint.ToString(), rabbitMqSettings.UserName, rabbitMqSettings.Password, "None", "RabbitMq") }
                 }),
                 new RabbitMqTransportFactory());
 
-            var meEndpointResolver = new RabbitMqConventionEndpointResolver(
-                "MeRabbitMq",
+            var sagasEndpointResolver = new RabbitMqConventionEndpointResolver(
+                "SagasRabbitMq",
                 "messagepack",
                 environment: "lykke",
                 exclusiveQueuePostfix: "k8s");
@@ -52,7 +53,7 @@ namespace Lykke.Service.Operations.Modules
                 "messagepack",
                 environment: "lykke",
                 exclusiveQueuePostfix: "k8s");
-            
+
             builder.Register(ctx =>
                 {
                     return new CqrsEngine(_log,
@@ -61,9 +62,16 @@ namespace Lykke.Service.Operations.Modules
                         new DefaultEndpointProvider(),
                         true,
                         Register.DefaultEndpointResolver(clientEndpointResolver),
-                        
+
                         Register.BoundedContext("operations")
-                            .PublishingEvents(typeof(LimitOrderCreatedEvent), typeof(LimitOrderRejectedEvent), typeof(OperationCreatedEvent)).With("events"));
+                            .PublishingEvents(typeof(LimitOrderCreatedEvent), typeof(LimitOrderRejectedEvent), typeof(OperationCreatedEvent)).With("events"),
+
+                        Register.BoundedContext(SwiftWithdrawalBoundedContext.Name)
+                            .PublishingCommands(typeof(SwiftCashoutCreateCommand))
+                            .To(SwiftWithdrawalBoundedContext.Name)
+                            .With("commands")
+                            .WithEndpointResolver(sagasEndpointResolver));
+
                 })
             .As<ICqrsEngine>()
             .SingleInstance()

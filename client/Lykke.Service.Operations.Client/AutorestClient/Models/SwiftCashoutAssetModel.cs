@@ -9,26 +9,25 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class CreateTransferCommand
+    public partial class SwiftCashoutAssetModel
     {
         /// <summary>
-        /// Initializes a new instance of the CreateTransferCommand class.
+        /// Initializes a new instance of the SwiftCashoutAssetModel class.
         /// </summary>
-        public CreateTransferCommand()
+        public SwiftCashoutAssetModel()
         {
             CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the CreateTransferCommand class.
+        /// Initializes a new instance of the SwiftCashoutAssetModel class.
         /// </summary>
-        public CreateTransferCommand(System.Guid clientId, decimal amount, System.Guid sourceWalletId, System.Guid walletId, string assetId = default(string))
+        public SwiftCashoutAssetModel(bool kycNeeded, bool swiftCashoutEnabled, string id = default(string), string lykkeEntityId = default(string))
         {
-            ClientId = clientId;
-            AssetId = assetId;
-            Amount = amount;
-            SourceWalletId = sourceWalletId;
-            WalletId = walletId;
+            Id = id;
+            KycNeeded = kycNeeded;
+            SwiftCashoutEnabled = swiftCashoutEnabled;
+            LykkeEntityId = lykkeEntityId;
             CustomInit();
         }
 
@@ -39,28 +38,23 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "ClientId")]
-        public System.Guid ClientId { get; set; }
+        [JsonProperty(PropertyName = "Id")]
+        public string Id { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "AssetId")]
-        public string AssetId { get; set; }
+        [JsonProperty(PropertyName = "KycNeeded")]
+        public bool KycNeeded { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "Amount")]
-        public decimal Amount { get; set; }
+        [JsonProperty(PropertyName = "SwiftCashoutEnabled")]
+        public bool SwiftCashoutEnabled { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "SourceWalletId")]
-        public System.Guid SourceWalletId { get; set; }
-
-        /// <summary>
-        /// </summary>
-        [JsonProperty(PropertyName = "WalletId")]
-        public System.Guid WalletId { get; set; }
+        [JsonProperty(PropertyName = "LykkeEntityId")]
+        public string LykkeEntityId { get; set; }
 
         /// <summary>
         /// Validate the object.

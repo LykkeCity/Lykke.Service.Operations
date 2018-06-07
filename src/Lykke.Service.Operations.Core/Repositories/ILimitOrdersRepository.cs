@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Orders;
 
 namespace Lykke.Service.Operations.Core.Repositories
 {

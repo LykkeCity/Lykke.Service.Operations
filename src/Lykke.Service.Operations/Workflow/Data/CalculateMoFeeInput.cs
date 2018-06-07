@@ -1,4 +1,4 @@
-﻿using Lykke.Service.Operations.Contracts;
+﻿using Lykke.Service.Operations.Contracts.Orders;
 
 namespace Lykke.Service.Operations.Workflow.Data
 {
