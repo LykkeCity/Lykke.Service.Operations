@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.Operations.Contracts.SwiftCashout
+﻿using System;
+
+namespace Lykke.Service.Operations.Contracts.SwiftCashout
 {
     /// <summary>
     /// Swift operation model
@@ -11,6 +13,7 @@
         public string AccHolderAddress { get; set; }
         public string BankName { get; set; }
 
+        [Obsolete("Unnecessary field, automatically extracted from Swift field, should be remove on next release")]
         public string AccHolderCountry { get; set; }
         public string AccHolderZipCode { get; set; }
         public string AccHolderCity { get; set; }

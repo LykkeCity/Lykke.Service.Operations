@@ -1,6 +1,8 @@
-﻿using FluentValidation;
+﻿using Common;
+using FluentValidation;
 using JetBrains.Annotations;
 using Lykke.Service.Operations.Workflow.Data;
+using System;
 
 namespace Lykke.Service.Operations.Workflow.Validation.SwiftCashout
 {
@@ -9,6 +11,15 @@ namespace Lykke.Service.Operations.Workflow.Validation.SwiftCashout
     {
         public SwiftFieldsValidator()
         {
+            RuleFor(m => m.Bic)
+                .Must(bic =>
+                {
+                    var code = bic.GetCountryCode();
+                    return code != null && CountryManager.HasIso2(code);
+                })
+                .WithErrorCode("InvalidField")
+                .WithMessage("Bic");
+
             RuleFor(m => m.AccHolderAddress)
                 .NotEmpty()
                 .WithErrorCode("InvalidField")
@@ -18,11 +29,6 @@ namespace Lykke.Service.Operations.Workflow.Validation.SwiftCashout
                 .NotEmpty()
                 .WithErrorCode("InvalidField")
                 .WithMessage("AccHolderCity");
-
-            RuleFor(m => m.AccHolderCountry)
-                .NotEmpty()
-                .WithErrorCode("InvalidField")
-                .WithMessage("AccHolderCountry");
 
             RuleFor(m => m.AccHolderZipCode)
                 .NotEmpty()
@@ -43,11 +49,6 @@ namespace Lykke.Service.Operations.Workflow.Validation.SwiftCashout
                 .NotEmpty()
                 .WithErrorCode("InvalidField")
                 .WithMessage("BankName");
-
-            RuleFor(m => m.Bic)
-                .NotEmpty()
-                .WithErrorCode("InvalidField")
-                .WithMessage("Bic");
         }
     }
 }

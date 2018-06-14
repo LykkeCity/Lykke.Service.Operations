@@ -22,12 +22,13 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateSwiftCashoutCommand class.
         /// </summary>
-        public CreateSwiftCashoutCommand(decimal volume, SwiftCashoutAssetModel asset = default(SwiftCashoutAssetModel), SwiftCashoutClientModel client = default(SwiftCashoutClientModel), SwiftFieldsModel swift = default(SwiftFieldsModel))
+        public CreateSwiftCashoutCommand(decimal volume, SwiftCashoutAssetModel asset = default(SwiftCashoutAssetModel), SwiftCashoutClientModel client = default(SwiftCashoutClientModel), SwiftFieldsModel swift = default(SwiftFieldsModel), SwiftCashoutSettingsModel cashoutSettings = default(SwiftCashoutSettingsModel))
         {
             Asset = asset;
             Volume = volume;
             Client = client;
             Swift = swift;
+            CashoutSettings = cashoutSettings;
             CustomInit();
         }
 
@@ -55,6 +56,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         [JsonProperty(PropertyName = "Swift")]
         public SwiftFieldsModel Swift { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "CashoutSettings")]
+        public SwiftCashoutSettingsModel CashoutSettings { get; set; }
 
         /// <summary>
         /// Validate the object.
