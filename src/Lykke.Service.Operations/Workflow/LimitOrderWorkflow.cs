@@ -14,6 +14,7 @@ using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
+using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 using OrderAction = Lykke.Service.Operations.Contracts.Orders.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow
@@ -138,6 +139,13 @@ namespace Lykke.Service.Operations.Workflow
             {
                 MakerSize = (double)fee.MakerFeeSize,
                 TakerSize = (double)fee.TakerFeeSize,
+                MakerFeeModificator = (double)fee.MakerFeeModificator,
+                MakerSizeType = fee.MakerFeeType == FeeType.Absolute
+                    ? (int)FeeSizeType.ABSOLUTE
+                    : (int)FeeSizeType.PERCENTAGE,
+                TakerSizeType = fee.TakerFeeType == FeeType.Absolute
+                    ? (int)FeeSizeType.ABSOLUTE
+                    : (int)FeeSizeType.PERCENTAGE,
                 SourceClientId = input.ClientId,
                 TargetClientId = input.TargetClientId,
                 Type = fee.MakerFeeSize == 0m && fee.TakerFeeSize == 0m ? (int)LimitOrderFeeType.NO_FEE : (int)LimitOrderFeeType.CLIENT_FEE
