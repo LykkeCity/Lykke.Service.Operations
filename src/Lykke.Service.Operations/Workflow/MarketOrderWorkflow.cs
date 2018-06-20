@@ -20,43 +20,43 @@ namespace Lykke.Service.Operations.Workflow
     {
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly IMatchingEngineClient _matchingEngineClient;
-        
+
         public MarketOrderWorkflow(
-            Operation operation, 
-            ILog log, 
+            Operation operation,
+            ILog log,
             IActivityFactory activityFactory,
             IFeeCalculatorClient feeCalculatorClient,
             IMatchingEngineClient matchingEngineClient) : base(operation, log, activityFactory)
         {
             _feeCalculatorClient = feeCalculatorClient;
             _matchingEngineClient = matchingEngineClient;
-            
+
             DelegateNode<CalculateMoFeeInput, MarketOrderFeeModel>("Calculate fee", input => CalculateFee(input))
                 .WithInput(context => new CalculateMoFeeInput
                 {
-                    ClientId = context.OperationValues.Client.Id,                    
-                    AssetPairId = context.OperationValues.AssetPair.Id,                    
+                    ClientId = context.OperationValues.Client.Id,
+                    AssetPairId = context.OperationValues.AssetPair.Id,
                     AssetId = context.OperationValues.Asset.Id,
                     OrderAction = context.OperationValues.OrderAction,
                     TargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClientId
                 })
                 .MergeOutput(output => new { Fee = output })
                 .MergeFailOutput(output => output);
-            
+
             DelegateNode<MeMoOrderInput, object>("Send to ME", input => SendToMe(input))
                 .WithInput(context => new MeMoOrderInput
                 {
-                    Id = context.Id.ToString(),                    
+                    Id = context.Id.ToString(),
                     AssetPairId = context.OperationValues.AssetPair.Id,
                     ClientId = context.OperationValues.Client.Id,
                     Straight = (string)context.OperationValues.Asset.Id == (string)context.OperationValues.AssetPair.BaseAsset.Id,
-                    Volume = context.OperationValues.Volume,                    
+                    Volume = context.OperationValues.Volume,
                     OrderAction = context.OperationValues.OrderAction,
                     Fee = ((JObject)context.OperationValues.Fee)?.ToObject<MarketOrderFeeModel>()
                 })
                 .MergeOutput(output => new { Me = output })
                 .MergeFailOutput(output => new { ErrorMessage = output.Message, ErrorCode = WorkflowException.GetExceptionCode(output) });
-        }        
+        }
 
         private MarketOrderFeeModel CalculateFee(CalculateMoFeeInput input)
         {
@@ -84,7 +84,7 @@ namespace Lykke.Service.Operations.Workflow
                     : new[] { fee.TargetAssetId }
             };
         }
-        
+
         private object SendToMe(MeMoOrderInput input)
         {
             var marketOrderModel = new MarketOrderModel
@@ -95,9 +95,9 @@ namespace Lykke.Service.Operations.Workflow
                 ReservedLimitVolume = null,
                 Straight = input.Straight,
                 Volume = Math.Abs(input.Volume),
-                Fee = input.Fee,
+                Fees = new[] { input.Fee },
                 OrderAction = input.OrderAction == OrderAction.Buy ? MatchingEngine.Connector.Abstractions.Models.OrderAction.Buy : MatchingEngine.Connector.Abstractions.Models.OrderAction.Sell
-            };            
+            };
 
             var response = _matchingEngineClient.HandleMarketOrderAsync(marketOrderModel).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -111,7 +111,7 @@ namespace Lykke.Service.Operations.Workflow
             {
                 Status = response.Status.ToString(),
                 response.Price
-            };           
-        }        
+            };
+        }
     }
 }
