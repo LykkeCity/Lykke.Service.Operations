@@ -95,9 +95,11 @@ namespace Lykke.Service.Operations.Workflow
                 ReservedLimitVolume = null,
                 Straight = input.Straight,
                 Volume = Math.Abs(input.Volume),
-                Fees = new[] { input.Fee },
                 OrderAction = input.OrderAction == OrderAction.Buy ? MatchingEngine.Connector.Abstractions.Models.OrderAction.Buy : MatchingEngine.Connector.Abstractions.Models.OrderAction.Sell
             };
+
+            if (input.Fee != null)
+                marketOrderModel.Fees = new[] { input.Fee };
 
             var response = _matchingEngineClient.HandleMarketOrderAsync(marketOrderModel).ConfigureAwait(false).GetAwaiter().GetResult();
 
