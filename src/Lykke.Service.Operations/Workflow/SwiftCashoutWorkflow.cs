@@ -39,10 +39,12 @@ namespace Lykke.Service.Operations.Workflow
                     .Do("Disclaimers validation").OnFail("Fail operation")
                     .Do("Limits check").OnFail("Fail operation")
                     .Do("Send to exchange operations").OnFail("Fail operation")
-                    .Do("Send create request command").OnFail("Fail operation").ContinueWith("end")
+                    .Do("Send create request command").OnFail("Fail operation")
+                    .Do("Confirm operation")
+                    .End()
                     .WithBranch()
                         .Do("Fail operation")
-                    .End()
+                        .End()
             );
 
             ValidationNode<SwiftInput>("Swift check")
@@ -104,6 +106,8 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeFailOutput(output => output);
 
             DelegateNode("Fail operation", context => context.Fail());
+
+            DelegateNode("Confirm operation", context => context.Confirm());
 
             DelegateNode<ExchangeOperationsInput>("Send to exchange operations", input => SendToExchangeOperations(input))
                 .WithInput(context => new ExchangeOperationsInput
