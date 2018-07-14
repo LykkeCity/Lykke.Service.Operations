@@ -173,7 +173,7 @@ namespace Lykke.Service.Operations.Workflow
                 (double)input.Volume,
                 input.AssetId,
                 transactionId: input.Id,
-                feeModel: operationFee
+                fee: operationFee
                 ).GetAwaiter().GetResult();
 
             if (result.IsOk())
