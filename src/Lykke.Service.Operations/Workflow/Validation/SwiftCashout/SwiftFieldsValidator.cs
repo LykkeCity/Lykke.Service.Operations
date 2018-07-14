@@ -3,19 +3,22 @@ using FluentValidation;
 using JetBrains.Annotations;
 using Lykke.Service.Operations.Workflow.Data;
 using System;
+using System.Text.RegularExpressions;
 
 namespace Lykke.Service.Operations.Workflow.Validation.SwiftCashout
 {
     [UsedImplicitly]
     public class SwiftFieldsValidator : AbstractValidator<SwiftInput>
     {
+        private readonly Regex _swiftRegex = new Regex("^[a-zA-Z]{6}[a-zA-Z0-9]{2}([a-zA-Z0-9]{3})?$");
+
         public SwiftFieldsValidator()
         {
             RuleFor(m => m.Bic)
                 .Must(bic =>
                 {
                     var code = bic.GetCountryCode();
-                    return code != null && CountryManager.HasIso2(code);
+                    return code != null && _swiftRegex.IsMatch(bic) && CountryManager.HasIso2(code);
                 })
                 .WithErrorCode("InvalidField")
                 .WithMessage("Bic");
