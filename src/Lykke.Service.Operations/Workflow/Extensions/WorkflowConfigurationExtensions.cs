@@ -1,5 +1,6 @@
 ﻿using System;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Core.Extensions;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;

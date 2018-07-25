@@ -11,5 +11,6 @@ namespace Lykke.Service.Operations.Contracts
         public decimal Volume { get; set; }
         public SwiftCashoutClientModel Client { get; set; }
         public SwiftFieldsModel Swift { get; set; }
+        public SwiftCashoutSettingsModel CashoutSettings { get; set; }
     }
 }

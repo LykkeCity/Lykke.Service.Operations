@@ -12,8 +12,17 @@ namespace Lykke.Service.Operations.Workflow.Data
         public string AccHolderAddress { get; set; }
         public string BankName { get; set; }
 
-        public string AccHolderCountry { get; set; }
         public string AccHolderZipCode { get; set; }
         public string AccHolderCity { get; set; }
+    }
+
+    public static class SwiftInputExtensions
+    {
+        public static string GetCountryCode(this string bic)
+        {
+            if (string.IsNullOrWhiteSpace(bic))
+                return null;
+            return bic.Length >= 6 ? bic.Substring(4, 2).ToUpperInvariant() : null;
+        }
     }
 }
