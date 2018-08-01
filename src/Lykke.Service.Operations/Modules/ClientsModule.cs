@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Net.Http;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common.Log;
 using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Balances.Client;
+using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
+using Lykke.Service.BlockchainWallets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
+using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.ExchangeOperations.Client;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Limitations.Client;
@@ -46,6 +50,11 @@ namespace Lykke.Service.Operations.Modules
                 BaseUri = new Uri(_settings.CurrentValue.Assets.ServiceUrl)
             });
 
+            builder.RegisterInstance<IEthereumCoreAPI>(new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl), new HttpClient()));
+            builder.RegisterBlockchainCashoutPreconditionsCheckClient(_settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient, _log);
+            builder.RegisterType<BlockchainWalletsClient>().As<IBlockchainWalletsClient>()
+                .WithParameter("hostUrl", _settings.CurrentValue.BlockchainWalletsServiceClient.ServiceUrl)
+                .WithParameter("log", _log);
             builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl, _log);
             builder.RegisterBalancesClient(_settings.CurrentValue.BalancesServiceClient.ServiceUrl, _log);
             builder.RegisterFeeCalculatorClient(_settings.CurrentValue.FeeCalculatorServiceClient.ServiceUrl, _log);

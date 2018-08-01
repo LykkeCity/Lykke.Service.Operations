@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
+using System.Net.Http;
 using Autofac;
 using Common.Log;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
-using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Operations.Contracts;
@@ -14,9 +14,6 @@ using Lykke.Service.Operations.Contracts.Orders;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Modules;
 using Lykke.Service.Operations.Settings;
-using Lykke.Service.Operations.Settings.Assets;
-using Lykke.Service.Operations.Settings.ServiceSettings;
-using Lykke.Service.Operations.Settings.SlackNotifications;
 using Lykke.Service.Operations.Workflow;
 using Lykke.SettingsReader;
 using Lykke.Workflow;
@@ -29,77 +26,103 @@ namespace Lykke.Service.Operations.Tests
 {
     public class WorkflowTests
     {
-        //[Theory]
-        [InlineData(OperationType.LimitOrder, "LimitOrderWorkflow")]
-        [InlineData(OperationType.MarketOrder, "MarketOrderWorkflow")]
-        public void RunWorkflow(OperationType type, string workflowType)
+        private readonly IContainer _container;
+
+        public WorkflowTests()
         {
             var builder = new ContainerBuilder();
-
             var reloadingManager = new Mock<IReloadingManager<AppSettings>>();
 
-            reloadingManager.Setup(m => m.CurrentValue).Returns(new AppSettings
-            {
-                Transports = new TransportSettings
-                {
-                    ClientRabbitMqConnectionString = "",
-                    MeRabbitMqConnectionString = ""
-                },
-                OperationsService = new OperationsSettings
-                {
-                    Db = new DbSettings
-                    {
-                        HMarketOrdersConnString = ""
-                    },
-                    Services = new ServicesSettings
-                    {
-                        ClientAccountUrl = "http://client-account.lykke-service.svc.cluster.local",
-                        PushNotificationsUrl = "http://push-notifications.lykke-service.svc.cluster.local"
-                    }
-                },
-                Assets = new AssetsSettings
-                {
-                    ServiceUrl = "http://assets.lykke-service.svc.cluster.local"
-                },               
-                RateCalculatorServiceClient = new RateCalculatorSettings
-                {
-                    ServiceUrl = "http://rate-calculator.lykke-service.svc.cluster.local"
-                },
-                BalancesServiceClient = new BalancesSettings
-                {
-                    ServiceUrl = "http://balances.lykke-service.svc.cluster.local"
-                },
-                FeeCalculatorServiceClient = new FeeCalculatorSettings
-                {
-                    ServiceUrl = "http://fee-calculator.lykke-service.svc.cluster.local"
-                },
-                AssetDisclaimersServiceClient = new AssetDisclaimersServiceClientSettings
-                {
-                    ServiceUrl = "http://asset-disclaimers.lykke-service.svc.cluster.local/"
-                },
-                MatchingEngineClient = new MatchingEngineSettings
-                {
-                    IpEndpoint = new IpEndpointSettings
-                    {
-                        Port = 8888,
-                        Host = "me.lykke-me.svc.cluster.local"                  
-                    }
-                },
-                SlackNotifications = new SlackNotificationsSettings()
-            });
+            AppSettings settings;
+            using (var client = new HttpClient())
+            { 
+                var response = client.GetAsync("http://settings.lykke-settings.svc.cluster.local/755d5e98-fe7e-480d-8f14-23e55a90d485_Operations").GetAwaiter().GetResult();
+                settings = JsonConvert.DeserializeObject<AppSettings>(response.Content.ReadAsStringAsync().GetAwaiter().GetResult());
+            }
+
+            reloadingManager.Setup(m => m.CurrentValue).Returns(settings);
 
             builder.RegisterModule(new ServiceModule(reloadingManager.Object, new LogToConsole()));
             builder.RegisterModule(new ClientsModule(reloadingManager.Object, new LogToConsole()));
             builder.Register(ctx => new InMemoryCqrsEngine(Register.BoundedContext("operations")
                 .PublishingEvents(typeof(LimitOrderCreatedEvent), typeof(LimitOrderRejectedEvent)).With("events"))).As<ICqrsEngine>().SingleInstance();
             //builder.RegisterModule(new CqrsModule(reloadingManager.Object, new LogToConsole()));
-            builder.RegisterModule(new WorkflowModule());            
-            
-            var container = builder.Build();
+            builder.RegisterModule(new WorkflowModule());
 
+            _container = builder.Build();
+        }
+
+        //[Fact]
+        public void CashoutWorkflow()
+        {
             var context = new
-            {          
-                Asset = new AssetModel
+            {
+                DestinationAddress = "0x3d893aa6c1baa63f5d29a1108bb63a9b76eab425",
+                DestinationAddressExtension = (string)null,
+                Volume = 0.003m,
+                Asset = new Contracts.Cashout.AssetCashoutModel
+                {
+                    Id = "ETH",                    
+                    DisplayId = "ETH",
+                    MultiplierPower = 18,
+                    AssetAddress = "0x1c4ca817d1c61f9c47ce2bec9d7106393ff981ce",
+                    Accuracy = 6,
+                    Blockchain = "Ethereum",
+                    Type = "Erc20Token",
+                    IsTradable = true,
+                    IsTrusted = true,
+                    KycNeeded = true,                    
+                    BlockchainIntegrationLayerId = "",
+                    CashoutMinimalAmount = 0.0001m,
+                    LowVolumeAmount = 0.0001m
+                },
+                Client = new Contracts.Cashout.ClientCashoutModel
+                {
+                    Id = new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"),
+                    Multisig = "2Mu5mgwReDeKhAd2queTNAhTBMCro1UEyVp",
+                    Balance = 13m,
+                    CashOutBlocked = false,
+                    BackupDone = true,
+                    KycStatus = "Ok"
+                },
+                GlobalSettings = new Contracts.Cashout.GlobalSettingsCashoutModel
+                {
+                    CashOutBlocked = false,
+                    EthereumHotWallet = "0x406561F72e25af10fD28b41200FA3D52badC5A21",                    
+                    FeeSettings = new Contracts.Cashout.FeeSettingsCashoutModel
+                    {
+                        TargetClients = new Dictionary<string, string>()
+                        { 
+                            { "Cashout", "27fe9c28-a18b-4939-8ebf-a70061fbfa05" }                            
+                        }
+                    }
+                }
+            };
+
+            var inputValues = JsonConvert.SerializeObject(context);
+            Trace.WriteLine(JsonConvert.SerializeObject(context, Formatting.Indented));
+
+            var operation = new Operation();
+            operation.Create(Guid.NewGuid(), new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"), OperationType.Cashout, inputValues);
+
+            var wf = _container.ResolveNamed<OperationWorkflow>("CashoutWorkflow", new TypedParameter(typeof(Operation), operation));
+
+            var result = wf.Run(operation);
+
+            Trace.WriteLine(JsonConvert.SerializeObject(operation, Formatting.Indented));
+            Trace.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+            Assert.Equal(WorkflowState.Complete, result.State);
+            Assert.Equal(OperationStatus.Created, operation.Status);
+        }
+
+        [Theory]
+        [InlineData(OperationType.LimitOrder, "LimitOrderWorkflow")]
+        [InlineData(OperationType.MarketOrder, "MarketOrderWorkflow")]
+        public void RunWorkflow(OperationType type, string workflowType)
+        {
+            var context = new
+            {
+                Asset = new
                 {
                     Id = "BTC",
                     Accuracy = 8,
@@ -109,10 +132,10 @@ namespace Lykke.Service.Operations.Tests
                     LykkeEntityId = "LYKKEUK",
                     Blockchain = "Bitcoin"
                 },
-                AssetPair = new AssetPairModel
+                AssetPair = new
                 {
                     Id = "BTCUSD",
-                    BaseAsset = new AssetModel
+                    BaseAsset = new
                     {
                         Id = "BTC",
                         Accuracy = 8,
@@ -122,7 +145,7 @@ namespace Lykke.Service.Operations.Tests
                         LykkeEntityId = "LYKKEUK",
                         Blockchain = "Bitcoin"
                     },
-                    QuotingAsset = new AssetModel
+                    QuotingAsset = new
                     {
                         Id = "USD",
                         Accuracy = 2,
@@ -138,7 +161,7 @@ namespace Lykke.Service.Operations.Tests
                 Volume = 1000000000,
                 Price = 6000,
                 OrderAction = OrderAction.Buy,
-                Client = new ClientModel
+                Client = new
                 {
                     Id = new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"),
                     TradesBlocked = false,
@@ -151,17 +174,17 @@ namespace Lykke.Service.Operations.Tests
                         CountryFromPOA = "RUS",
                     }
                 },
-                GlobalSettings = new GlobalSettingsModel
+                GlobalSettings = new
                 {
-                    BlockedAssetPairs = new[] {"BTCEUR"},
+                    BlockedAssetPairs = new[] { "BTCEUR" },
                     BitcoinBlockchainOperationsDisabled = false,
                     BtcOperationsDisabled = false,
-                    IcoSettings = new IcoSettingsModel
+                    IcoSettings = new
                     {
-                        RestrictedCountriesIso3 = new[] {"USA"},
+                        RestrictedCountriesIso3 = new[] { "USA" },
                         LKK2YAssetId = "LKK2Y"
                     },
-                    FeeSettings = new FeeSettingsModel
+                    FeeSettings = new
                     {
                         FeeEnabled = true,
                         TargetClientId = "e3fa1d1e-8e7a-44e0-a666-a442bc35515c"
@@ -169,15 +192,13 @@ namespace Lykke.Service.Operations.Tests
                 }
             };
 
+            var inputValues = JsonConvert.SerializeObject(context);
             Trace.WriteLine(JsonConvert.SerializeObject(context, Formatting.Indented));
 
             var operation = new Operation();
+            operation.Create(Guid.NewGuid(), new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"), type, inputValues);
 
-            var inputValues = JsonConvert.SerializeObject(context);
-
-            operation.Create(Guid.NewGuid(), new Guid("27fe9c28-a18b-4939-8ebf-a70061fbfa05"), type, inputValues);                        
-
-            var wf = container.ResolveNamed<OperationWorkflow>(workflowType, new TypedParameter(typeof(Operation), operation));            
+            var wf = _container.ResolveNamed<OperationWorkflow>(workflowType, new TypedParameter(typeof(Operation), operation));
 
             var result = wf.Run(operation);
 
@@ -186,6 +207,6 @@ namespace Lykke.Service.Operations.Tests
             Assert.Equal(WorkflowState.Complete, result.State);
             Assert.Equal(OperationStatus.Accepted, operation.Status);
         }
-    }
+    }    
 }
 

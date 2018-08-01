@@ -20,7 +20,7 @@ namespace Lykke.Service.Operations.Workflow
         {            
             Configure(cfg => 
                 cfg
-                    .Do("Client validation").OnFail("Fail operation")                                        
+                    .Do("Client validation").OnFail("Fail operation")
                     .Do("Asset validation").OnFail("Fail operation")
                     .Do("Asset pair validation").OnFail("Fail operation")
                     .Do("AssetPair: base asset kyc validation").OnFail("Fail operation")
@@ -53,7 +53,7 @@ namespace Lykke.Service.Operations.Workflow
             ValidationNode<ClientInput>("Client validation")
                 .WithInput(context => new ClientInput
                 {
-                    TradesBlocked = context.OperationValues.Client.TradesBlocked,
+                    OperationsBlocked = context.OperationValues.Client.TradesBlocked,
                     BackupDone = context.OperationValues.Client.BackupDone
                 })
                 .MergeFailOutput(output => output);

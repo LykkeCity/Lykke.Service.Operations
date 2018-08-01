@@ -7,6 +7,7 @@ using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Abstractions.Models;
 using Lykke.Service.ExchangeOperations.Client;
 using Lykke.Service.FeeCalculator.Client;
+using Lykke.Service.Limitations.Client;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Exceptions;
@@ -110,7 +111,8 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     ClientId = context.OperationValues.Client.Id,
                     AssetId = context.OperationValues.Asset.Id,
-                    Volume = context.OperationValues.Volume
+                    Volume = context.OperationValues.Volume,
+                    OperationType = CurrencyOperationType.SwiftTransferOut
                 })
                 .MergeFailOutput(output => output);
 

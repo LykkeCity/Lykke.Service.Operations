@@ -10,6 +10,7 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
@@ -226,6 +227,32 @@ namespace Lykke.Service.Operations.Controllers
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
             await HandleWorkflow("SwiftCashoutWorkflow", operation);
+
+            return Created(Url.Action("Get", "Operations", new { id }), id);
+        }
+
+        [HttpPost]
+        [Route("cashout/{id}")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
+            if (!ModelState.IsValid)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+            
+            operation = new Operation();
+            operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
+
+            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
+
+            await HandleWorkflow("CashoutWorkflow", operation);
 
             return Created(Url.Action("Get", "Operations", new { id }), id);
         }

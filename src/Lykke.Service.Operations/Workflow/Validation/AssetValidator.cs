@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using JetBrains.Annotations;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.Operations.Workflow.Data;
 
 namespace Lykke.Service.Operations.Workflow.Validation
@@ -9,12 +10,16 @@ namespace Lykke.Service.Operations.Workflow.Validation
     {
         public AssetValidator()
         {
-            RuleFor(m => m.IsTradable)
-                .Equal(true)
+            RuleFor(m => m.Id)                
+                .Must((input, id) => input.IsTradable)
+                .WithName("AssetId")
+                .WithErrorCode("InvalidInputField")
                 .WithMessage(asset => $"Asset '{asset.DisplayId}' must be tradable");
 
-            RuleFor(m => m.IsTrusted)
-                .Equal(true)
+            RuleFor(m => m.Id)
+                .Must((input, id) => input.IsTrusted)
+                .WithName("AssetId")
+                .WithErrorCode("InvalidInputField")
                 .WithMessage(asset => $"Asset '{asset.DisplayId}' must be trusted");
         }
     }

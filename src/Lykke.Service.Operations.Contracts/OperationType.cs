@@ -10,6 +10,7 @@
         MarketOrder,
         LimitOrder,
         NewOrder,
-        CashoutSwift
+        CashoutSwift,
+        Cashout
     }
 }

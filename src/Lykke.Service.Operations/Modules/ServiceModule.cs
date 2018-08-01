@@ -6,9 +6,13 @@ using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.MongoRepositories;
 using Lykke.Service.Operations.Services;
+using Lykke.Service.Operations.Services.Blockchain;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.Operations.Workflow;
+using Lykke.Service.Operations.Workflow.Validation;
 using Lykke.SettingsReader;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Redis;
 
 namespace Lykke.Service.Operations.Modules
 {
@@ -46,6 +50,26 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterInstance<ILimitOrdersRepository>(
                 new LimitOrdersRepository(AzureTableStorage<LimitOrderEntity>.Create(_settings.ConnectionString(x => x.OperationsService.Db.HMarketOrdersConnString),
                     "LimitOrders", _log)));
+
+            builder.RegisterType<SrvBlockchainValidations>().SingleInstance();
+            builder.RegisterType<EthereumFacade>().As<IEthereumFacade>().SingleInstance();
+            builder.RegisterType<SrvNinjaBlockChainReader>()
+                .WithParameter("url", _settings.CurrentValue.NinjaServiceClient.ServiceUrl)
+                .As<ISrvBlockchainReader>()
+                .SingleInstance();
+
+            builder.RegisterType<BlockchainAddress>().SingleInstance();
+            builder.RegisterType<AddressExtensionsCache>()
+                .WithParameter("cacheTime", _settings.CurrentValue.OperationsService.BlockchainAddressCacheExpiration)
+                .SingleInstance();
+
+            var redis = new RedisCache(new RedisCacheOptions
+            {
+                Configuration = _settings.CurrentValue.RedisSettings.Configuration,
+                InstanceName = "FinanceDataCacheInstance"
+            });
+
+            builder.RegisterInstance(redis).As<IDistributedCache>().SingleInstance();
         }
     }
 }

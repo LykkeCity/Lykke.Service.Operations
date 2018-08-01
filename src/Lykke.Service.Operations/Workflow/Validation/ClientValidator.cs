@@ -9,13 +9,15 @@ namespace Lykke.Service.Operations.Workflow.Validation
     {
         public ClientValidator()
         {
-            RuleFor(m => m.TradesBlocked)
+            RuleFor(m => m.OperationsBlocked)
                 .Equal(false)
-                .WithMessage("Trades are blocked.");
+                .WithErrorCode("InconsistentData")
+                .WithMessage("Operations are blocked");
 
             RuleFor(m => m.BackupDone)                
                 .Equal(true)
-                .WithMessage("Wallet requires backup.");            
+                .WithErrorCode("BackupRequired")
+                .WithMessage("To ensure the safety of your funds, you must back up your private key before proceeding");
         }
     }
 }
