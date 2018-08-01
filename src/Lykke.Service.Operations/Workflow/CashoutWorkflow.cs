@@ -6,6 +6,7 @@ using Lykke.Common.Log;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client.Models;
 using Lykke.Service.ExchangeOperations.Client;
+using Lykke.Service.ExchangeOperations.Contracts.Fee;
 using Lykke.Service.FeeCalculator.AutorestClient.Models;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Limitations.Client;
