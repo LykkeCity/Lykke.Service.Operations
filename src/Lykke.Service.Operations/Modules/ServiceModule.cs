@@ -1,10 +1,11 @@
 ﻿using Autofac;
+using AzureStorage.Queue;
 using AzureStorage.Tables;
 using Common.Log;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Core.Services;
-using Lykke.Service.Operations.MongoRepositories;
+using Lykke.Service.Operations.Repositories;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Services.Blockchain;
 using Lykke.Service.Operations.Settings;
@@ -50,6 +51,8 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterInstance<ILimitOrdersRepository>(
                 new LimitOrdersRepository(AzureTableStorage<LimitOrderEntity>.Create(_settings.ConnectionString(x => x.OperationsService.Db.HMarketOrdersConnString),
                     "LimitOrders", _log)));
+            
+            builder.RegisterType<WorkflowService>().As<IWorkflowService>().SingleInstance();
 
             builder.RegisterType<SrvBlockchainValidations>().SingleInstance();
             builder.RegisterType<EthereumFacade>().As<IEthereumFacade>().SingleInstance();
@@ -57,6 +60,9 @@ namespace Lykke.Service.Operations.Modules
                 .WithParameter("url", _settings.CurrentValue.NinjaServiceClient.ServiceUrl)
                 .As<ISrvBlockchainReader>()
                 .SingleInstance();
+
+            builder.RegisterInstance<ISrvSolarCoinCommandProducer>(
+                new SrvSolarCoinCommandProducer(AzureQueueExt.Create(_settings.ConnectionString(x => x.OperationsService.Db.SolarCoinConnString), "solar-out")));
 
             builder.RegisterType<BlockchainAddress>().SingleInstance();
             builder.RegisterType<AddressExtensionsCache>()

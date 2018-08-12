@@ -1,4 +1,4 @@
-﻿using Lykke.MatchingEngine.Connector.Abstractions.Models;
+﻿using Lykke.MatchingEngine.Connector.Models.Api;
 
 namespace Lykke.Service.Operations.Workflow.Extensions
 {

@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Cqrs;
-using Lykke.MatchingEngine.Connector.Abstractions.Models;
+using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.ExchangeOperations.Client;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Limitations.Client;

@@ -6,10 +6,18 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
+using Lykke.Job.BlockchainCashoutProcessor.Contract;
+using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
+using Lykke.Job.BlockchainOperationsExecutor.Contract;
+using Lykke.Job.BlockchainOperationsExecutor.Contract.Events;
 using Lykke.Messaging;
 using Lykke.Messaging.RabbitMq;
+using Lykke.Service.FeeCalculator.AutorestClient.Models;
 using Lykke.Service.Operations.Contracts.Events;
+using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Settings;
+using Lykke.Service.Operations.Workflow.Sagas;
+using Lykke.Service.PostProcessing.Contracts.Cqrs.Events;
 using Lykke.Service.SwiftWithdrawal.Contracts;
 using Lykke.SettingsReader;
 
@@ -28,17 +36,33 @@ namespace Lykke.Service.Operations.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            Messaging.Serialization.MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
-            var rabbitMqSagasSettings = new RabbitMQ.Client.ConnectionFactory { Uri = _settings.CurrentValue.SagasRabbitMq.RabbitConnectionString };
-            var rabbitMqSettings = new RabbitMQ.Client.ConnectionFactory { Uri = _settings.CurrentValue.Transports.ClientRabbitMqConnectionString };
+            Messaging.Serialization.MessagePackSerializerFactory.Defaults.FormatterResolver =
+                MessagePack.Resolvers.ContractlessStandardResolver.Instance;
+            var rabbitMqSagasSettings = new RabbitMQ.Client.ConnectionFactory
+            {
+                Uri = _settings.CurrentValue.SagasRabbitMq.RabbitConnectionString
+            };
+            var rabbitMqSettings = new RabbitMQ.Client.ConnectionFactory
+            {
+                Uri = _settings.CurrentValue.Transports.ClientRabbitMqConnectionString
+            };
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>();
+
+            builder.RegisterType<MeHandler>().SingleInstance();
+            builder.RegisterType<WorkflowCommandHandler>().SingleInstance();
+
+            builder.RegisterType<MeSaga>().SingleInstance();
+            builder.RegisterType<BlockchainCashoutSaga>().SingleInstance();
 
             var messagingEngine = new MessagingEngine(_log,
                 new TransportResolver(new Dictionary<string, TransportInfo>
                 {
-                    { "SagasRabbitMq", new TransportInfo(rabbitMqSagasSettings.Endpoint.ToString(), rabbitMqSagasSettings.UserName, rabbitMqSagasSettings.Password, "None", "RabbitMq") },
-                    { "ClientRabbitMq", new TransportInfo(rabbitMqSettings.Endpoint.ToString(), rabbitMqSettings.UserName, rabbitMqSettings.Password, "None", "RabbitMq") }
+                    {
+                        "SagasRabbitMq",
+                        new TransportInfo(rabbitMqSagasSettings.Endpoint.ToString(), rabbitMqSagasSettings.UserName,
+                            rabbitMqSagasSettings.Password, "None", "RabbitMq")
+                    }                    
                 }),
                 new RabbitMqTransportFactory());
 
@@ -48,9 +72,9 @@ namespace Lykke.Service.Operations.Modules
                 environment: "lykke",
                 exclusiveQueuePostfix: "k8s");
 
-            var clientEndpointResolver = new RabbitMqConventionEndpointResolver(
-                "ClientRabbitMq",
-                "messagepack",
+            var sagasProtobufEndpointResolver = new RabbitMqConventionEndpointResolver(
+                "SagasRabbitMq",
+                "protobuf",
                 environment: "lykke",
                 exclusiveQueuePostfix: "k8s");
 
@@ -61,21 +85,55 @@ namespace Lykke.Service.Operations.Modules
                         messagingEngine,
                         new DefaultEndpointProvider(),
                         true,
-                        Register.DefaultEndpointResolver(clientEndpointResolver),
+                        Register.DefaultEndpointResolver(sagasEndpointResolver),
 
                         Register.BoundedContext("operations")
-                            .PublishingEvents(typeof(LimitOrderCreatedEvent), typeof(LimitOrderRejectedEvent), typeof(OperationCreatedEvent)).With("events"),
+                            .ListeningCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).On("commands")
+                                .WithCommandsHandler<WorkflowCommandHandler>()
+                            .PublishingEvents(
+                                typeof(LimitOrderCreatedEvent),
+                                typeof(LimitOrderRejectedEvent),
+                                typeof(OperationCreatedEvent),
+                                typeof(ExternalExecutionActivityCreatedEvent))                            
+                            .With("events"),
 
                         Register.BoundedContext(SwiftWithdrawalBoundedContext.Name)
-                            .PublishingCommands(typeof(SwiftCashoutCreateCommand))
-                            .To(SwiftWithdrawalBoundedContext.Name)
-                            .With("commands")
-                            .WithEndpointResolver(sagasEndpointResolver));
+                            .PublishingCommands(typeof(SwiftCashoutCreateCommand))                            
+                            .To(SwiftWithdrawalBoundedContext.Name)                            
+                            .With("commands"),
 
+                        Register.BoundedContext("me")
+                            .ListeningCommands(typeof(MeCashoutCommand)).On("commands")
+                                .WithCommandsHandler(ctx.Resolve<MeHandler>())
+                            .PublishingEvents(typeof(MeCashoutFailedEvent)).With("events"),
+
+                        Register.Saga<MeSaga>("me-saga")
+                            .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent))
+                                .From("operations").On("events")                            
+                            .ListeningEvents(typeof(CashOutProcessedEvent))
+                                .From("post-processing").On("events")
+                                .WithEndpointResolver(sagasProtobufEndpointResolver)
+                            .ListeningEvents(typeof(MeCashoutFailedEvent))
+                                .From("me").On("events")
+                            .PublishingCommands(typeof(MeCashoutCommand))
+                                .To("me").With("commands")
+                            .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand))
+                                .To("operations").With("commands"),
+
+                        Register.Saga<BlockchainCashoutSaga>("blockchain-cashout-saga")
+                            .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent))
+                                .From("operations").On("events")
+                            .ListeningEvents(typeof(OperationExecutionCompletedEvent), typeof(OperationExecutionFailedEvent))
+                                .From(BlockchainOperationsExecutorBoundedContext.Name).On("events")
+                            .PublishingCommands(typeof(StartCashoutCommand))
+                                .To(BlockchainCashoutProcessorBoundedContext.Name).With("commands")
+                            .PublishingCommands(typeof(CompleteActivityCommand))
+                                .To("operations").With("commands")
+                    );
                 })
-            .As<ICqrsEngine>()
-            .SingleInstance()
-            .AutoActivate();
+                .As<ICqrsEngine>()
+                .SingleInstance()
+                .AutoActivate();
         }
 
         internal class AutofacDependencyResolver : IDependencyResolver
@@ -97,5 +155,18 @@ namespace Lykke.Service.Operations.Modules
                 return _context.IsRegistered(type);
             }
         }
+    }
+
+    public class MeCashoutCommand
+    {
+        public Guid OperationId { get; set; }
+        public Guid RequestId { get; set; }        
+        public string ClientId { get; set; }
+        public string AssetId { get; set; }
+        public int AssetAccuracy { get; set; }
+        public decimal Amount { get; set; }
+        public string FeeClientId { get; set; }
+        public double FeeSize { get; set; }
+        public FeeType FeeType { get; set; }
     }
 }

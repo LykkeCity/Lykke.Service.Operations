@@ -9,7 +9,7 @@ namespace Lykke.Service.Operations.Settings.ServiceSettings
 
         public ServicesSettings Services { get; set; }
 
-        public TimeSpan BlockchainAddressCacheExpiration { get; set; }
+        public TimeSpan BlockchainAddressCacheExpiration { get; set; }        
     }
 
     public class ServicesSettings

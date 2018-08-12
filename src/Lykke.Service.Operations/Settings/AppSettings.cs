@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using JetBrains.Annotations;
 using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
 using Lykke.Service.EthereumCore.Client;
@@ -24,7 +25,7 @@ namespace Lykke.Service.Operations.Settings
         public MatchingEngineSettings MatchingEngineClient { set; get; }
         public TransportSettings Transports { get; set; }
         public AssetDisclaimersServiceClientSettings AssetDisclaimersServiceClient { get; set; }
-        public ExchangeOperationsServiceClientSettings ExchangeOperationsServiceClient { get; set; }
+        public ExchangeOperationsServiceClientSettings ExchangeOperationsServiceClient { get; set; }        
 
         public SagasRabbitMq SagasRabbitMq { get; set; }
         public NinjaClientSettings NinjaServiceClient { get; set; }
@@ -33,6 +34,13 @@ namespace Lykke.Service.Operations.Settings
 
         public BlockchainCashoutPreconditionsCheckServiceClientSettings BlockchainCashoutPreconditionsCheckServiceClient { get; set; }
         public EthereumServiceClientSettings EthereumServiceClient { get; set; }
+    }
+    
+    public class RabbitMqSettings
+    {
+        [AmqpCheck]
+        public string ConnectionString { get; set; }
+        public string Exchange { get; set; }
     }
 
     public class RedisSettings

@@ -10,7 +10,7 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Driver;
 
-namespace Lykke.Service.Operations.MongoRepositories
+namespace Lykke.Service.Operations.Repositories
 {
     public class MongoRepository<T> where T : class, IHasId
     {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -14,6 +15,7 @@ using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
+using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
@@ -36,6 +38,7 @@ namespace Lykke.Service.Operations.Controllers
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
+        private readonly IWorkflowService _workflowService;
         private readonly ICqrsEngine _cqrsEngine;
         private readonly ILog _log;
         private readonly IMapper _mapper;
@@ -46,6 +49,7 @@ namespace Lykke.Service.Operations.Controllers
             IPushNotificationsAPI pushNotificationsApi,
             IAssetsServiceWithCache assetsServiceWithCache,
             Func<string, Operation, OperationWorkflow> workflowFactory,
+            IWorkflowService workflowService,
             ICqrsEngine cqrsEngine,
             ILog log,
             IMapper mapper)
@@ -55,6 +59,7 @@ namespace Lykke.Service.Operations.Controllers
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
             _workflowFactory = workflowFactory;
+            _workflowService = workflowService;
             _cqrsEngine = cqrsEngine;
             _log = log;
             _mapper = mapper;
@@ -289,7 +294,7 @@ namespace Lykke.Service.Operations.Controllers
                     modelState.AddModelError(errorCode, errorMessage);
 
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
-            }
+            }            
         }
 
         [HttpPost]
@@ -423,7 +428,7 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("confirm/{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task Confirm(Guid id)
+        public async Task Confirm(Guid id, ConfirmationCommand cmd)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -436,23 +441,42 @@ namespace Lykke.Service.Operations.Controllers
             if (operation.Status == OperationStatus.Confirmed)
                 return;
 
-            if (operation.Status != OperationStatus.Created) // todo: accepted?
+            if (operation.Status != OperationStatus.Created && operation.Status != OperationStatus.Accepted) // todo: accepted?
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be confirmed"));
-
-            operation.OperationValues = JObject.Parse(operation.Context);
-
+            
             switch (operation.Type)
             {
-                case OperationType.MarketOrder:
-                    await HandleWorkflow("MarketOrderWorkflow", operation);
-                    break;
-                case OperationType.LimitOrder:
-                    await HandleWorkflow("LimitOrderWorkflow", operation);
-                    break;
+                case OperationType.Cashout:
+                    var activityId = operation.GetConfirmationActivity().ActivityId;
+                    var activityOutput = JObject.FromObject(new { cmd.SignedMessage });
+                    var wfState = await _workflowService.CompleteActivity(operation, activityId, activityOutput);
+
+                    if (wfState == WorkflowState.InProgress)
+                    {
+                        var executingActivity = operation.Activities.Single(a => a.IsExecuting);
+
+                        _cqrsEngine.PublishEvent(new ExternalExecutionActivityCreatedEvent
+                        {
+                            Id = executingActivity.ActivityId,
+                            Type = executingActivity.Type,
+                            Input = executingActivity.Input
+                        }, "operations");
+                    }
+                    else if (wfState == WorkflowState.Complete)
+                    {
+                        if (operation.Status == OperationStatus.Failed)                        
+                            throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", operation.OperationValues.ErrorMessage?.ToString()));
+                    }
+                    break;                
                 default:
                     await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
                     break;
             }
-        }
+        }        
+    }
+
+    public class ConfirmationCommand
+    {
+        public string SignedMessage { get; set; }
     }
 }

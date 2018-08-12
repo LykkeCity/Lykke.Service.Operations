@@ -29,7 +29,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.Operations", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.Operations.Contracts", "src\Lykke.Service.Operations.Contracts\Lykke.Service.Operations.Contracts.csproj", "{F31EB775-A9A9-471D-A500-26AE3CF8C806}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lykke.Service.Operations.MongoRepositories", "src\Lykke.Service.Operations.MongoRepositories\Lykke.Service.Operations.MongoRepositories.csproj", "{93E6263A-B917-4B2C-9AC8-15727AE7EF69}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.Operations.Repositories", "src\Lykke.Service.Operations.MongoRepositories\Lykke.Service.Operations.Repositories.csproj", "{93E6263A-B917-4B2C-9AC8-15727AE7EF69}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

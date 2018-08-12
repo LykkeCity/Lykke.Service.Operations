@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Commands;
 using Xunit;
 
 namespace Lykke.Service.Operations.Tests

@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using Lykke.Service.Operations.Core.Repositories;
 
-namespace Lykke.Service.Operations.MongoRepositories
+namespace Lykke.Service.Operations.Repositories
 {
     public class LimitOrderEntity : BaseEntity, ILimitOrder
     {

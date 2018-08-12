@@ -1,6 +1,6 @@
 ﻿using Lykke.Service.Operations.Contracts.SwiftCashout;
 
-namespace Lykke.Service.Operations.Contracts
+namespace Lykke.Service.Operations.Contracts.Commands
 {
     /// <summary>
     /// Command to create swift cashout

@@ -1,4 +1,4 @@
-﻿using Lykke.MatchingEngine.Connector.Abstractions.Models;
+﻿using Lykke.MatchingEngine.Connector.Models.Api;
 using OrderAction = Lykke.Service.Operations.Contracts.Orders.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow.Data

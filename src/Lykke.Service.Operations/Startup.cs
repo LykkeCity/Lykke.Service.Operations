@@ -72,7 +72,7 @@ namespace Lykke.Service.Operations
                 builder.RegisterModule(new ClientsModule(appSettings, Log));
                 builder.RegisterModule(new CqrsModule(appSettings, Log));
                 builder.RegisterModule(new WorkflowModule());
-                builder.RegisterModule(new MongoDbModule(appSettings.Nested(x => x.OperationsService.Db)));
+                builder.RegisterModule(new DbModule(appSettings.Nested(x => x.OperationsService.Db), Log));
                 builder.RegisterModule<AutoMapperModules>();
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();

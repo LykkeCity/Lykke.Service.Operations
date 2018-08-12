@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Lykke.Service.Operations.Contracts
+namespace Lykke.Service.Operations.Contracts.Commands
 {
     public class CreateNewOrderCommand : IValidatableObject
     {

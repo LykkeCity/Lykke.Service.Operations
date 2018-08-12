@@ -1,11 +1,12 @@
 ﻿using System;
 using Lykke.Workflow;
+using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Core.Domain
 {
     public class OperationActivity
     {
-        public OperationActivity(Guid? activityId, string name, string type, string input)
+        public OperationActivity(Guid activityId, string name, string type, string input)
         {
             ActivityId = activityId;
             Name = name;
@@ -15,7 +16,7 @@ namespace Lykke.Service.Operations.Core.Domain
             Created = DateTime.UtcNow;
         }
 
-        public Guid? ActivityId { get; private set; }
+        public Guid ActivityId { get; private set; }
         public string Name { get; private set; }
         public string Input { get; private set; }
         public string Output { get; internal set; }
@@ -25,5 +26,11 @@ namespace Lykke.Service.Operations.Core.Domain
         public ActivityResult Status { get; internal set; }
         public bool IsExecutedExternally { get; internal set; }
         public bool IsExecuting { get; set; }
+
+        public void Complete(JObject outputValues)
+        {
+            Output = outputValues.ToString();
+            Status = ActivityResult.Succeeded;
+        }
     }
 }

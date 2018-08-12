@@ -1,4 +1,8 @@
 ﻿using Autofac;
+using AzureStorage;
+using AzureStorage.Tables;
+using Common.Log;
+using Lykke.Service.Operations.Repositories;
 using Lykke.Service.Operations.Settings.ServiceSettings;
 using Lykke.SettingsReader;
 using MongoDB.Bson.Serialization.Conventions;
@@ -6,13 +10,15 @@ using MongoDB.Driver;
 
 namespace Lykke.Service.Operations.Modules
 {
-    public class MongoDbModule : Module
+    public class DbModule : Module
     {
         private readonly IReloadingManager<DbSettings> _dbSettings;
+        private readonly ILog _log;
 
-        public MongoDbModule(IReloadingManager<DbSettings> dbSettings)
+        public DbModule(IReloadingManager<DbSettings> dbSettings, ILog log)
         {
             _dbSettings = dbSettings;
+            _log = log;
         }
 
         protected override void Load(ContainerBuilder builder)
@@ -22,6 +28,9 @@ namespace Lykke.Service.Operations.Modules
 
             var database = new MongoClient(mongoUrl).GetDatabase(mongoUrl.DatabaseName);
             builder.RegisterInstance(database);
+
+            builder.Register(ctx => AzureTableStorage<RecoveryTokenLevel1Entity>.Create(_dbSettings.ConnectionString(db => db.ClientPersonalInfoConnString), "RecoveryTokens", _log));
+            builder.RegisterType<RecoveryTokensRepository>().As<IRecoveryTokensRepository>().SingleInstance();
         }
     }
 }

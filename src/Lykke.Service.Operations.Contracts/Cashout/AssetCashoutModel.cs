@@ -15,5 +15,6 @@
         public string BlockchainIntegrationLayerId { get; set; }
         public decimal CashoutMinimalAmount { get; set; }
         public decimal LowVolumeAmount { get; set; }
+        public bool BlockchainWithdrawal { get; set; }
     }
 }
