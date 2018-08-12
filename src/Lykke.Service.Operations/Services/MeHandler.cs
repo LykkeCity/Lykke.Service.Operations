@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.MatchingEngine.Connector.Models.Api;
-using Lykke.Service.ExchangeOperations.Client;
-using Lykke.Service.ExchangeOperations.Contracts.Fee;
-using Lykke.Service.Operations.Core.Extensions;
 using Lykke.Service.Operations.Modules;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 
