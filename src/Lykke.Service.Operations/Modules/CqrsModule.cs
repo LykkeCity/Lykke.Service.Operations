@@ -11,6 +11,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 using Lykke.Job.BlockchainOperationsExecutor.Contract.Events;
 using Lykke.Messaging;
+using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Service.FeeCalculator.AutorestClient.Models;
 using Lykke.Service.Operations.Contracts.Events;
@@ -57,17 +58,17 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterType<MeSaga>().SingleInstance();
             builder.RegisterType<BlockchainCashoutSaga>().SingleInstance();
 
-            var messagingEngine = new MessagingEngine(_log,
+            builder.RegisterInstance(new MessagingEngine(_log,
                 new TransportResolver(new Dictionary<string, TransportInfo>
                 {
                     {
                         "SagasRabbitMq",
                         new TransportInfo(rabbitMqSagasSettings.Endpoint.ToString(), rabbitMqSagasSettings.UserName,
                             rabbitMqSagasSettings.Password, "None", "RabbitMq")
-                    }                    
+                    }
                 }),
-                new RabbitMqTransportFactory());
-
+                new RabbitMqTransportFactory())).As<IMessagingEngine>();
+          
             var sagasEndpointResolver = new RabbitMqConventionEndpointResolver(
                 "SagasRabbitMq",
                 "messagepack",
@@ -84,7 +85,7 @@ namespace Lykke.Service.Operations.Modules
                 {
                     return new CqrsEngine(_log,
                         ctx.Resolve<IDependencyResolver>(),
-                        messagingEngine,
+                        ctx.Resolve<IMessagingEngine>(),
                         new DefaultEndpointProvider(),
                         true,
                         Register.DefaultEndpointResolver(sagasEndpointResolver),
