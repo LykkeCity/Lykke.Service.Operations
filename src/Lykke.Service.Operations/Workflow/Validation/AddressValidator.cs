@@ -43,14 +43,14 @@ namespace Lykke.Service.Operations.Workflow.Validation
                     {
                         return !string.IsNullOrWhiteSpace(input.DestinationAddress) &&
                                await IsValidCashoutAddress(input.AssetId, input.AssetBlockchain,
-                                   input.DestinationAddress, input.Multisig);
+                                   input.DestinationAddress);
                     })
                     .WithErrorCode("InvalidInputField")
                     .WithMessage("Invalid address");
             });
         }
 
-        private async Task<bool> IsValidCashoutAddress(string assetId, string assetBlockchain, string destinationAddress, string multisig)
+        private async Task<bool> IsValidCashoutAddress(string assetId, string assetBlockchain, string destinationAddress)
         {
             if (assetId == LykkeConstants.SolarAssetId)
                 return SolarCoinAddress.IsValid(destinationAddress);
@@ -65,7 +65,7 @@ namespace Lykke.Service.Operations.Workflow.Validation
 
             if (assetBlockchain == "Bitcoin")
             {
-                var result = await _srvBlockchainValidations.IsValidAddressToCashout(multisig, LykkeConstants.BitcoinAssetId != assetId, destinationAddress);
+                var result = await _srvBlockchainValidations.IsValidAddressToCashout(LykkeConstants.BitcoinAssetId != assetId, destinationAddress);
 
                 if (result == ValidationErrors.None)
                     return true;
@@ -199,17 +199,14 @@ namespace Lykke.Service.Operations.Workflow.Validation
             _srvBlockchainReader = srvBlockchainReader;            
         }
 
-        public async Task<ValidationErrors> IsValidAddressToCashout(string multisig, bool isColoredCashOut, string destinationAddress)
+        public async Task<ValidationErrors> IsValidAddressToCashout(bool isColoredCashOut, string destinationAddress)
         {
             if (!await _srvBlockchainReader.IsValidAddress(destinationAddress, enableColored: true))
                 return ValidationErrors.InvalidAddress;
 
             if (isColoredCashOut && !await _srvBlockchainReader.IsColoredAddress(destinationAddress))
                 return ValidationErrors.ColoredAddressExpected;
-
-            if (await _srvBlockchainReader.GetUncoloredAdress(destinationAddress) == multisig)
-                return ValidationErrors.SameSourceAsDestination;
-
+            
             return ValidationErrors.None;
         }
     }
@@ -218,8 +215,7 @@ namespace Lykke.Service.Operations.Workflow.Validation
     {
         None,
         InvalidAddress,
-        ColoredAddressExpected,
-        SameSourceAsDestination
+        ColoredAddressExpected       
     }
 
     public interface IEthereumFacade

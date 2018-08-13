@@ -120,7 +120,6 @@ namespace Lykke.Service.Operations.Workflow
                     AssetBlockchain = context.OperationValues.Asset.Blockchain,
                     DestinationAddress = context.OperationValues.DestinationAddress,
                     BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId,
-                    Multisig = context.OperationValues.Client.Multisig
                 })
                 .MergeFailOutput(output => output);
 
@@ -276,7 +275,7 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new CashoutMeInput
                 {
                     OperationId = context.Id,
-                    ClientId = context.OperationValues.Client.Id,                    
+                    ClientId = context.OperationValues.Client.Id,
                     Volume = context.OperationValues.Volume,
                     AssetId = context.OperationValues.Asset.Id,
                     AssetAccuracy = context.OperationValues.Asset.Accuracy,

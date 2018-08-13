@@ -100,8 +100,7 @@ namespace Lykke.Service.Operations.Tests
                 Client = new Contracts.Cashout.ClientCashoutModel
                 {
                     Id = new Guid("1a5f673a-c8a9-4cef-bcc8-3f5aa30a12bb"),
-                    BitcoinAddress = "16DVQXimrww3tRmEJwFN6kwrBygK753zEj",
-                    Multisig = "2N1bCpdgw75iA9KMuH7SpdETsn7iaLNrbfN",
+                    BitcoinAddress = "16DVQXimrww3tRmEJwFN6kwrBygK753zEj",                    
                     Balance = 13m,
                     CashOutBlocked = false,
                     BackupDone = true,

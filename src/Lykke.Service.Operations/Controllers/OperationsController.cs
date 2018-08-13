@@ -10,6 +10,7 @@ using Lykke.Cqrs;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
+using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
@@ -41,6 +42,7 @@ namespace Lykke.Service.Operations.Controllers
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
         private readonly IWorkflowService _workflowService;
         private readonly ICqrsEngine _cqrsEngine;
+        private readonly EthereumServiceClientSettings _ethereumServiceClientSettings;
         private readonly ILog _log;
         private readonly IMapper _mapper;
 
@@ -52,6 +54,7 @@ namespace Lykke.Service.Operations.Controllers
             Func<string, Operation, OperationWorkflow> workflowFactory,
             IWorkflowService workflowService,
             ICqrsEngine cqrsEngine,
+            EthereumServiceClientSettings ethereumServiceClientSettings,
             ILog log,
             IMapper mapper)
         {
@@ -62,6 +65,7 @@ namespace Lykke.Service.Operations.Controllers
             _workflowFactory = workflowFactory;
             _workflowService = workflowService;
             _cqrsEngine = cqrsEngine;
+            _ethereumServiceClientSettings = ethereumServiceClientSettings;
             _log = log;
             _mapper = mapper;
         }
@@ -253,7 +257,10 @@ namespace Lykke.Service.Operations.Controllers
 
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
-            
+
+            // TODO: temp, ugly
+            command.GlobalSettings.EthereumHotWallet = _ethereumServiceClientSettings.HotwalletAddress;
+
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
 

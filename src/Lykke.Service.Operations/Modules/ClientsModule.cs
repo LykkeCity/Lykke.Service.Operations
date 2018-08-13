@@ -50,6 +50,8 @@ namespace Lykke.Service.Operations.Modules
                 BaseUri = new Uri(_settings.CurrentValue.Assets.ServiceUrl)
             });
 
+            builder.RegisterInstance(_settings.CurrentValue.EthereumServiceClient);
+
             builder.RegisterInstance<IEthereumCoreAPI>(new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl), new HttpClient()));
             builder.RegisterBlockchainCashoutPreconditionsCheckClient(_settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient, _log);
             builder.RegisterType<BlockchainWalletsClient>().As<IBlockchainWalletsClient>()
