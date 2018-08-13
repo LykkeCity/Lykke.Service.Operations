@@ -86,9 +86,9 @@ namespace Lykke.Service.Operations.Client
             return _operationsApi.ApiOperationsCompleteByIdPostAsync(id);
         }
 
-        public Task Confirm(Guid id)
+        public Task Confirm(Guid id, ConfirmCommand confirmCommand = null)
         {
-            return _operationsApi.ApiOperationsConfirmByIdPostAsync(id);
+            return _operationsApi.ApiOperationsConfirmByIdPostAsync(id, _mapper.Map<AutorestClient.Models.ConfirmCommand>(confirmCommand));
         }
 
         public Task Fail(Guid id)

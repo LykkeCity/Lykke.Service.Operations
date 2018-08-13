@@ -228,12 +228,14 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// </param>
             /// <param name='id'>
             /// </param>
+            /// <param name='cmd'>
+            /// </param>
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task ApiOperationsConfirmByIdPostAsync(this IOperationsAPI operations, System.Guid id, CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task ApiOperationsConfirmByIdPostAsync(this IOperationsAPI operations, System.Guid id, ConfirmCommand cmd = default(ConfirmCommand), CancellationToken cancellationToken = default(CancellationToken))
             {
-                (await operations.ApiOperationsConfirmByIdPostWithHttpMessagesAsync(id, null, cancellationToken).ConfigureAwait(false)).Dispose();
+                (await operations.ApiOperationsConfirmByIdPostWithHttpMessagesAsync(id, cmd, null, cancellationToken).ConfigureAwait(false)).Dispose();
             }
 
     }

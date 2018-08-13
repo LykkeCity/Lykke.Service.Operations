@@ -16,6 +16,7 @@ namespace Lykke.Service.Operations.Client
             CreateMap<CreateNewOrderCommand, AutorestClient.Models.CreateNewOrderCommand>();
             CreateMap<CreateSwiftCashoutCommand, AutorestClient.Models.CreateSwiftCashoutCommand>();
             CreateMap<CreateCashoutCommand, AutorestClient.Models.CreateCashoutCommand>();
+            CreateMap<ConfirmCommand, AutorestClient.Models.ConfirmCommand>();
         }
     }
 }

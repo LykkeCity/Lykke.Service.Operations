@@ -179,13 +179,15 @@ namespace Lykke.Service.Operations.Client.AutorestClient
 
         /// <param name='id'>
         /// </param>
+        /// <param name='cmd'>
+        /// </param>
         /// <param name='customHeaders'>
         /// The headers that will be added to request.
         /// </param>
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse> ApiOperationsConfirmByIdPostWithHttpMessagesAsync(System.Guid id, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse> ApiOperationsConfirmByIdPostWithHttpMessagesAsync(System.Guid id, ConfirmCommand cmd = default(ConfirmCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
     }
 }

@@ -11,23 +11,22 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Newtonsoft.Json;
     using System.Linq;
 
-    public partial class SwiftCashoutSettingsModel
+    public partial class ConfirmCommand
     {
         /// <summary>
-        /// Initializes a new instance of the SwiftCashoutSettingsModel class.
+        /// Initializes a new instance of the ConfirmCommand class.
         /// </summary>
-        public SwiftCashoutSettingsModel()
+        public ConfirmCommand()
         {
           CustomInit();
         }
 
         /// <summary>
-        /// Initializes a new instance of the SwiftCashoutSettingsModel class.
+        /// Initializes a new instance of the ConfirmCommand class.
         /// </summary>
-        public SwiftCashoutSettingsModel(string hotwalletTargetId = default(string), string feeTargetId = default(string))
+        public ConfirmCommand(string confirmation = default(string))
         {
-            HotwalletTargetId = hotwalletTargetId;
-            FeeTargetId = feeTargetId;
+            Confirmation = confirmation;
             CustomInit();
         }
 
@@ -38,13 +37,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "HotwalletTargetId")]
-        public string HotwalletTargetId { get; set; }
-
-        /// <summary>
-        /// </summary>
-        [JsonProperty(PropertyName = "FeeTargetId")]
-        public string FeeTargetId { get; set; }
+        [JsonProperty(PropertyName = "Confirmation")]
+        public string Confirmation { get; set; }
 
     }
 }

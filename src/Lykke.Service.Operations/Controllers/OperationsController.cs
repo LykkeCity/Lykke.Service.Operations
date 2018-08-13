@@ -240,6 +240,7 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("cashout/{id}")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
         {
             if (id == Guid.Empty)
@@ -429,7 +430,8 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("confirm/{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task Confirm(Guid id, ConfirmationCommand cmd)
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task Confirm(Guid id, [FromBody]ConfirmCommand cmd)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -474,10 +476,5 @@ namespace Lykke.Service.Operations.Controllers
                     break;
             }
         }        
-    }
-
-    public class ConfirmationCommand
-    {
-        public string Confirmation { get; set; }
     }
 }

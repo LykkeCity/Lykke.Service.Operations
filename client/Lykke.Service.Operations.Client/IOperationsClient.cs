@@ -14,7 +14,7 @@ namespace Lykke.Service.Operations.Client
         Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand);
         Task Cancel(Guid id);
         Task Complete(Guid id);
-        Task Confirm(Guid id);
+        Task Confirm(Guid id, ConfirmCommand confirmCommand = null);
         Task Fail(Guid id);
 
         /// <summary>
