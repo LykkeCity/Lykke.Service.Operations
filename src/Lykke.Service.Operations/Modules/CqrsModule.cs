@@ -13,7 +13,6 @@ using Lykke.Job.BlockchainOperationsExecutor.Contract.Events;
 using Lykke.Messaging;
 using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
-using Lykke.Service.FeeCalculator.AutorestClient.Models;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Settings;
@@ -158,18 +157,5 @@ namespace Lykke.Service.Operations.Modules
                 return _context.IsRegistered(type);
             }
         }
-    }
-
-    public class MeCashoutCommand
-    {
-        public Guid OperationId { get; set; }
-        public Guid RequestId { get; set; }        
-        public string ClientId { get; set; }
-        public string AssetId { get; set; }
-        public int AssetAccuracy { get; set; }
-        public decimal Amount { get; set; }
-        public string FeeClientId { get; set; }
-        public double FeeSize { get; set; }
-        public FeeType FeeType { get; set; }
     }
 }
