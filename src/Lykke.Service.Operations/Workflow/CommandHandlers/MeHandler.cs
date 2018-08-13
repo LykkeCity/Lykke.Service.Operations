@@ -4,11 +4,11 @@ using Common.Log;
 using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.MatchingEngine.Connector.Models.Api;
-using Lykke.Service.Operations.Modules;
+using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.Operations.Workflow.Events;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 
-namespace Lykke.Service.Operations.Services
+namespace Lykke.Service.Operations.Workflow.CommandHandlers
 {
     public class MeHandler
     {

@@ -14,6 +14,7 @@ using Lykke.Service.Operations.Modules;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.Operations.Workflow;
+using Lykke.Service.Operations.Workflow.CommandHandlers;
 using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.Operations.Workflow.Sagas;
 using Lykke.SettingsReader;
