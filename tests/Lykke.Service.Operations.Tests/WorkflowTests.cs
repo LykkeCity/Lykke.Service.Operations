@@ -14,6 +14,7 @@ using Lykke.Service.Operations.Modules;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.Operations.Workflow;
+using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.Operations.Workflow.Sagas;
 using Lykke.SettingsReader;
 using Lykke.Workflow;
@@ -140,7 +141,7 @@ namespace Lykke.Service.Operations.Tests
             //Trace.WriteLine("--- WF result ---");
             //Trace.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
             
-            await wfService.CompleteActivity(operation, operation.GetConfirmationActivity().ActivityId, JObject.FromObject(new { SignedMessage = "111" }));
+            await wfService.CompleteActivity(operation, operation.GetConfirmationActivity().ActivityId, JObject.FromObject(new { Confirmation = "111" }));
 
             var executingActivity = operation.Activities.Single(a => a.IsExecuting);
 

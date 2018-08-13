@@ -16,6 +16,8 @@ using Lykke.Service.FeeCalculator.AutorestClient.Models;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Settings;
+using Lykke.Service.Operations.Workflow.Commands;
+using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.Operations.Workflow.Sagas;
 using Lykke.Service.PostProcessing.Contracts.Cqrs.Events;
 using Lykke.Service.SwiftWithdrawal.Contracts;

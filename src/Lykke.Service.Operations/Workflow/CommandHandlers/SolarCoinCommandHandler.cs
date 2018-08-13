@@ -3,6 +3,8 @@ using Common;
 using Common.Log;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
+using Lykke.Service.Operations.Workflow.Commands;
+using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.Operations.Workflow.Validation;
 
 namespace Lykke.Service.Operations.Services

@@ -5,7 +5,9 @@ using JetBrains.Annotations;
 using Lykke.Cqrs;
 using Lykke.Service.Operations.Modules;
 using Lykke.Service.Operations.Services;
+using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.Operations.Workflow.Data;
+using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.PostProcessing.Contracts.Cqrs.Events;
 using Newtonsoft.Json;
 
@@ -63,8 +65,12 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             var command = new FailActivityCommand
             {
                 OperationId = evt.OperationId,
-                ErrorCode = evt.ErrorCode,
-                ErrorMessage = evt.ErrorMessage
+                ActivityId = evt.RequestId,
+                Output = new
+                {
+                    evt.ErrorCode,
+                    evt.ErrorMessage
+                }.ToJson()
             };
 
             commandSender.SendCommand(command, "operations");

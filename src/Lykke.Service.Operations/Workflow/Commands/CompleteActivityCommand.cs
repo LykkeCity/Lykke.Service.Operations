@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lykke.Service.Operations.Services
+namespace Lykke.Service.Operations.Workflow.Commands
 {
     public class CompleteActivityCommand
     {

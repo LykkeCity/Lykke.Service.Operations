@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using AzureStorage.Queue;
 using Common;
+using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.Operations.Workflow.Validation;
 
 namespace Lykke.Service.Operations.Services

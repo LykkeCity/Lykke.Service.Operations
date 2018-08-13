@@ -6,9 +6,12 @@ using Lykke.Bitcoin.Contracts;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
+using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract.Events;
 using Lykke.Job.EthereumCore.Contracts.Cqrs;
 using Lykke.Service.Operations.Services;
+using Lykke.Service.Operations.Workflow.Commands;
+using Lykke.Service.Operations.Workflow.Events;
 using Newtonsoft.Json;
 
 namespace Lykke.Service.Operations.Workflow.Sagas
@@ -129,13 +132,31 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             commandSender.SendCommand(command, "operations");
         }
 
+        [UsedImplicitly]
+        public async Task Handle(CashoutCompletedEvent evt, ICommandSender commandSender)
+        {
+            var command = new CompleteActivityCommand
+            {
+                OperationId = evt.OperationId,
+                Output = new
+                {
+                    evt.TransactionHash                    
+                }.ToJson()
+            };
+
+            commandSender.SendCommand(command, "operations");
+        }
+
         public async Task Handle(OperationExecutionFailedEvent evt, ICommandSender commandSender)
         {
             var command = new FailActivityCommand
             {
                 OperationId = evt.OperationId,
-                ErrorCode = evt.ErrorCode.ToString(),
-                ErrorMessage = evt.Error
+                Output = new
+                {
+                    ErrorCode = evt.ErrorCode.ToString(),
+                    ErrorMessage = evt.Error
+                }.ToJson()
             };
 
             commandSender.SendCommand(command, "operations");

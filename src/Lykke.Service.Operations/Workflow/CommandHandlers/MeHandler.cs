@@ -1,20 +1,24 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Common.Log;
 using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.Operations.Modules;
+using Lykke.Service.Operations.Workflow.Events;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 
 namespace Lykke.Service.Operations.Services
 {
     public class MeHandler
     {
+        private readonly ILog _log;
         private readonly IMatchingEngineClient _matchingEngineClient;
         
-        public MeHandler(IMatchingEngineClient matchingEngineClient)
+        public MeHandler(ILog log, IMatchingEngineClient matchingEngineClient)
         {
-            _matchingEngineClient = matchingEngineClient;            
+            _log = log;
+            _matchingEngineClient = matchingEngineClient;
         }
 
         public async Task<CommandHandlingResult> Handle(MeCashoutCommand cmd, IEventPublisher eventPublisher)
@@ -34,14 +38,12 @@ namespace Lykke.Service.Operations.Services
             
             if (result == null)
             {
-                eventPublisher.PublishEvent(new MeCashoutFailedEvent
-                {
-                    OperationId = cmd.OperationId,
-                    RequestId = cmd.RequestId,
-                    ErrorMessage = "ME is not available"
-                });                
+                _log.WriteError("Me cashout", new { cmd.OperationId, cmd.RequestId, ErrorMessage = "Me is not available" });    
+
+                throw new InvalidOperationException("Me is not available");
             }
-            else if (result.Status != MeStatusCodes.Ok)
+
+            if (result.Status != MeStatusCodes.Ok)
             {
                 eventPublisher.PublishEvent(new MeCashoutFailedEvent
                 {
@@ -55,13 +57,4 @@ namespace Lykke.Service.Operations.Services
             return CommandHandlingResult.Ok();
         }
     }
-
-    public class MeCashoutFailedEvent
-    {
-        public Guid OperationId { get; set; }
-        public Guid RequestId { get; set; }
-
-        public string ErrorCode { get; set; }
-        public string ErrorMessage { get; set; }        
-    }    
 }

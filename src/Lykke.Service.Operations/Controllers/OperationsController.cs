@@ -17,6 +17,7 @@ using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow;
+using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
 using Lykke.Workflow;
@@ -448,7 +449,7 @@ namespace Lykke.Service.Operations.Controllers
             {
                 case OperationType.Cashout:
                     var activityId = operation.GetConfirmationActivity().ActivityId;
-                    var activityOutput = JObject.FromObject(new { cmd.SignedMessage });
+                    var activityOutput = JObject.FromObject(new { cmd.Confirmation });
                     var wfState = await _workflowService.CompleteActivity(operation, activityId, activityOutput);
 
                     if (wfState == WorkflowState.InProgress)
@@ -477,6 +478,6 @@ namespace Lykke.Service.Operations.Controllers
 
     public class ConfirmationCommand
     {
-        public string SignedMessage { get; set; }
+        public string Confirmation { get; set; }
     }
 }

@@ -36,11 +36,4 @@ namespace Lykke.Service.Operations.Services
             return wfResult.State;            
         }
     }
-
-    public class ExternalExecutionActivityCreatedEvent
-    {
-        public Guid Id { get; set; }
-        public string Type { get; set; }
-        public string Input { get; set; }
-    }
 }

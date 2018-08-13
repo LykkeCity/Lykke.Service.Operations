@@ -4,6 +4,8 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Cqrs;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Workflow.Commands;
+using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Workflow;
 using Newtonsoft.Json.Linq;
 

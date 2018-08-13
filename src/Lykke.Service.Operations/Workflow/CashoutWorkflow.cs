@@ -178,7 +178,8 @@ namespace Lykke.Service.Operations.Workflow
                     AssetAccuracy = context.OperationValues.Asset.Accuracy,
                     HotWallet = context.OperationValues.GlobalSettings.EthereumHotWallet                    
                 })
-                .MergeOutput(output => new { EthAdapterBalance = output });
+                .MergeOutput(output => new { EthAdapterBalance = output })
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode<EthCashoutEstimationInput, EthCashoutEstimation>("Estimate eth cashout", input => EstimateEthCashout(input))
                 .WithInput(context => new EthCashoutEstimationInput
@@ -194,7 +195,8 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeOutput(output => new
                 {
                     EthCashoutEstimation = output
-                });
+                })
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             ValidationNode<EthInput>("ETH validation")
                 .WithInput(context => new EthInput
@@ -211,14 +213,14 @@ namespace Lykke.Service.Operations.Workflow
                     DestinationAddress = context.OperationValues.DestinationAddress,
                     DestinationAddressExtension = context.OperationValues.DestinationAddressExtension,
                     BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId
-                })
-                .MergeFailOutput(output => output)
+                })               
                 .MergeOutput(output => !string.IsNullOrWhiteSpace(output)
                     ? new
                     {
                         DestinationAddress = output
                     }
-                    : (object)new {});
+                    : (object)new {})
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode<BilInput, BilOutput>("BIL check", input => BilCheck(input))
                 .WithInput(context => new BilInput
@@ -228,7 +230,7 @@ namespace Lykke.Service.Operations.Workflow
                     DestinationAddress = context.OperationValues.DestinationAddress
                 })
                 .MergeOutput(output => new { BilCheckResult = output })
-                .MergeFailOutput(output => output);
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             ValidationNode<BilOutput>("BIL check validation")
                 .WithInput(context => ((JObject)context.OperationValues.BilCheckResult).ToObject<BilOutput>())
@@ -245,8 +247,7 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeFailOutput(output => output);
 
             DelegateNode("Create sign challenge", input => new { SignChallenge = Guid.NewGuid() })
-                .MergeOutput(output => output)
-                .MergeFailOutput(output => output);
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode<CalculateCashoutFeeInput, object>("Calculate fee", input => CalculateFee(input))
                 .WithInput(context => new CalculateCashoutFeeInput
@@ -254,15 +255,12 @@ namespace Lykke.Service.Operations.Workflow
                     AssetId = context.OperationValues.Asset.Id
                 })
                 .MergeOutput(output => new { Fee = output })
-                .MergeFailOutput(output => output);
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             Node("Request confirmation", i => i.RequestConfirmation())
-                .WithInput(context => new
-                {
-
-                })
+                .WithInput(context => new { })
                 .MergeOutput(output => output)
-                .MergeFailOutput(output => output);
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode<ValidateConfirmationInput>("Validate confirmation", input => ValidateConfirmation(input))
                 .WithInput(context => new ValidateConfirmationInput
@@ -270,7 +268,7 @@ namespace Lykke.Service.Operations.Workflow
                     ClientId = context.OperationValues.Client.Id,
                     PubKeyAddress = context.OperationValues.Client.BitcoinAddress,
                     Challenge = context.OperationValues.SignChallenge,
-                    SignedMessage = context.OperationValues.SignedMessage
+                    Confirmation = context.OperationValues.Confirmation
                 })
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
@@ -287,7 +285,7 @@ namespace Lykke.Service.Operations.Workflow
                     FeeType = context.OperationValues.Fee.Type
                 })
                 .MergeOutput(output => new { Me = output })
-                .MergeFailOutput(output => output);
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             Node("Settle on blockchain", i => i.SettleOnBlockchain())
                 .WithInput(context => new BlockchainCashoutInput
@@ -303,7 +301,7 @@ namespace Lykke.Service.Operations.Workflow
                     EthHotWallet = context.OperationValues.GlobalSettings.EthereumHotWallet
                 })
                 .MergeOutput(output => new { Blockchain = output })
-                .MergeFailOutput(output => output);
+                .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode("Fail operation", context => context.Fail());
             DelegateNode("Accept operation", context => context.Accept());
@@ -313,18 +311,18 @@ namespace Lykke.Service.Operations.Workflow
 
         private void ValidateConfirmation(ValidateConfirmationInput input)
         {
-            var isOldVerificationMethod = Guid.TryParse(input.SignedMessage, out var guid);
+            var isOldVerificationMethod = Guid.TryParse(input.Confirmation, out var guid);
 
             if (isOldVerificationMethod)
             {
-                var accessToken = _recoveryTokensRepository.GetAccessTokenLvl1Async(input.SignedMessage).ConfigureAwait(false).GetAwaiter().GetResult();
+                var accessToken = _recoveryTokensRepository.GetAccessTokenLvl1Async(input.Confirmation).ConfigureAwait(false).GetAwaiter().GetResult();
 
                 if (accessToken != null &&
                     accessToken.ClientId != input.ClientId &&
                     DateTime.UtcNow - accessToken.IssueDateTime.ToUniversalTime() > TimeSpan.FromMinutes(5))
                     throw new InvalidOperationException("Token is invalid");
 
-                _recoveryTokensRepository.RemoveAccessTokenLvl1Async(input.SignedMessage).ConfigureAwait(false).GetAwaiter().GetResult();
+                _recoveryTokensRepository.RemoveAccessTokenLvl1Async(input.Confirmation).ConfigureAwait(false).GetAwaiter().GetResult();
             }
             else
             {
@@ -332,7 +330,7 @@ namespace Lykke.Service.Operations.Workflow
                 var verifyResult = false;
                 try
                 {
-                    verifyResult = address.VerifyMessage(input.Challenge, input.SignedMessage);
+                    verifyResult = address.VerifyMessage(input.Challenge, input.Confirmation);
                 }
                 catch { }
 
