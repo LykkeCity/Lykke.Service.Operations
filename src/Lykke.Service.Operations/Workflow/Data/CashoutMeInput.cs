@@ -5,7 +5,8 @@ namespace Lykke.Service.Operations.Workflow.Data
 {
     public class CashoutMeInput
     {
-        public Guid OperationId { get; set; } 
+        public Guid OperationId { get; set; }
+        public Guid RequestId { get; set; }
         public string ClientId { get; set; }        
         public decimal Volume { get; set; }
         public string AssetId { get; set; }

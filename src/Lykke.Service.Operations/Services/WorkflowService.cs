@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Lykke.Cqrs;
+using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow;
 using Lykke.Workflow;
@@ -34,6 +35,16 @@ namespace Lykke.Service.Operations.Services
             await _operationsRepository.Save(operation);
 
             return wfResult.State;            
+        }
+
+        public async Task FailActivity(Operation operation, Guid? activityId, JObject activityOutput)
+        {
+            var activity = operation.Activities.Single(o => !activityId.HasValue && o.IsExecuting || o.ActivityId == activityId);
+            activity.Complete(activityOutput);
+
+            operation.Status = OperationStatus.Failed;
+
+            await _operationsRepository.Save(operation);            
         }
     }
 }

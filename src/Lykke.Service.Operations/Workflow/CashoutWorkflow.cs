@@ -2,6 +2,8 @@
 using System.Linq;
 using Common;
 using Common.Log;
+using Lykke.MatchingEngine.Connector.Abstractions.Services;
+using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client.Models;
 using Lykke.Service.FeeCalculator.AutorestClient.Models;
@@ -12,6 +14,7 @@ using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Repositories;
 using Lykke.Service.Operations.Services.Blockchain;
 using Lykke.Service.Operations.Workflow.Data;
+using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Service.Operations.Workflow.Validation;
 using Lykke.Workflow;
@@ -27,7 +30,8 @@ namespace Lykke.Service.Operations.Workflow
         private readonly ILog _log;
         private readonly IRecoveryTokensRepository _recoveryTokensRepository;
         private readonly IEthereumFacade _ethereumFacade;
-        private readonly IFeeCalculatorClient _feeCalculatorClient;                
+        private readonly IFeeCalculatorClient _feeCalculatorClient;
+        private readonly IMatchingEngineClient _matchingEngineClient;
         private readonly IBlockchainCashoutPreconditionsCheckClient _blockchainCashoutPreconditionsCheckClient;
 
         public CashoutWorkflow(
@@ -38,12 +42,14 @@ namespace Lykke.Service.Operations.Workflow
             IEthereumFacade ethereumFacade,
             BlockchainAddress blockchainAddress,
             IFeeCalculatorClient feeCalculatorClient,
+            IMatchingEngineClient matchingEngineClient,
             IBlockchainCashoutPreconditionsCheckClient blockchainCashoutPreconditionsCheckClient) : base(operation, log, activityFactory)
         {
             _log = log;
             _recoveryTokensRepository = recoveryTokensRepository;
             _ethereumFacade = ethereumFacade;
             _feeCalculatorClient = feeCalculatorClient;
+            _matchingEngineClient = matchingEngineClient;
             _blockchainCashoutPreconditionsCheckClient = blockchainCashoutPreconditionsCheckClient;
             
             Configure(cfg =>
@@ -65,12 +71,10 @@ namespace Lykke.Service.Operations.Workflow
                         .ContinueWith("Start blockchain validation")
                     .WithBranch()
                         .Do("Start blockchain validation")
-                    .On("Is not blockchain integration")
-                        .DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
-                        .ContinueWith("Limits validation")
-                    .On("Is blockchain integration")
-                        .DeterminedAs(context => !string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
-                        .ContinueWith("Merge blockchain address")                    
+                        .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
+                            .ContinueWith("Limits validation")
+                        .On("Is blockchain integration").DeterminedAs(context => !string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
+                            .ContinueWith("Merge blockchain address")                    
                     .WithBranch()
                         .Do("Merge blockchain address").OnFail("Fail operation")
                         .Do("BIL check").OnFail("Fail operation")
@@ -78,18 +82,25 @@ namespace Lykke.Service.Operations.Workflow
                         .ContinueWith("Limits validation")
                     .WithBranch()
                         .Do("Limits validation").OnFail("Fail operation")
-                        .Do("Calculate fee").OnFail("Fail operation")
-                        .Do("Create sign challenge").OnFail("Fail operation")
+                        .Do("Calculate fee").OnFail("Fail operation")                        
                         .Do("Accept operation").OnFail("Fail operation")
+                        .On("2FA is disabled").DeterminedAs(context => !(bool)context.OperationValues.GlobalSettings.TwoFactorEnabled)
+                            .ContinueWith("Send to ME")
+                        .On("2FA is enabled").DeterminedAs(context => (bool)context.OperationValues.GlobalSettings.TwoFactorEnabled)
+                            .ContinueWith("Create sign challenge")
+                    .WithBranch()
+                        .Do("Create sign challenge").OnFail("Fail operation")
                         .Do("Request confirmation").OnFail("Fail operation")
                         .Do("Validate confirmation").OnFail("Fail operation")
+                    .WithBranch()
                         .Do("Send to ME").OnFail("Fail operation")
-                        .ContinueWith("Confirm operation")
+                        .Do("Confirm operation")
+                        .Do("Wait for results from ME")
+                        .ContinueWith("Settle on blockchain")
                     .WithBranch()
                         .Do("Fail operation")
                         .ContinueWith("Send operation status")
-                    .WithBranch()
-                        .Do("Confirm operation")
+                    .WithBranch()                        
                         .Do("Settle on blockchain")
                         .Do("Complete operation")
                         .ContinueWith("Send operation status")
@@ -271,10 +282,10 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
-            Node("Send to ME", i => i.SendToMe())
+            DelegateNode<CashoutMeInput>("Send to ME", i => SendToMe(i))
                 .WithInput(context => new CashoutMeInput
                 {
-                    OperationId = context.Id,
+                    OperationId = context.Id,                    
                     ClientId = context.OperationValues.Client.Id,
                     Volume = context.OperationValues.Volume,
                     AssetId = context.OperationValues.Asset.Id,
@@ -282,7 +293,15 @@ namespace Lykke.Service.Operations.Workflow
                     CashoutTargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClients["Cashout"],
                     FeeSize = context.OperationValues.Fee.Size,
                     FeeType = context.OperationValues.Fee.Type
-                })
+                })                
+                .MergeFailOutput(e => new
+                {
+                    ErrorCode = "MeError",
+                    ErrorMessage = e.Message
+                });
+
+            Node("Wait for results from ME", i => i.WaitForResultsFromMe())
+                .WithInput(context => new { })
                 .MergeOutput(output => new { Me = output })
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
@@ -306,6 +325,34 @@ namespace Lykke.Service.Operations.Workflow
             DelegateNode("Accept operation", context => context.Accept());
             DelegateNode("Confirm operation", context => context.Confirm());
             DelegateNode("Complete operation", context => context.Complete());
+        }
+
+        private void SendToMe(CashoutMeInput input)
+        {
+            var result = _matchingEngineClient.CashInOutAsync(
+                input.OperationId.ToString(),
+                null,
+                input.ClientId,
+                input.AssetId,
+                input.AssetAccuracy,
+                (double)-Math.Abs(input.Volume),
+                input.CashoutTargetClientId,
+                input.FeeSize,
+                input.FeeType == FeeType.Absolute
+                    ? MatchingEngine.Connector.Models.Common.FeeSizeType.ABSOLUTE
+                    : MatchingEngine.Connector.Models.Common.FeeSizeType.PERCENTAGE).GetAwaiter().GetResult();
+
+            if (result == null)
+            {
+                _log.WriteError("Me cashout", new { input.OperationId, ErrorMessage = "Me is not available" });
+
+                throw new InvalidOperationException("Me is not available");
+            }
+
+            if (result.Status != MeStatusCodes.Ok)
+            {
+                throw new InvalidOperationException($"{result.Status}: {result.Message}");
+            }
         }
 
         private void ValidateConfirmation(ValidateConfirmationInput input)
@@ -407,5 +454,9 @@ namespace Lykke.Service.Operations.Workflow
                 Volume = volume
             };
         }
+    }
+
+    public class CashoutMeOutput
+    {
     }
 }

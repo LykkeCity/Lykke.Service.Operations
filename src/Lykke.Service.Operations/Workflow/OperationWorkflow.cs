@@ -48,7 +48,7 @@ namespace Lykke.Service.Operations.Workflow
 
             return result;
         }
-
+        
         internal ISlotCreationHelper<Operation, GenericActivity<TInput, TOutput, TFailOutput>> Node<TInput, TOutput, TFailOutput>(string name, Expression<Func<IActivityReference, Tuple<TInput, TOutput, TFailOutput>>> method)
             where TInput : class
             where TOutput : class
@@ -74,8 +74,8 @@ namespace Lykke.Service.Operations.Workflow
 
     public interface IActivityReference
     {
-        Tuple<CashoutMeInput, dynamic, dynamic> SendToMe();
+        Tuple<dynamic, dynamic, dynamic> WaitForResultsFromMe();
         Tuple<dynamic, dynamic, dynamic> RequestConfirmation();
-        Tuple<dynamic, dynamic, dynamic> SettleOnBlockchain();
+        Tuple<BlockchainCashoutInput, dynamic, dynamic> SettleOnBlockchain();
     }
 }

@@ -30,7 +30,7 @@ namespace Lykke.Service.Operations.Services
             var operation = await _operationsRepository.Get(cmd.OperationId);            
 
             if (operation == null)
-                return CommandHandlingResult.Ok();
+                return new CommandHandlingResult { Retry = true, RetryDelay = 3000 };
 
             var wfResult = await _workflowService.CompleteActivity(operation, cmd.ActivityId, JObject.Parse(cmd.Output));
 
@@ -57,6 +57,8 @@ namespace Lykke.Service.Operations.Services
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(FailActivityCommand cmd, IEventPublisher eventPublisher)
         {
+
+
             return CommandHandlingResult.Ok();
         }
     }

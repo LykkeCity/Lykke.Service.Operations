@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Autofac;
 using Common.Log;
 using JetBrains.Annotations;
@@ -51,9 +50,9 @@ namespace Lykke.Service.Operations.Modules
             };
 
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>();
-
-            builder.RegisterType<MeHandler>().SingleInstance();
+            
             builder.RegisterType<WorkflowCommandHandler>().SingleInstance();
+            builder.RegisterType<SolarCoinCommandHandler>().SingleInstance();
 
             builder.RegisterType<MeSaga>().SingleInstance();
             builder.RegisterType<BlockchainCashoutSaga>().SingleInstance();
@@ -92,7 +91,7 @@ namespace Lykke.Service.Operations.Modules
 
                         Register.BoundedContext("operations")
                             .ListeningCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).On("commands")
-                                .WithCommandsHandler<WorkflowCommandHandler>()
+                                .WithCommandsHandler<WorkflowCommandHandler>()                            
                             .PublishingEvents(
                                 typeof(LimitOrderCreatedEvent),
                                 typeof(LimitOrderRejectedEvent),
@@ -104,22 +103,13 @@ namespace Lykke.Service.Operations.Modules
                             .PublishingCommands(typeof(SwiftCashoutCreateCommand))                            
                             .To(SwiftWithdrawalBoundedContext.Name)                            
                             .With("commands"),
-
-                        Register.BoundedContext("me")
-                            .ListeningCommands(typeof(MeCashoutCommand)).On("commands")
-                                .WithCommandsHandler(ctx.Resolve<MeHandler>())
-                            .PublishingEvents(typeof(MeCashoutFailedEvent)).With("events"),
-
+                        
                         Register.Saga<MeSaga>("me-saga")
                             .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent))
                                 .From("operations").On("events")                            
                             .ListeningEvents(typeof(CashOutProcessedEvent))
                                 .From("post-processing").On("events")
                                 .WithEndpointResolver(sagasProtobufEndpointResolver)
-                            .ListeningEvents(typeof(MeCashoutFailedEvent))
-                                .From("me").On("events")
-                            .PublishingCommands(typeof(MeCashoutCommand))
-                                .To("me").With("commands")
                             .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand))
                                 .To("operations").With("commands"),
 
@@ -130,7 +120,7 @@ namespace Lykke.Service.Operations.Modules
                                 .From(BlockchainOperationsExecutorBoundedContext.Name).On("events")
                             .PublishingCommands(typeof(StartCashoutCommand))
                                 .To(BlockchainCashoutProcessorBoundedContext.Name).With("commands")
-                            .PublishingCommands(typeof(CompleteActivityCommand))
+                            .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand))
                                 .To("operations").With("commands")
                     );
                 })

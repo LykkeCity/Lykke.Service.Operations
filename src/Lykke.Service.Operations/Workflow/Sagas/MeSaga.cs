@@ -18,24 +18,9 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         [UsedImplicitly]
         public async Task Handle(ExternalExecutionActivityCreatedEvent evt, ICommandSender commandSender)
         {
-            if (evt.Type == "SendToMe")
+            if (evt.Type == "WaitForResultsFromME")
             {
-                var meInput = JsonConvert.DeserializeObject<CashoutMeInput>(evt.Input);
-
-                var command = new MeCashoutCommand
-                {
-                    OperationId = meInput.OperationId,
-                    RequestId = evt.Id,                    
-                    AssetId = meInput.AssetId,
-                    AssetAccuracy = meInput.AssetAccuracy,
-                    Amount = meInput.Volume,
-                    ClientId = meInput.ClientId,
-                    FeeClientId = meInput.CashoutTargetClientId,
-                    FeeSize = meInput.FeeSize,
-                    FeeType = meInput.FeeType
-                };
-
-                commandSender.SendCommand(command, "me");                
+                // NOP. Step for waiting ME results.
             }            
         }
 
@@ -44,8 +29,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         {
             var command = new CompleteActivityCommand
             {
-                OperationId = evt.OperationId,
-                ActivityId = evt.RequestId,
+                OperationId = evt.OperationId,                
                 Output = new
                 {
                     evt.AssetId,

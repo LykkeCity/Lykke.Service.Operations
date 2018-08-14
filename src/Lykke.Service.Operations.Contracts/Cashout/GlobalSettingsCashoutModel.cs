@@ -6,5 +6,6 @@
         public string EthereumHotWallet { get; set; }
 
         public FeeSettingsCashoutModel FeeSettings { get; set; }
+        public bool TwoFactorEnabled { get; set; }
     }
 }

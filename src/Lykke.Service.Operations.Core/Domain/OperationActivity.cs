@@ -32,5 +32,11 @@ namespace Lykke.Service.Operations.Core.Domain
             Output = outputValues.ToString();
             Status = ActivityResult.Succeeded;
         }
+
+        public void Fail(JObject outputValues)
+        {
+            Output = outputValues.ToString();
+            Status = ActivityResult.Failed;
+        }
     }
 }

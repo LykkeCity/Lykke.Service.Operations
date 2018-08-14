@@ -9,5 +9,6 @@ namespace Lykke.Service.Operations.Services
     public interface IWorkflowService
     {
         Task<WorkflowState> CompleteActivity(Operation operation, Guid? activityId, JObject activityOutput);
+        Task FailActivity(Operation operation, Guid? activityId, JObject activityOutput);
     }
 }
