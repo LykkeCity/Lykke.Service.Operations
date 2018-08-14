@@ -68,7 +68,7 @@ namespace Lykke.Service.Operations.Workflow
                         .Do("Load eth adapter balance").OnFail("Fail operation")
                         .Do("Estimate eth cashout").OnFail("Fail operation")                        
                         .Do("ETH validation").OnFail("Fail operation")
-                        .ContinueWith("Start blockchain validation")
+                        .ContinueWith("Limits validation")
                     .WithBranch()
                         .Do("Start blockchain validation")
                         .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
@@ -91,18 +91,16 @@ namespace Lykke.Service.Operations.Workflow
                     .WithBranch()
                         .Do("Create sign challenge").OnFail("Fail operation")
                         .Do("Request confirmation").OnFail("Fail operation")
-                        .Do("Validate confirmation").OnFail("Fail operation")
+                        .Do("Validate confirmation").OnFail("Fail operation").ContinueWith("Send to ME")
                     .WithBranch()
                         .Do("Send to ME").OnFail("Fail operation")
                         .Do("Confirm operation")
-                        .Do("Wait for results from ME")
-                        .ContinueWith("Settle on blockchain")
-                    .WithBranch()
-                        .Do("Fail operation")
-                        .ContinueWith("Send operation status")
-                    .WithBranch()                        
+                        .Do("Wait for results from ME")                                       
                         .Do("Settle on blockchain")
                         .Do("Complete operation")
+                        .ContinueWith("Send operation status")
+                    .WithBranch()
+                        .Do("Fail operation")
                         .ContinueWith("Send operation status")
                     .WithBranch()
                         .Do("Send operation status")
@@ -454,9 +452,5 @@ namespace Lykke.Service.Operations.Workflow
                 Volume = volume
             };
         }
-    }
-
-    public class CashoutMeOutput
-    {
     }
 }
