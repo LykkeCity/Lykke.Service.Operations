@@ -24,11 +24,12 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the GlobalSettingsCashoutModel class.
         /// </summary>
-        public GlobalSettingsCashoutModel(bool cashOutBlocked, string ethereumHotWallet = default(string), FeeSettingsCashoutModel feeSettings = default(FeeSettingsCashoutModel))
+        public GlobalSettingsCashoutModel(bool cashOutBlocked, bool twoFactorEnabled, string ethereumHotWallet = default(string), FeeSettingsCashoutModel feeSettings = default(FeeSettingsCashoutModel))
         {
             CashOutBlocked = cashOutBlocked;
             EthereumHotWallet = ethereumHotWallet;
             FeeSettings = feeSettings;
+            TwoFactorEnabled = twoFactorEnabled;
             CustomInit();
         }
 
@@ -51,6 +52,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         [JsonProperty(PropertyName = "FeeSettings")]
         public FeeSettingsCashoutModel FeeSettings { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "TwoFactorEnabled")]
+        public bool TwoFactorEnabled { get; set; }
 
         /// <summary>
         /// Validate the object.

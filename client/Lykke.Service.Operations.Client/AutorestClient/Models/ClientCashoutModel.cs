@@ -24,11 +24,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the ClientCashoutModel class.
         /// </summary>
-        public ClientCashoutModel(System.Guid id, decimal balance, bool cashOutBlocked, bool backupDone, string bitcoinAddress = default(string), string multisig = default(string), string kycStatus = default(string))
+        public ClientCashoutModel(System.Guid id, decimal balance, bool cashOutBlocked, bool backupDone, string bitcoinAddress = default(string), string kycStatus = default(string))
         {
             Id = id;
             BitcoinAddress = bitcoinAddress;
-            Multisig = multisig;
             Balance = balance;
             CashOutBlocked = cashOutBlocked;
             BackupDone = backupDone;
@@ -50,11 +49,6 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         [JsonProperty(PropertyName = "BitcoinAddress")]
         public string BitcoinAddress { get; set; }
-
-        /// <summary>
-        /// </summary>
-        [JsonProperty(PropertyName = "Multisig")]
-        public string Multisig { get; set; }
 
         /// <summary>
         /// </summary>

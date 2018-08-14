@@ -29,7 +29,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// 'CashoutSwift', 'Cashout'</param>
         /// <param name="status">Possible values include: 'Created',
         /// 'Accepted', 'Confirmed', 'Completed', 'Canceled', 'Failed'</param>
-        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context = default(object), string contextJson = default(string))
+        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context = default(object), object activities = default(object), string contextJson = default(string))
         {
             Id = id;
             Created = created;
@@ -37,6 +37,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
             Status = status;
             ClientId = clientId;
             Context = context;
+            Activities = activities;
             ContextJson = contextJson;
             CustomInit();
         }
@@ -80,6 +81,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         [JsonProperty(PropertyName = "Context")]
         public object Context { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "Activities")]
+        public object Activities { get; set; }
 
         /// <summary>
         /// </summary>
