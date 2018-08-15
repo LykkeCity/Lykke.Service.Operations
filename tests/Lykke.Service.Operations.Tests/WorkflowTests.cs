@@ -94,7 +94,8 @@ namespace Lykke.Service.Operations.Tests
                     BlockchainWithdrawal = false,
                     BlockchainIntegrationLayerId = "LiteCoin",
                     CashoutMinimalAmount = 0.005m,
-                    LowVolumeAmount = 0.002m
+                    LowVolumeAmount = 0.002m,
+                    LykkeEntityId = "LYKKEUK"
                 },
                 Client = new Contracts.Cashout.ClientCashoutModel
                 {

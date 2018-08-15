@@ -244,7 +244,6 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("cashout/{id}")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.BadRequest)]
         public async Task<IActionResult> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
         {
             if (id == Guid.Empty)

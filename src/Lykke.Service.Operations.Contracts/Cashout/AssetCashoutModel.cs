@@ -16,5 +16,6 @@
         public decimal CashoutMinimalAmount { get; set; }
         public decimal LowVolumeAmount { get; set; }
         public bool BlockchainWithdrawal { get; set; }
+        public string LykkeEntityId { get; set; }
     }
 }
