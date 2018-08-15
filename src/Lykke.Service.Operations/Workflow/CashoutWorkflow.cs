@@ -27,8 +27,7 @@ namespace Lykke.Service.Operations.Workflow
 {
     public class CashoutWorkflow : OperationWorkflow
     {
-        private readonly ILog _log;
-        private readonly IRecoveryTokensRepository _recoveryTokensRepository;
+        private readonly ILog _log;        
         private readonly IEthereumFacade _ethereumFacade;
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly IMatchingEngineClient _matchingEngineClient;
@@ -37,7 +36,6 @@ namespace Lykke.Service.Operations.Workflow
         public CashoutWorkflow(
             Operation operation, 
             ILog log, 
-            IRecoveryTokensRepository recoveryTokensRepository,
             IActivityFactory activityFactory,
             IEthereumFacade ethereumFacade,
             BlockchainAddress blockchainAddress,
@@ -45,8 +43,7 @@ namespace Lykke.Service.Operations.Workflow
             IMatchingEngineClient matchingEngineClient,
             IBlockchainCashoutPreconditionsCheckClient blockchainCashoutPreconditionsCheckClient) : base(operation, log, activityFactory)
         {
-            _log = log;
-            _recoveryTokensRepository = recoveryTokensRepository;
+            _log = log;            
             _ethereumFacade = ethereumFacade;
             _feeCalculatorClient = feeCalculatorClient;
             _matchingEngineClient = matchingEngineClient;
@@ -355,32 +352,16 @@ namespace Lykke.Service.Operations.Workflow
 
         private void ValidateConfirmation(ValidateConfirmationInput input)
         {
-            var isOldVerificationMethod = Guid.TryParse(input.Confirmation, out var guid);
-
-            if (isOldVerificationMethod)
+            var address = new BitcoinPubKeyAddress(input.PubKeyAddress);
+            var verifyResult = false;
+            try
             {
-                var accessToken = _recoveryTokensRepository.GetAccessTokenLvl1Async(input.Confirmation).ConfigureAwait(false).GetAwaiter().GetResult();
-
-                if (accessToken != null &&
-                    accessToken.ClientId != input.ClientId &&
-                    DateTime.UtcNow - accessToken.IssueDateTime.ToUniversalTime() > TimeSpan.FromMinutes(5))
-                    throw new InvalidOperationException("Token is invalid");
-
-                _recoveryTokensRepository.RemoveAccessTokenLvl1Async(input.Confirmation).ConfigureAwait(false).GetAwaiter().GetResult();
+                verifyResult = address.VerifyMessage(input.Challenge, input.Confirmation);
             }
-            else
-            {
-                var address = new BitcoinPubKeyAddress(input.PubKeyAddress);
-                var verifyResult = false;
-                try
-                {
-                    verifyResult = address.VerifyMessage(input.Challenge, input.Confirmation);
-                }
-                catch { }
+            catch { }
 
-                if (!verifyResult)
-                    throw new InvalidOperationException("Signature is invalid");
-            }
+            if (!verifyResult)
+                throw new InvalidOperationException("Signature is invalid");            
         }
 
         private AdapterBalanceOutput LoadEthAdapterBalance(AdapterBalanceInput input)

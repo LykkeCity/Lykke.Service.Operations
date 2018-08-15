@@ -28,9 +28,6 @@ namespace Lykke.Service.Operations.Modules
 
             var database = new MongoClient(mongoUrl).GetDatabase(mongoUrl.DatabaseName);
             builder.RegisterInstance(database);
-
-            builder.Register(ctx => AzureTableStorage<RecoveryTokenLevel1Entity>.Create(_dbSettings.ConnectionString(db => db.ClientPersonalInfoConnString), "RecoveryTokens", _log));
-            builder.RegisterType<RecoveryTokensRepository>().As<IRecoveryTokensRepository>().SingleInstance();
         }
     }
 }
