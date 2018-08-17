@@ -13,6 +13,7 @@ namespace Lykke.Service.Operations.Workflow.Data
         public int AssetAccuracy { get; set; }
         public double FeeSize { get; set; }
         public FeeType FeeType { get; set; }
-        public string CashoutTargetClientId { get; set; }        
+        public string CashoutTargetClientId { get; set; }
+        public string DestinationAddress { get; set; }
     }
 }

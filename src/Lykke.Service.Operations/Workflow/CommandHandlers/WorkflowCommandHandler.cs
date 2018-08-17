@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Cqrs;
+using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.Operations.Workflow.Events;
@@ -27,10 +28,17 @@ namespace Lykke.Service.Operations.Services
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(CompleteActivityCommand cmd, IEventPublisher eventPublisher)
         {
-            var operation = await _operationsRepository.Get(cmd.OperationId);            
+            var operation = await _operationsRepository.Get(cmd.OperationId);
 
             if (operation == null)
-                return new CommandHandlingResult { Retry = true, RetryDelay = 3000 };
+            {
+                _log.WriteWarning(nameof(WorkflowCommandHandler), context: cmd, info: "operation not found");
+
+                return CommandHandlingResult.Ok();
+            }
+            
+            if (operation.Status == OperationStatus.Completed)
+                return CommandHandlingResult.Ok();
 
             var wfResult = await _workflowService.CompleteActivity(operation, cmd.ActivityId, JObject.Parse(cmd.Output));
 

@@ -299,7 +299,7 @@ namespace Lykke.Service.Operations.Controllers
                 string errorCode = operation.OperationValues.ErrorCode;
 
                 if (!string.IsNullOrWhiteSpace(errorMessage))
-                    modelState.AddModelError(errorCode, errorMessage);
+                    modelState.AddModelError(errorCode ?? "Error", errorMessage);
 
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
             }            

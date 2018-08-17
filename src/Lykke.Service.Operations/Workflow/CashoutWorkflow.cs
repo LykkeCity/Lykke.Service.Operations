@@ -6,6 +6,8 @@ using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client.Models;
+using Lykke.Service.ExchangeOperations.Client;
+using Lykke.Service.ExchangeOperations.Contracts.Fee;
 using Lykke.Service.FeeCalculator.AutorestClient.Models;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Limitations.Client;
@@ -29,6 +31,7 @@ namespace Lykke.Service.Operations.Workflow
         private readonly IEthereumFacade _ethereumFacade;
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly IMatchingEngineClient _matchingEngineClient;
+        private readonly IExchangeOperationsServiceClient _exchangeOperationsServiceClient;
         private readonly IBlockchainCashoutPreconditionsCheckClient _blockchainCashoutPreconditionsCheckClient;
 
         public CashoutWorkflow(
@@ -39,12 +42,14 @@ namespace Lykke.Service.Operations.Workflow
             BlockchainAddress blockchainAddress,
             IFeeCalculatorClient feeCalculatorClient,
             IMatchingEngineClient matchingEngineClient,
+            IExchangeOperationsServiceClient exchangeOperationsServiceClient,
             IBlockchainCashoutPreconditionsCheckClient blockchainCashoutPreconditionsCheckClient) : base(operation, log, activityFactory)
         {
             _log = log;            
             _ethereumFacade = ethereumFacade;
             _feeCalculatorClient = feeCalculatorClient;
             _matchingEngineClient = matchingEngineClient;
+            _exchangeOperationsServiceClient = exchangeOperationsServiceClient;
             _blockchainCashoutPreconditionsCheckClient = blockchainCashoutPreconditionsCheckClient;
             
             Configure(cfg =>
@@ -280,6 +285,7 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     OperationId = context.Id,                    
                     ClientId = context.OperationValues.Client.Id,
+                    DestinationAddress = context.OperationValues.DestinationAddress,
                     Volume = context.OperationValues.Volume,
                     AssetId = context.OperationValues.Asset.Id,
                     AssetAccuracy = context.OperationValues.Asset.Accuracy,
@@ -322,29 +328,23 @@ namespace Lykke.Service.Operations.Workflow
 
         private void SendToMe(CashoutMeInput input)
         {
-            var result = _matchingEngineClient.CashInOutAsync(
-                input.OperationId.ToString(),
-                null,
+            var res = _exchangeOperationsServiceClient.CashOutAsync(
                 input.ClientId,
+                input.DestinationAddress,
+                (double)input.Volume,
                 input.AssetId,
-                input.AssetAccuracy,
-                (double)-Math.Abs(input.Volume),
-                input.CashoutTargetClientId,
-                input.FeeSize,
-                input.FeeType == FeeType.Absolute
-                    ? MatchingEngine.Connector.Models.Common.FeeSizeType.ABSOLUTE
-                    : MatchingEngine.Connector.Models.Common.FeeSizeType.PERCENTAGE).GetAwaiter().GetResult();
-
-            if (result == null)
+                txId: input.OperationId.ToString(),
+                feeClientId: input.CashoutTargetClientId,
+                feeSize: input.FeeSize,
+                feeSizeType: input.FeeType == FeeType.Absolute ? FeeSizeType.ABSOLUTE : FeeSizeType.PERCENTAGE).GetAwaiter().GetResult();
+            
+            if (!res.IsOk())
             {
-                _log.WriteError("Me cashout", new { input.OperationId, ErrorMessage = "Me is not available" });
+                var message = $"{res.Code}: {res.Message}";
 
-                throw new InvalidOperationException("Me is not available");
-            }
+                _log.WriteError("Me cashout", new { input.OperationId, ErrorMessage = message });
 
-            if (result.Status != MeStatusCodes.Ok)
-            {
-                throw new InvalidOperationException($"{result.Status}: {result.Message}");
+                throw new InvalidOperationException(message);
             }
         }
 

@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using Autofac;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Bitcoin.Contracts;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
+using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 using Lykke.Job.BlockchainOperationsExecutor.Contract.Events;
+using Lykke.Job.EthereumCore.Contracts.Cqrs;
 using Lykke.Messaging;
 using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
@@ -114,14 +117,17 @@ namespace Lykke.Service.Operations.Modules
                                 .To("operations").With("commands"),
 
                         Register.Saga<BlockchainCashoutSaga>("blockchain-cashout-saga")
-                            .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent))
-                                .From("operations").On("events")
-                            .ListeningEvents(typeof(OperationExecutionCompletedEvent), typeof(OperationExecutionFailedEvent))
-                                .From(BlockchainOperationsExecutorBoundedContext.Name).On("events")
-                            .PublishingCommands(typeof(StartCashoutCommand))
-                                .To(BlockchainCashoutProcessorBoundedContext.Name).With("commands")
-                            .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand))
-                                .To("operations").With("commands")
+                            .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent)).From("operations").On("events")
+                            .ListeningEvents(typeof(OperationExecutionCompletedEvent), typeof(OperationExecutionFailedEvent)).From(BlockchainOperationsExecutorBoundedContext.Name).On("events")
+                            .ListeningEvents(typeof(Bitcoin.Contracts.Events.CashoutCompletedEvent)).From(BitcoinBoundedContext.Name).On("events")
+                            .ListeningEvents(typeof(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent)).From(EthereumBoundedContext.Name).On("events")
+                            .ListeningEvents(typeof(SolarCashOutCompletedEvent)).From("Solarcoin").On("events")
+                            .ListeningEvents(typeof(CashoutCompletedEvent)).From(BlockchainCashoutProcessorBoundedContext.Name).On("events")
+                            .PublishingCommands(typeof(StartCashoutCommand)).To(BlockchainCashoutProcessorBoundedContext.Name).With("commands")
+                            .PublishingCommands(typeof(Job.EthereumCore.Contracts.Cqrs.Commands.StartCashoutCommand)).To(EthereumBoundedContext.Name).With("commands")
+                            .PublishingCommands(typeof(SolarCashOutCommand)).To("Solarcoin").With("commands")
+                            .PublishingCommands(typeof(Bitcoin.Contracts.Commands.StartCashoutCommand)).To(BitcoinBoundedContext.Name).With("commands")
+                            .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).To("operations").With("commands")
                     );
                 })
                 .As<ICqrsEngine>()
