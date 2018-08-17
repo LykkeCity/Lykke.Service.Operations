@@ -50,7 +50,7 @@ namespace Lykke.Service.Operations.Services
             if (wfResult == WorkflowState.InProgress)
             {
                 var executingActivity = operation.Activities.Single(a => a.IsExecuting);
-
+                
                 eventPublisher.PublishEvent(new ExternalExecutionActivityCreatedEvent
                 {
                     Id = executingActivity.ActivityId,
@@ -65,7 +65,19 @@ namespace Lykke.Service.Operations.Services
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(FailActivityCommand cmd, IEventPublisher eventPublisher)
         {
+            var operation = await _operationsRepository.Get(cmd.OperationId);
+            var activity = operation.Activities.SingleOrDefault(o => !cmd.ActivityId.HasValue && o.IsExecuting || o.ActivityId == cmd.ActivityId);
 
+            if (activity == null)
+            {
+                _log.WriteWarning("FailActivity", context: new { activity, cmd.Output }, info: "Executing activity not found");
+
+                return CommandHandlingResult.Ok();
+            }
+
+            activity.Fail(cmd.Output);
+
+            await _operationsRepository.Save(operation);
 
             return CommandHandlingResult.Ok();
         }

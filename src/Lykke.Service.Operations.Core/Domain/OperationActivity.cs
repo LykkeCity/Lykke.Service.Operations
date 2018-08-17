@@ -30,12 +30,14 @@ namespace Lykke.Service.Operations.Core.Domain
         public void Complete(JObject outputValues)
         {
             Output = outputValues.ToString();
+            IsExecutedExternally = true;
             Status = ActivityResult.Succeeded;
         }
 
-        public void Fail(JObject outputValues)
+        public void Fail(string outputValues)
         {
-            Output = outputValues.ToString();
+            Output = outputValues;
+            IsExecutedExternally = true;
             Status = ActivityResult.Failed;
         }
     }
