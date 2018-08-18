@@ -158,7 +158,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task<object> ApiOperationsCashoutByIdPostAsync(this IOperationsAPI operations, System.Guid id, CreateCashoutCommand command = default(CreateCashoutCommand), CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task<System.Guid?> ApiOperationsCashoutByIdPostAsync(this IOperationsAPI operations, System.Guid id, CreateCashoutCommand command = default(CreateCashoutCommand), CancellationToken cancellationToken = default(CancellationToken))
             {
                 using (var _result = await operations.ApiOperationsCashoutByIdPostWithHttpMessagesAsync(id, command, null, cancellationToken).ConfigureAwait(false))
                 {
