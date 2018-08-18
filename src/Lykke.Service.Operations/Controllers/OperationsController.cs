@@ -244,6 +244,8 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("cashout/{id}")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        [ProducesResponseType(typeof(ModelStateDictionary), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ModelStateDictionary), (int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
         {
             if (id == Guid.Empty)
@@ -281,7 +283,9 @@ namespace Lykke.Service.Operations.Controllers
             {
                 _log.WriteFatalError(workflowType, JsonConvert.SerializeObject(wfResult, Formatting.Indented));
 
-                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult("InternalError", wfResult.Error));
+                ModelState.AddModelError("InternalError", wfResult.Error);
+
+                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult(ModelState));
             }
 
             if (operation.Status == OperationStatus.Failed)

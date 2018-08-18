@@ -24,7 +24,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the AssetCashoutModel class.
         /// </summary>
-        public AssetCashoutModel(int multiplierPower, int accuracy, bool isTradable, bool isTrusted, bool kycNeeded, decimal cashoutMinimalAmount, decimal lowVolumeAmount, bool blockchainWithdrawal, string id = default(string), string displayId = default(string), string assetAddress = default(string), string blockchain = default(string), string type = default(string), string blockchainIntegrationLayerId = default(string))
+        public AssetCashoutModel(int multiplierPower, int accuracy, bool isTradable, bool isTrusted, bool kycNeeded, decimal cashoutMinimalAmount, decimal lowVolumeAmount, bool blockchainWithdrawal, string id = default(string), string displayId = default(string), string assetAddress = default(string), string blockchain = default(string), string type = default(string), string blockchainIntegrationLayerId = default(string), string lykkeEntityId = default(string))
         {
             Id = id;
             DisplayId = displayId;
@@ -40,6 +40,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
             CashoutMinimalAmount = cashoutMinimalAmount;
             LowVolumeAmount = lowVolumeAmount;
             BlockchainWithdrawal = blockchainWithdrawal;
+            LykkeEntityId = lykkeEntityId;
             CustomInit();
         }
 
@@ -117,6 +118,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         [JsonProperty(PropertyName = "BlockchainWithdrawal")]
         public bool BlockchainWithdrawal { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "LykkeEntityId")]
+        public string LykkeEntityId { get; set; }
 
         /// <summary>
         /// Validate the object.

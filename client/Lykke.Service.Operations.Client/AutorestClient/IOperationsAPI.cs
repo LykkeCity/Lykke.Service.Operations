@@ -133,7 +133,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
         /// <param name='cancellationToken'>
         /// The cancellation token.
         /// </param>
-        Task<HttpOperationResponse<System.Guid?>> ApiOperationsCashoutByIdPostWithHttpMessagesAsync(System.Guid id, CreateCashoutCommand command = default(CreateCashoutCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+        Task<HttpOperationResponse<object>> ApiOperationsCashoutByIdPostWithHttpMessagesAsync(System.Guid id, CreateCashoutCommand command = default(CreateCashoutCommand), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <param name='id'>
         /// </param>
