@@ -6,7 +6,6 @@ namespace Lykke.Service.Operations.Workflow.Data
 {
     public class ClientInput
     {
-        public bool OperationsBlocked { get; set; }
-        public bool BackupDone { get; set; }
+        public bool OperationsBlocked { get; set; }        
     }
 }

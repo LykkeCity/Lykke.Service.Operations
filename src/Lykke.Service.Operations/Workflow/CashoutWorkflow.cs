@@ -118,7 +118,6 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new ClientInput
                 {
                     OperationsBlocked = context.OperationValues.Client.CashOutBlocked,
-                    BackupDone = context.OperationValues.Client.BackupDone
                 })
                 .MergeFailOutput(output => output);
 

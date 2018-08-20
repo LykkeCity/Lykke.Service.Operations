@@ -53,8 +53,7 @@ namespace Lykke.Service.Operations.Workflow
             ValidationNode<ClientInput>("Client validation")
                 .WithInput(context => new ClientInput
                 {
-                    OperationsBlocked = context.OperationValues.Client.TradesBlocked,
-                    BackupDone = context.OperationValues.Client.BackupDone
+                    OperationsBlocked = context.OperationValues.Client.TradesBlocked                    
                 })
                 .MergeFailOutput(output => output);
             
