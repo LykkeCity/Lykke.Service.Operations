@@ -11,7 +11,7 @@ namespace Lykke.Service.Operations.Workflow.Validation
         private readonly Dictionary<ValidationErrorType, (string codeType, string message)> _errors = new Dictionary<ValidationErrorType, (string, string)>()
         {
             { ValidationErrorType.AddressIsNotValid, ("InvalidCashoutAddress", "Invalid Destination Address. Please try again.") },
-            { ValidationErrorType.BlackListedAddress, ("InvalidCashoutAddress", "The destination address is not allowed for the withdrawal from the Trading wallet. Please try to send funds to your private wallet first.") }
+            { ValidationErrorType.BlackListedAddress, ("InvalidCashoutAddress", "The destination address is not allowed for the withdrawal from the Trading wallet. Please try to send funds to your private wallet first.") }            
         };
 
         public BilValidator()
@@ -35,7 +35,7 @@ namespace Lykke.Service.Operations.Workflow.Validation
                         if (_errors.ContainsKey(errorType))
                             return _errors[errorType].message;
 
-                        return "Destination address is invalid";
+                        return input.Errors.First().Value;
                     }));
         }        
     }
