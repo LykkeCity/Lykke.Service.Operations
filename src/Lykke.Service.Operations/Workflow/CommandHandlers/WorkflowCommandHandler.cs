@@ -33,9 +33,9 @@ namespace Lykke.Service.Operations.Services
 
             if (operation == null)
             {
-                _log.WriteInfo(nameof(WorkflowCommandHandler), context: cmd, info: "operation not found. Retrying...");
+                _log.WriteWarning(nameof(WorkflowCommandHandler), context: cmd, info: "operation not found. Retrying...");
 
-                return new CommandHandlingResult { Retry = true, RetryDelay = (long) TimeSpan.FromSeconds(5).TotalMilliseconds };
+                return new CommandHandlingResult { Retry = true, RetryDelay = (long) TimeSpan.FromSeconds(60).TotalMilliseconds };
             }
             
             if (operation.Status == OperationStatus.Completed)

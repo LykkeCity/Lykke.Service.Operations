@@ -160,6 +160,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+            await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
@@ -197,6 +198,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+            await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
@@ -233,6 +235,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(context, Formatting.Indented));
+            await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
@@ -262,6 +265,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
+            await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
