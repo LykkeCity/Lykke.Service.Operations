@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Common;
 using JetBrains.Annotations;
 using Lykke.Cqrs;
+using Lykke.Service.Assets.Client;
 using Lykke.Service.Operations.Modules;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow.Commands;
@@ -15,6 +16,13 @@ namespace Lykke.Service.Operations.Workflow.Sagas
 {
     public class MeSaga
     {
+        private readonly IAssetsServiceWithCache _assetsServiceWithCache;
+
+        public MeSaga(IAssetsServiceWithCache assetsServiceWithCache)
+        {
+            _assetsServiceWithCache = assetsServiceWithCache;
+        }
+
         [UsedImplicitly]
         public async Task Handle(ExternalExecutionActivityCreatedEvent evt, ICommandSender commandSender)
         {
@@ -27,6 +35,11 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         [UsedImplicitly]
         public async Task Handle(CashOutProcessedEvent evt, ICommandSender commandSender)
         {
+            var asset = await _assetsServiceWithCache.TryGetAssetAsync(evt.AssetId);
+
+            if (asset.SwiftWithdrawal || asset.ForwardWithdrawal)
+                return;
+
             var command = new CompleteActivityCommand
             {
                 OperationId = evt.OperationId,                
