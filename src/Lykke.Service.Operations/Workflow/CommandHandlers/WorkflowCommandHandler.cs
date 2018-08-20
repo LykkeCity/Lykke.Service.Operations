@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
@@ -32,9 +33,9 @@ namespace Lykke.Service.Operations.Services
 
             if (operation == null)
             {
-                _log.WriteWarning(nameof(WorkflowCommandHandler), context: cmd, info: "operation not found");
+                _log.WriteInfo(nameof(WorkflowCommandHandler), context: cmd, info: "operation not found. Retrying...");
 
-                return CommandHandlingResult.Ok();
+                return new CommandHandlingResult { Retry = true, RetryDelay = (long) TimeSpan.FromSeconds(5).TotalMilliseconds };
             }
             
             if (operation.Status == OperationStatus.Completed)
