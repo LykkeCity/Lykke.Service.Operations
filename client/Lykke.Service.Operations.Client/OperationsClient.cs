@@ -36,6 +36,9 @@ namespace Lykke.Service.Operations.Client
         {
             var op = await _operationsApi.ApiOperationsByIdGetAsync(id);
 
+            if (op == null)
+                return null;
+
             var result = _mapper.Map<OperationModel>(op);
 
             return result;
