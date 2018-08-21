@@ -174,6 +174,11 @@ namespace Lykke.Service.Operations.Core.Domain
             return Activities.LastOrDefault(a => a.Type == "RequestConfirmation" && a.Status == ActivityResult.None);
         }
 
+        public OperationActivity ExecutingActivity()
+        {
+            return Activities.SingleOrDefault(o => o.IsExecuting);
+        }
+
         public void CompleteActivity(Guid activityId, object output)
         {
             var activity = Activities.Single(a => a.ActivityId == activityId && a.Status == ActivityResult.None);

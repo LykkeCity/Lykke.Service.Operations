@@ -18,6 +18,7 @@ using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
+using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.Operations.Workflow.CommandHandlers;
 using Lykke.Service.Operations.Workflow.Commands;

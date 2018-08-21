@@ -150,6 +150,9 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                 return CommandHandlingResult.Ok();
             }
 
+            if (operation.ExecutingActivity() == null)
+                return new CommandHandlingResult { Retry = true, RetryDelay = (long) TimeSpan.FromSeconds(5).TotalMilliseconds };
+
             var wfResult = await _workflowService.CompleteActivity(operation, cmd.ActivityId, JObject.Parse(cmd.Output));
 
             if (wfResult != null)
