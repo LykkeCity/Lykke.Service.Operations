@@ -21,13 +21,13 @@ using AssetInput = Lykke.Service.Operations.Workflow.Data.SwiftCashout.AssetInpu
 namespace Lykke.Service.Operations.Workflow
 {
     [UsedImplicitly]
-    public class SwiftCashoutWorkflow : OperationWorkflow
+    public class CashoutSwiftWorkflow : OperationWorkflow
     {
         private readonly IExchangeOperationsServiceClient _exchangeOperationsServiceClient;
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly ICqrsEngine _cqrsEngine;
 
-        public SwiftCashoutWorkflow(
+        public CashoutSwiftWorkflow(
             Operation operation,
             ILogFactory logFactory,
             IActivityFactory activityFactory,
