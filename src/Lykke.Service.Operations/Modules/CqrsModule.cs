@@ -41,8 +41,7 @@ namespace Lykke.Service.Operations.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            Messaging.Serialization.MessagePackSerializerFactory.Defaults.FormatterResolver =
-                MessagePack.Resolvers.ContractlessStandardResolver.Instance;
+            Messaging.Serialization.MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
             var rabbitMqSagasSettings = new RabbitMQ.Client.ConnectionFactory
             {
                 Uri = _settings.CurrentValue.SagasRabbitMq.RabbitConnectionString
