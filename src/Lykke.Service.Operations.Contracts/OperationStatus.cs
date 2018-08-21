@@ -13,6 +13,7 @@ namespace Lykke.Service.Operations.Contracts
         Confirmed,
         Completed,
         Canceled,
-        Failed
+        Failed,
+        Corrupted
     }
 }

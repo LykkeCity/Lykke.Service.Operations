@@ -249,10 +249,10 @@ namespace Lykke.Service.Operations.Workflow.Validation
 
         private readonly AddressUtil _addressUtil;
 
-        public EthereumFacade(IEthereumCoreAPI ethereumApi, ILog log)
+        public EthereumFacade(IEthereumCoreAPI ethereumApi, ILogFactory log)
         {
             _ethereumApi = ethereumApi;
-            _log = log;
+            _log = log.CreateLog(this);
             _addressUtil = new AddressUtil();
         }
 

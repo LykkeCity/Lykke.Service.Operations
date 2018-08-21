@@ -52,10 +52,10 @@ namespace Lykke.Service.Operations.Tests
 
             reloadingManager.Setup(m => m.CurrentValue).Returns(settings);
 
-            builder.RegisterModule(new ClientsModule(reloadingManager.Object, new LogToConsole()));
-            builder.RegisterModule(new ServiceModule(reloadingManager.Object, new LogToConsole()));            
-            builder.RegisterModule(new DbModule(reloadingManager.Object.Nested(x => x.OperationsService.Db), new LogToConsole()));            
-            builder.RegisterModule(new CqrsModule(reloadingManager.Object, new LogToConsole()));
+            builder.RegisterModule(new ClientsModule(reloadingManager.Object));
+            builder.RegisterModule(new ServiceModule(reloadingManager.Object));
+            builder.RegisterModule(new DbModule(reloadingManager.Object));
+            builder.RegisterModule(new CqrsModule(reloadingManager.Object));
             builder.RegisterModule(new WorkflowModule());
 
             _container = builder.Build();

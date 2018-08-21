@@ -4,6 +4,7 @@ using Autofac;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Bitcoin.Contracts;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
@@ -15,8 +16,8 @@ using Lykke.Job.EthereumCore.Contracts.Cqrs;
 using Lykke.Messaging;
 using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
+using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
-using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.Operations.Workflow.CommandHandlers;
 using Lykke.Service.Operations.Workflow.Commands;
@@ -31,12 +32,10 @@ namespace Lykke.Service.Operations.Modules
     public class CqrsModule : Module
     {
         private readonly IReloadingManager<AppSettings> _settings;
-        private readonly ILog _log;
-
-        public CqrsModule(IReloadingManager<AppSettings> settings, ILog log)
+        
+        public CqrsModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
-            _log = log;
         }
 
         protected override void Load(ContainerBuilder builder)
@@ -50,13 +49,16 @@ namespace Lykke.Service.Operations.Modules
             
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>();
             
-            builder.RegisterType<WorkflowCommandHandler>().SingleInstance();
+            builder.RegisterType<WorkflowCommandHandler>()
+                .WithParameter("ethereumHotWallet", _settings.CurrentValue.EthereumServiceClient.HotwalletAddress)
+                .SingleInstance();
             builder.RegisterType<SolarCoinCommandHandler>().SingleInstance();
 
             builder.RegisterType<MeSaga>().SingleInstance();
             builder.RegisterType<BlockchainCashoutSaga>().SingleInstance();
+            builder.RegisterType<WorkflowSaga>().SingleInstance();
 
-            builder.RegisterInstance(new MessagingEngine(_log,
+            builder.Register(ctx => new MessagingEngine(ctx.Resolve<ILogFactory>(),
                 new TransportResolver(new Dictionary<string, TransportInfo>
                 {
                     {
@@ -65,7 +67,7 @@ namespace Lykke.Service.Operations.Modules
                             rabbitMqSagasSettings.Password, "None", "RabbitMq")
                     }
                 }),
-                new RabbitMqTransportFactory())).As<IMessagingEngine>();
+                new RabbitMqTransportFactory(ctx.Resolve<ILogFactory>()))).As<IMessagingEngine>();
           
             var sagasEndpointResolver = new RabbitMqConventionEndpointResolver(
                 "SagasRabbitMq",
@@ -81,7 +83,8 @@ namespace Lykke.Service.Operations.Modules
 
             builder.Register(ctx =>
                 {
-                    return new CqrsEngine(_log,
+                    return new CqrsEngine(
+                        ctx.Resolve<ILogFactory>(),
                         ctx.Resolve<IDependencyResolver>(),
                         ctx.Resolve<IMessagingEngine>(),
                         new DefaultEndpointProvider(),
@@ -89,12 +92,19 @@ namespace Lykke.Service.Operations.Modules
                         Register.DefaultEndpointResolver(sagasEndpointResolver),
 
                         Register.BoundedContext("operations")
-                            .ListeningCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).On("commands")
+                            .ListeningCommands(
+                                typeof(CreateCashoutCommand),
+                                typeof(ExecuteOperationCommand),
+                                typeof(CompleteActivityCommand), 
+                                typeof(FailActivityCommand))
+                                .On("commands")
                                 .WithCommandsHandler<WorkflowCommandHandler>()                            
                             .PublishingEvents(
                                 typeof(LimitOrderCreatedEvent),
                                 typeof(LimitOrderRejectedEvent),
                                 typeof(OperationCreatedEvent),
+                                typeof(OperationCorruptedEvent),
+                                typeof(OperationFailedEvent),
                                 typeof(ExternalExecutionActivityCreatedEvent))                            
                             .With("events"),
 
@@ -129,7 +139,11 @@ namespace Lykke.Service.Operations.Modules
                             .PublishingCommands(typeof(Job.EthereumCore.Contracts.Cqrs.Commands.StartCashoutCommand)).To(EthereumBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(SolarCashOutCommand)).To("solarcoin").With("commands")
                             .PublishingCommands(typeof(Bitcoin.Contracts.Commands.StartCashoutCommand)).To(BitcoinBoundedContext.Name).With("commands")
-                            .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).To("operations").With("commands")
+                            .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).To("operations").With("commands"),
+
+                        Register.Saga<WorkflowSaga>("workflow-saga")
+                            .ListeningEvents(typeof(OperationCreatedEvent)).From("operations").On("events")
+                            .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands")
                     );
                 })
                 .As<ICqrsEngine>()

@@ -2,7 +2,7 @@
 using System.Net.Http;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Balances.Client;
@@ -24,13 +24,11 @@ namespace Lykke.Service.Operations.Modules
     public class ClientsModule : Module
     {
         private readonly IReloadingManager<AppSettings> _settings;
-        private readonly ILog _log;
         private readonly IServiceCollection _services;
 
-        public ClientsModule(IReloadingManager<AppSettings> settings, ILog log)
+        public ClientsModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
-            _log = log;
             _services = new ServiceCollection();
         }
 
@@ -53,13 +51,29 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterInstance(_settings.CurrentValue.EthereumServiceClient);
 
             builder.RegisterInstance<IEthereumCoreAPI>(new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl), new HttpClient()));
-            builder.RegisterBlockchainCashoutPreconditionsCheckClient(_settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient, _log);
-            builder.RegisterType<BlockchainWalletsClient>().As<IBlockchainWalletsClient>()
-                .WithParameter("hostUrl", _settings.CurrentValue.BlockchainWalletsServiceClient.ServiceUrl)
-                .WithParameter("log", _log);
-            builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl, _log);
-            builder.RegisterBalancesClient(_settings.CurrentValue.BalancesServiceClient.ServiceUrl, _log);
-            builder.RegisterFeeCalculatorClient(_settings.CurrentValue.FeeCalculatorServiceClient.ServiceUrl, _log);
+
+            builder.Register(ctx => new BlockchainCashoutPreconditionsCheckClient(
+                    _settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient.ServiceUrl, 
+                    ctx.Resolve<ILogFactory>().CreateLog("BlockchainCashoutPreconditionsCheckClient")))
+                .As<IBlockchainCashoutPreconditionsCheckClient>()
+                .SingleInstance();
+
+            builder.Register(ctx => new BlockchainWalletsClient(
+                    _settings.CurrentValue.BlockchainWalletsServiceClient.ServiceUrl,
+                    ctx.Resolve<ILogFactory>().CreateLog("BlockchainWalletsClient")))
+                .As<IBlockchainWalletsClient>()
+                .SingleInstance();
+
+            builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl);
+
+            builder.Register(ctx => new BalancesClient(
+                    _settings.CurrentValue.BalancesServiceClient.ServiceUrl, 
+                    ctx.Resolve<ILogFactory>().CreateLog("BalancesClient")))
+                .As<IBalancesClient>()
+                .SingleInstance();
+
+            builder.RegisterFeeCalculatorClient(_settings.CurrentValue.FeeCalculatorServiceClient.ServiceUrl);
+
             builder.RegisterInstance<IAssetDisclaimersClient>(new AssetDisclaimersClient(_settings.CurrentValue.AssetDisclaimersServiceClient));
             builder.BindMeClient(_settings.CurrentValue.MatchingEngineClient.IpEndpoint.GetClientIpEndPoint(), socketLog: null, ignoreErrors: true);
             builder.RegisterLimitationsServiceClient(_settings.CurrentValue.LimitationServiceClient.ServiceUrl);

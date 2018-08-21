@@ -2,6 +2,7 @@
 using System.Linq;
 using Common;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
@@ -36,7 +37,7 @@ namespace Lykke.Service.Operations.Workflow
 
         public CashoutWorkflow(
             Operation operation, 
-            ILog log, 
+            ILogFactory log, 
             IActivityFactory activityFactory,
             IEthereumFacade ethereumFacade,
             BlockchainAddress blockchainAddress,
@@ -45,7 +46,7 @@ namespace Lykke.Service.Operations.Workflow
             IExchangeOperationsServiceClient exchangeOperationsServiceClient,
             IBlockchainCashoutPreconditionsCheckClient blockchainCashoutPreconditionsCheckClient) : base(operation, log, activityFactory)
         {
-            _log = log;            
+            _log = log.CreateLog(this);
             _ethereumFacade = ethereumFacade;
             _feeCalculatorClient = feeCalculatorClient;
             _matchingEngineClient = matchingEngineClient;

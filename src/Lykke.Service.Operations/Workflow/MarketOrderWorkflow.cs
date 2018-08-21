@@ -1,6 +1,7 @@
 ﻿using System;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.MatchingEngine.Connector.Models.Common;
@@ -24,10 +25,10 @@ namespace Lykke.Service.Operations.Workflow
 
         public MarketOrderWorkflow(
             Operation operation,
-            ILog log,
+            ILogFactory logFactory,
             IActivityFactory activityFactory,
             IFeeCalculatorClient feeCalculatorClient,
-            IMatchingEngineClient matchingEngineClient) : base(operation, log, activityFactory)
+            IMatchingEngineClient matchingEngineClient) : base(operation, logFactory, activityFactory)
         {
             _feeCalculatorClient = feeCalculatorClient;
             _matchingEngineClient = matchingEngineClient;

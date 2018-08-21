@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using Lykke.Common.ApiLibrary.Middleware;
+using Lykke.Common.Log;
 using Lykke.Service.Operations.Models;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -18,9 +19,9 @@ namespace Lykke.Service.Operations.Middleware
         private readonly CreateErrorResponse _createErrorResponse;
         private readonly RequestDelegate _next;
 
-        public GlobalErrorHandlerMiddleware(RequestDelegate next, ILog log, string componentName, CreateErrorResponse createErrorResponse)
+        public GlobalErrorHandlerMiddleware(RequestDelegate next, ILogFactory log, string componentName, CreateErrorResponse createErrorResponse)
         {
-            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _log = log.CreateLog(this) ?? throw new ArgumentNullException(nameof(log));
             _componentName = componentName ?? throw new ArgumentNullException(nameof(componentName));
             _createErrorResponse = createErrorResponse ?? throw new ArgumentNullException(nameof(createErrorResponse));
             _next = next;

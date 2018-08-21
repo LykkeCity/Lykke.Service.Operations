@@ -2,6 +2,7 @@
 using AzureStorage.Queue;
 using AzureStorage.Tables;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Core.Services;
@@ -20,37 +21,21 @@ namespace Lykke.Service.Operations.Modules
     public class ServiceModule : Module
     {
         private readonly IReloadingManager<AppSettings> _settings;
-        private readonly ILog _log;
-
-        public ServiceModule(IReloadingManager<AppSettings> settings, ILog log)
+        
+        public ServiceModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
-            _log = log;
         }
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterInstance(_log)
-                .As<ILog>()
-                .SingleInstance();
-
-            builder.RegisterType<HealthService>()
-                .As<IHealthService>()
-                .SingleInstance();
-
-            builder.RegisterType<StartupManager>()
-                .As<IStartupManager>();
-
-            builder.RegisterType<ShutdownManager>()
-                .As<IShutdownManager>();
-
             builder.RegisterType<OperationsRepository>()
                 .As<IOperationsRepository>()
                 .SingleInstance();
             
-            builder.RegisterInstance<ILimitOrdersRepository>(
+            builder.Register<ILimitOrdersRepository>(ctx =>
                 new LimitOrdersRepository(AzureTableStorage<LimitOrderEntity>.Create(_settings.ConnectionString(x => x.OperationsService.Db.HMarketOrdersConnString),
-                    "LimitOrders", _log)));
+                    "LimitOrders", ctx.Resolve<ILogFactory>()))).SingleInstance();
             
             builder.RegisterType<WorkflowService>().As<IWorkflowService>().SingleInstance();
 

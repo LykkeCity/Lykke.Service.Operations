@@ -1,7 +1,9 @@
 ﻿using System;
+using MessagePack;
 
 namespace Lykke.Service.Operations.Contracts.Cashout
 {
+    [MessagePackObject(keyAsPropertyName: true)]
     public class ClientCashoutModel
     {
         public Guid Id { get; set; }

@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Contracts.Operations;
 using Lykke.Cqrs;
 using Lykke.Service.Assets.Client;
@@ -55,7 +56,7 @@ namespace Lykke.Service.Operations.Controllers
             IWorkflowService workflowService,
             ICqrsEngine cqrsEngine,
             EthereumServiceClientSettings ethereumServiceClientSettings,
-            ILog log,
+            ILogFactory log,
             IMapper mapper)
         {
             _operationsRepository = operationsRepository;
@@ -66,7 +67,7 @@ namespace Lykke.Service.Operations.Controllers
             _workflowService = workflowService;
             _cqrsEngine = cqrsEngine;
             _ethereumServiceClientSettings = ethereumServiceClientSettings;
-            _log = log;
+            _log = log.CreateLog(this);
             _mapper = mapper;
         }
 
@@ -266,9 +267,7 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
             await _operationsRepository.Save(operation);
-
-            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
-
+            
             await HandleWorkflow("CashoutWorkflow", operation);
 
             return Created(Url.Action("Get", "Operations", new { id }), id);
@@ -466,7 +465,7 @@ namespace Lykke.Service.Operations.Controllers
                     var activityOutput = JObject.FromObject(new { cmd.Confirmation });
                     var wfState = await _workflowService.CompleteActivity(operation, activityId, activityOutput);
 
-                    if (wfState == WorkflowState.InProgress)
+                    if (wfState.State == WorkflowState.InProgress)
                     {
                         var executingActivity = operation.Activities.Single(a => a.IsExecuting);
 
@@ -477,7 +476,7 @@ namespace Lykke.Service.Operations.Controllers
                             Input = executingActivity.Input
                         }, "operations");
                     }
-                    else if (wfState == WorkflowState.Complete)
+                    else if (wfState.State == WorkflowState.Complete)
                     {
                         if (operation.Status == OperationStatus.Failed)                        
                             throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", operation.OperationValues.ErrorMessage?.ToString()));

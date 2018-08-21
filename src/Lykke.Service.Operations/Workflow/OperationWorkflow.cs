@@ -14,22 +14,22 @@ namespace Lykke.Service.Operations.Workflow
         private readonly Operation _activityExecutor;
         protected ILog Log { get; }
 
-        public OperationWorkflow(Operation operation, ILog log, IActivityFactory activityFactory) 
+        public OperationWorkflow(Operation operation, ILogFactory logFactory, IActivityFactory activityFactory) 
             : base(operation, activityFactory, operation)
         {
-            Log = log;
+            Log = logFactory.CreateLog(this);
             _activityExecutor = operation;
         }
 
         public override Execution<Operation> Run(Operation operation)
         {
-            Log.WriteInfo(GetType().Name, null, $"Operation [{operation.Id}] Run - running operation of type '{operation.Type}'");
+            Log.Info(GetType().Name, operation.Context, $"Operation [{operation.Id}] Run - running operation of type '{operation.Type}'");
 
             var state = operation.WorkflowState;
             var result = base.Run(operation);
             operation.ApplyValuesChanges();
 
-            Log.WriteInfo(GetType().Name, null, $"Operation [{operation.Id}] of type '{operation.Type}' Run - state changed from {state} to {operation.WorkflowState}");
+            Log.Info(GetType().Name, operation.Context, $"Operation [{operation.Id}] of type '{operation.Type}' Run - state changed from {state} to {operation.WorkflowState}");
             
             return result;
         }

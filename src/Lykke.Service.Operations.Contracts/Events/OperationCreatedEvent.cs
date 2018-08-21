@@ -8,6 +8,6 @@ namespace Lykke.Service.Operations.Contracts.Events
     public class OperationCreatedEvent
     {
         public Guid Id { get; set; }
-        public Guid ClientId { get; set; }        
+        public Guid ClientId { get; set; }
     }
 }

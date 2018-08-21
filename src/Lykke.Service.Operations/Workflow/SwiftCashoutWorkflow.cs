@@ -2,6 +2,7 @@
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.ExchangeOperations.Client;
@@ -28,12 +29,12 @@ namespace Lykke.Service.Operations.Workflow
 
         public SwiftCashoutWorkflow(
             Operation operation,
-            ILog log,
+            ILogFactory logFactory,
             IActivityFactory activityFactory,
             IExchangeOperationsServiceClient exchangeOperationsServiceClient,
             IFeeCalculatorClient feeCalculatorClient,
             ICqrsEngine cqrsEngine
-            ) : base(operation, log, activityFactory)
+            ) : base(operation, logFactory, activityFactory)
         {
             _exchangeOperationsServiceClient = exchangeOperationsServiceClient;
             _feeCalculatorClient = feeCalculatorClient;

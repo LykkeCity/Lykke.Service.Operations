@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow.Commands;
@@ -14,9 +15,9 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         private readonly ILog _log;
         private readonly ISrvSolarCoinCommandProducer _solarCoinCommandProducer;
 
-        public SolarCoinCommandHandler(ILog log, ISrvSolarCoinCommandProducer solarCoinCommandProducer)
+        public SolarCoinCommandHandler(ILogFactory logFactory, ISrvSolarCoinCommandProducer solarCoinCommandProducer)
         {
-            _log = log;
+            _log = logFactory.CreateLog(this);
             _solarCoinCommandProducer = solarCoinCommandProducer;
         }
 

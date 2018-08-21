@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
@@ -17,14 +18,14 @@ namespace Lykke.Service.Operations.Services
         private readonly IOperationsRepository _operationsRepository;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
         
-        public WorkflowService(ILog log, IOperationsRepository operationsRepository, Func<string, Operation, OperationWorkflow> workflowFactory)
+        public WorkflowService(ILogFactory log, IOperationsRepository operationsRepository, Func<string, Operation, OperationWorkflow> workflowFactory)
         {
-            _log = log;
+            _log = log.CreateLog(this);
             _operationsRepository = operationsRepository;
             _workflowFactory = workflowFactory;
         }
 
-        public async Task<WorkflowState> CompleteActivity(Operation operation, Guid? activityId, JObject activityOutput)
+        public async Task<Execution<Operation>> CompleteActivity(Operation operation, Guid? activityId, JObject activityOutput)
         {            
             var activity = operation.Activities.SingleOrDefault(o => !activityId.HasValue && o.IsExecuting || o.ActivityId == activityId);
 
@@ -32,7 +33,7 @@ namespace Lykke.Service.Operations.Services
             {
                 _log.WriteWarning("CompleteActivity", context: new { activity, activityOutput }, info: "Executing activity not found");
 
-                return operation.WorkflowState;
+                return null;
             }
 
             activity.Complete(activityOutput);
@@ -41,11 +42,7 @@ namespace Lykke.Service.Operations.Services
 
             var wf = _workflowFactory(operation.Type + "Workflow", operation);
 
-            var wfResult = wf.Resume(operation, activity.ActivityId, new ActivityState { NodeName = activity.Name, Status = activity.Status, Values = JObject.Parse(activity.Output) });
-            
-            await _operationsRepository.Save(operation);
-
-            return wfResult.State;            
+            return wf.Resume(operation, activity.ActivityId, new ActivityState { NodeName = activity.Name, Status = activity.Status, Values = JObject.Parse(activity.Output) });
         }
 
         public async Task FailActivity(Operation operation, Guid? activityId, JObject activityOutput)

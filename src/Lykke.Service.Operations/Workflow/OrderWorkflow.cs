@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
@@ -15,8 +16,8 @@ namespace Lykke.Service.Operations.Workflow
     {
         public OrderWorkflow(
             Operation operation, 
-            ILog log, 
-            IActivityFactory activityFactory) : base(operation, log, activityFactory)
+            ILogFactory logFactory, 
+            IActivityFactory activityFactory) : base(operation, logFactory, activityFactory)
         {            
             Configure(cfg => 
                 cfg

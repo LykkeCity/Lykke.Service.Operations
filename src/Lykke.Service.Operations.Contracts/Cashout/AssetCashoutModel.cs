@@ -1,5 +1,8 @@
-﻿namespace Lykke.Service.Operations.Contracts.Cashout
+﻿using MessagePack;
+
+namespace Lykke.Service.Operations.Contracts.Cashout
 {
+    [MessagePackObject(keyAsPropertyName: true)]
     public class AssetCashoutModel
     {
         public string Id { get; set; }

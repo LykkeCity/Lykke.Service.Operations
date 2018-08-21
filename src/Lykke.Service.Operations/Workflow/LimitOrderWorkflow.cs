@@ -1,6 +1,7 @@
 ﻿using System;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.MatchingEngine.Connector.Models.Api;
@@ -29,12 +30,12 @@ namespace Lykke.Service.Operations.Workflow
 
         public LimitOrderWorkflow(
             Operation operation,
-            ILog log,
+            ILogFactory logFactory,
             IActivityFactory activityFactory,
             IFeeCalculatorClient feeCalculatorClient,
             ILimitOrdersRepository limitOrdersRepository,
             IMatchingEngineClient matchingEngineClient,
-            ICqrsEngine cqrsEngine) : base(operation, log, activityFactory)
+            ICqrsEngine cqrsEngine) : base(operation, logFactory, activityFactory)
         {
             _feeCalculatorClient = feeCalculatorClient;
             _limitOrdersRepository = limitOrdersRepository;
