@@ -84,7 +84,10 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             var command = new CompleteActivityCommand
             {
                 OperationId = evt.OperationId,
-                Output = "{}"
+                Output = new
+                {
+                    TransactionHash = evt.TxHash
+                }.ToJson()
             };
 
             commandSender.SendCommand(command, "operations");
