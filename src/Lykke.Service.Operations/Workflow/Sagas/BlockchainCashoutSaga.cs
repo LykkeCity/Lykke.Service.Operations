@@ -113,25 +113,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
 
             commandSender.SendCommand(command, "operations");
         }
-
-        [UsedImplicitly]
-        public async Task Handle(OperationExecutionCompletedEvent evt, ICommandSender commandSender)
-        {
-            var command = new CompleteActivityCommand
-            {
-                OperationId = evt.OperationId,
-                Output = new
-                {
-                    evt.Block,
-                    evt.Fee,
-                    evt.TransactionAmount,
-                    evt.TransactionHash
-                }.ToJson()
-            };
-
-            commandSender.SendCommand(command, "operations");
-        }
-
+        
         [UsedImplicitly]
         public async Task Handle(CashoutCompletedEvent evt, ICommandSender commandSender)
         {

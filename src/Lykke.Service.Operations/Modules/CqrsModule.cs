@@ -47,11 +47,7 @@ namespace Lykke.Service.Operations.Modules
             {
                 Uri = _settings.CurrentValue.SagasRabbitMq.RabbitConnectionString
             };
-            var rabbitMqSettings = new RabbitMQ.Client.ConnectionFactory
-            {
-                Uri = _settings.CurrentValue.Transports.ClientRabbitMqConnectionString
-            };
-
+            
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>();
             
             builder.RegisterType<WorkflowCommandHandler>().SingleInstance();
@@ -102,6 +98,12 @@ namespace Lykke.Service.Operations.Modules
                                 typeof(ExternalExecutionActivityCreatedEvent))                            
                             .With("events"),
 
+                        Register.BoundedContext("solarcoin")
+                            .ListeningCommands(typeof(SolarCashOutCommand)).On("commands")
+                                .WithCommandsHandler<SolarCoinCommandHandler>()
+                            .PublishingEvents(typeof(SolarCashOutCompletedEvent))
+                                .With("events"),
+
                         Register.BoundedContext(SwiftWithdrawalBoundedContext.Name)
                             .PublishingCommands(typeof(SwiftCashoutCreateCommand))                            
                             .To(SwiftWithdrawalBoundedContext.Name)                            
@@ -118,14 +120,14 @@ namespace Lykke.Service.Operations.Modules
 
                         Register.Saga<BlockchainCashoutSaga>("blockchain-cashout-saga")
                             .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent)).From("operations").On("events")
-                            .ListeningEvents(typeof(OperationExecutionCompletedEvent), typeof(OperationExecutionFailedEvent)).From(BlockchainOperationsExecutorBoundedContext.Name).On("events")
+                            .ListeningEvents(typeof(OperationExecutionFailedEvent)).From(BlockchainOperationsExecutorBoundedContext.Name).On("events")
                             .ListeningEvents(typeof(Bitcoin.Contracts.Events.CashoutCompletedEvent)).From(BitcoinBoundedContext.Name).On("events")
                             .ListeningEvents(typeof(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent)).From(EthereumBoundedContext.Name).On("events")
-                            .ListeningEvents(typeof(SolarCashOutCompletedEvent)).From("Solarcoin").On("events")
+                            .ListeningEvents(typeof(SolarCashOutCompletedEvent)).From("solarcoin").On("events")
                             .ListeningEvents(typeof(CashoutCompletedEvent)).From(BlockchainCashoutProcessorBoundedContext.Name).On("events")
                             .PublishingCommands(typeof(StartCashoutCommand)).To(BlockchainCashoutProcessorBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(Job.EthereumCore.Contracts.Cqrs.Commands.StartCashoutCommand)).To(EthereumBoundedContext.Name).With("commands")
-                            .PublishingCommands(typeof(SolarCashOutCommand)).To("Solarcoin").With("commands")
+                            .PublishingCommands(typeof(SolarCashOutCommand)).To("solarcoin").With("commands")
                             .PublishingCommands(typeof(Bitcoin.Contracts.Commands.StartCashoutCommand)).To(BitcoinBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).To("operations").With("commands")
                     );
