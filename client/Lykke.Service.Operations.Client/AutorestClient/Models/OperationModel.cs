@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -28,8 +29,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// 'VisaCardPayment', 'MarketOrder', 'LimitOrder', 'NewOrder',
         /// 'CashoutSwift', 'Cashout'</param>
         /// <param name="status">Possible values include: 'Created',
-        /// 'Accepted', 'Confirmed', 'Completed', 'Canceled', 'Failed'</param>
-        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context = default(object), object activities = default(object), string contextJson = default(string))
+        /// 'Accepted', 'Confirmed', 'Completed', 'Canceled', 'Failed',
+        /// 'Corrupted'</param>
+        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context, object activities, string contextJson)
         {
             Id = id;
             Created = created;
@@ -67,7 +69,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// Gets or sets possible values include: 'Created', 'Accepted',
-        /// 'Confirmed', 'Completed', 'Canceled', 'Failed'
+        /// 'Confirmed', 'Completed', 'Canceled', 'Failed', 'Corrupted'
         /// </summary>
         [JsonProperty(PropertyName = "Status")]
         public OperationStatus Status { get; set; }
@@ -95,11 +97,23 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
+            if (Context == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Context");
+            }
+            if (Activities == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Activities");
+            }
+            if (ContextJson == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "ContextJson");
+            }
         }
     }
 }

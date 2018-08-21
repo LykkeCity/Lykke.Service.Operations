@@ -18,16 +18,13 @@ namespace Lykke.Service.Operations.Client.AutorestClient
     /// </summary>
     public static partial class OperationsAPIExtensions
     {
-            /// <summary>
-            /// Checks service is alive
-            /// </summary>
             /// <param name='operations'>
             /// The operations group for this extension method.
             /// </param>
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
-            public static async Task<object> IsAliveAsync(this IOperationsAPI operations, CancellationToken cancellationToken = default(CancellationToken))
+            public static async Task<IsAliveResponse> IsAliveAsync(this IOperationsAPI operations, CancellationToken cancellationToken = default(CancellationToken))
             {
                 using (var _result = await operations.IsAliveWithHttpMessagesAsync(null, cancellationToken).ConfigureAwait(false))
                 {
@@ -58,7 +55,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// </param>
             /// <param name='status'>
             /// Possible values include: 'Created', 'Accepted', 'Confirmed', 'Completed',
-            /// 'Canceled', 'Failed'
+            /// 'Canceled', 'Failed', 'Corrupted'
             /// </param>
             /// <param name='cancellationToken'>
             /// The cancellation token.

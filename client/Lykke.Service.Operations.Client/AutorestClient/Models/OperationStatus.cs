@@ -30,7 +30,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         [EnumMember(Value = "Canceled")]
         Canceled,
         [EnumMember(Value = "Failed")]
-        Failed
+        Failed,
+        [EnumMember(Value = "Corrupted")]
+        Corrupted
     }
     internal static class OperationStatusEnumExtension
     {
@@ -53,6 +55,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
                     return "Canceled";
                 case OperationStatus.Failed:
                     return "Failed";
+                case OperationStatus.Corrupted:
+                    return "Corrupted";
             }
             return null;
         }
@@ -73,6 +77,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
                     return OperationStatus.Canceled;
                 case "Failed":
                     return OperationStatus.Failed;
+                case "Corrupted":
+                    return OperationStatus.Corrupted;
             }
             return null;
         }

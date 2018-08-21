@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -26,7 +27,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         /// <param name="orderAction">Possible values include: 'Buy',
         /// 'Sell'</param>
-        public CreateMarketOrderCommand(double volume, OrderAction orderAction, string assetId = default(string), AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
+        public CreateMarketOrderCommand(string assetId, AssetPairModel assetPair, double volume, OrderAction orderAction, ClientModel client, GlobalSettingsModel globalSettings)
         {
             AssetId = assetId;
             AssetPair = assetPair;
@@ -76,11 +77,27 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
+            if (AssetId == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "AssetId");
+            }
+            if (AssetPair == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "AssetPair");
+            }
+            if (Client == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Client");
+            }
+            if (GlobalSettings == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "GlobalSettings");
+            }
             if (AssetPair != null)
             {
                 AssetPair.Validate();

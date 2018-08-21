@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Collections;
     using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the FeeSettingsCashoutModel class.
         /// </summary>
-        public FeeSettingsCashoutModel(IDictionary<string, string> targetClients = default(IDictionary<string, string>))
+        public FeeSettingsCashoutModel(IDictionary<string, string> targetClients)
         {
             TargetClients = targetClients;
             CustomInit();
@@ -42,5 +43,18 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         [JsonProperty(PropertyName = "TargetClients")]
         public IDictionary<string, string> TargetClients { get; set; }
 
+        /// <summary>
+        /// Validate the object.
+        /// </summary>
+        /// <exception cref="ValidationException">
+        /// Thrown if validation fails
+        /// </exception>
+        public virtual void Validate()
+        {
+            if (TargetClients == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "TargetClients");
+            }
+        }
     }
 }

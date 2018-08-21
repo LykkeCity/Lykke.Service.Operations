@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -24,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the FeeSettingsModel class.
         /// </summary>
-        public FeeSettingsModel(bool feeEnabled, string targetClientId = default(string))
+        public FeeSettingsModel(bool feeEnabled, string targetClientId)
         {
             FeeEnabled = feeEnabled;
             TargetClientId = targetClientId;
@@ -49,12 +50,15 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
-            //Nothing to validate
+            if (TargetClientId == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "TargetClientId");
+            }
         }
     }
 }

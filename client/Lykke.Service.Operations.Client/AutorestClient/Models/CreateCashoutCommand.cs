@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -24,8 +25,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateCashoutCommand class.
         /// </summary>
-        public CreateCashoutCommand(decimal volume, string destinationAddress = default(string), string destinationAddressExtension = default(string), AssetCashoutModel asset = default(AssetCashoutModel), ClientCashoutModel client = default(ClientCashoutModel), GlobalSettingsCashoutModel globalSettings = default(GlobalSettingsCashoutModel))
+        public CreateCashoutCommand(System.Guid operationId, string destinationAddress, string destinationAddressExtension, double volume, AssetCashoutModel asset, ClientCashoutModel client, GlobalSettingsCashoutModel globalSettings)
         {
+            OperationId = operationId;
             DestinationAddress = destinationAddress;
             DestinationAddressExtension = destinationAddressExtension;
             Volume = volume;
@@ -42,6 +44,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
+        [JsonProperty(PropertyName = "OperationId")]
+        public System.Guid OperationId { get; set; }
+
+        /// <summary>
+        /// </summary>
         [JsonProperty(PropertyName = "DestinationAddress")]
         public string DestinationAddress { get; set; }
 
@@ -53,7 +60,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Volume")]
-        public decimal Volume { get; set; }
+        public double Volume { get; set; }
 
         /// <summary>
         /// </summary>
@@ -73,11 +80,31 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
+            if (DestinationAddress == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "DestinationAddress");
+            }
+            if (DestinationAddressExtension == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "DestinationAddressExtension");
+            }
+            if (Asset == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Asset");
+            }
+            if (Client == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Client");
+            }
+            if (GlobalSettings == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "GlobalSettings");
+            }
             if (Asset != null)
             {
                 Asset.Validate();

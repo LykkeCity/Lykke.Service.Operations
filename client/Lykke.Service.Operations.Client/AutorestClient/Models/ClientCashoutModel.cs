@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -24,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the ClientCashoutModel class.
         /// </summary>
-        public ClientCashoutModel(System.Guid id, decimal balance, bool cashOutBlocked, bool backupDone, string bitcoinAddress = default(string), string kycStatus = default(string))
+        public ClientCashoutModel(System.Guid id, string bitcoinAddress, double balance, bool cashOutBlocked, bool backupDone, string kycStatus)
         {
             Id = id;
             BitcoinAddress = bitcoinAddress;
@@ -53,7 +54,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Balance")]
-        public decimal Balance { get; set; }
+        public double Balance { get; set; }
 
         /// <summary>
         /// </summary>
@@ -73,12 +74,19 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
-            //Nothing to validate
+            if (BitcoinAddress == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "BitcoinAddress");
+            }
+            if (KycStatus == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "KycStatus");
+            }
         }
     }
 }

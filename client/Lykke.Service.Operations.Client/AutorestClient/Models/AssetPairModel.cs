@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -24,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the AssetPairModel class.
         /// </summary>
-        public AssetPairModel(double minVolume, double minInvertedVolume, string id = default(string), AssetModel baseAsset = default(AssetModel), AssetModel quotingAsset = default(AssetModel))
+        public AssetPairModel(string id, AssetModel baseAsset, AssetModel quotingAsset, double minVolume, double minInvertedVolume)
         {
             Id = id;
             BaseAsset = baseAsset;
@@ -67,11 +68,23 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
+            if (Id == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Id");
+            }
+            if (BaseAsset == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "BaseAsset");
+            }
+            if (QuotingAsset == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "QuotingAsset");
+            }
             if (BaseAsset != null)
             {
                 BaseAsset.Validate();

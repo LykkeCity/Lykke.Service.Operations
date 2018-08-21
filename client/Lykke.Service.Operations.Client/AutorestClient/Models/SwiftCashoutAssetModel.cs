@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -24,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the SwiftCashoutAssetModel class.
         /// </summary>
-        public SwiftCashoutAssetModel(bool kycNeeded, bool swiftCashoutEnabled, string id = default(string), string lykkeEntityId = default(string))
+        public SwiftCashoutAssetModel(string id, bool kycNeeded, bool swiftCashoutEnabled, string lykkeEntityId)
         {
             Id = id;
             KycNeeded = kycNeeded;
@@ -61,12 +62,19 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
-            //Nothing to validate
+            if (Id == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Id");
+            }
+            if (LykkeEntityId == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "LykkeEntityId");
+            }
         }
     }
 }

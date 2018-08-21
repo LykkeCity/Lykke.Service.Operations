@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -24,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the GlobalSettingsCashoutModel class.
         /// </summary>
-        public GlobalSettingsCashoutModel(bool cashOutBlocked, bool twoFactorEnabled, string ethereumHotWallet = default(string), FeeSettingsCashoutModel feeSettings = default(FeeSettingsCashoutModel))
+        public GlobalSettingsCashoutModel(bool cashOutBlocked, string ethereumHotWallet, FeeSettingsCashoutModel feeSettings, bool twoFactorEnabled)
         {
             CashOutBlocked = cashOutBlocked;
             EthereumHotWallet = ethereumHotWallet;
@@ -61,11 +62,23 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
+            if (EthereumHotWallet == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "EthereumHotWallet");
+            }
+            if (FeeSettings == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "FeeSettings");
+            }
+            if (FeeSettings != null)
+            {
+                FeeSettings.Validate();
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -24,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateSwiftCashoutCommand class.
         /// </summary>
-        public CreateSwiftCashoutCommand(decimal volume, SwiftCashoutAssetModel asset = default(SwiftCashoutAssetModel), SwiftCashoutClientModel client = default(SwiftCashoutClientModel), SwiftFieldsModel swift = default(SwiftFieldsModel), SwiftCashoutSettingsModel cashoutSettings = default(SwiftCashoutSettingsModel))
+        public CreateSwiftCashoutCommand(SwiftCashoutAssetModel asset, double volume, SwiftCashoutClientModel client, SwiftFieldsModel swift, SwiftCashoutSettingsModel cashoutSettings)
         {
             Asset = asset;
             Volume = volume;
@@ -47,7 +48,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Volume")]
-        public decimal Volume { get; set; }
+        public double Volume { get; set; }
 
         /// <summary>
         /// </summary>
@@ -67,11 +68,27 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
+            if (Asset == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Asset");
+            }
+            if (Client == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Client");
+            }
+            if (Swift == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "Swift");
+            }
+            if (CashoutSettings == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "CashoutSettings");
+            }
             if (Asset != null)
             {
                 Asset.Validate();
@@ -79,6 +96,14 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
             if (Client != null)
             {
                 Client.Validate();
+            }
+            if (Swift != null)
+            {
+                Swift.Validate();
+            }
+            if (CashoutSettings != null)
+            {
+                CashoutSettings.Validate();
             }
         }
     }

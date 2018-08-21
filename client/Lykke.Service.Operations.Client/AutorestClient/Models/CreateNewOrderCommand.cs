@@ -25,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateNewOrderCommand class.
         /// </summary>
-        public CreateNewOrderCommand(System.Guid walletId, string clientOrderId = default(string))
+        public CreateNewOrderCommand(System.Guid walletId, string clientOrderId)
         {
             WalletId = walletId;
             ClientOrderId = clientOrderId;
@@ -55,6 +55,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
+            if (ClientOrderId == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "ClientOrderId");
+            }
             if (ClientOrderId != null)
             {
                 if (ClientOrderId.Length > 50)

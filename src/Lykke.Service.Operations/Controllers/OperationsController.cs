@@ -74,6 +74,7 @@ namespace Lykke.Service.Operations.Controllers
         [HttpGet]
         [Route("{id}")]
         [ProducesResponseType(typeof(OperationModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int)HttpStatusCode.NotFound)]
         public async Task<OperationModel> Get(Guid id)
         {
             var operation = await _operationsRepository.Get(id);
@@ -247,7 +248,7 @@ namespace Lykke.Service.Operations.Controllers
 
         [HttpPost]
         [Route("cashout/{id}")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]        
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
         public async Task<IActionResult> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
         {
             if (id == Guid.Empty)

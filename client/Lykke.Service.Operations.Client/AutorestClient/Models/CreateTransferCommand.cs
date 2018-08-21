@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Linq;
 
@@ -24,7 +25,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateTransferCommand class.
         /// </summary>
-        public CreateTransferCommand(System.Guid clientId, decimal amount, System.Guid sourceWalletId, System.Guid walletId, string assetId = default(string))
+        public CreateTransferCommand(System.Guid clientId, string assetId, double amount, System.Guid sourceWalletId, System.Guid walletId)
         {
             ClientId = clientId;
             AssetId = assetId;
@@ -52,7 +53,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Amount")]
-        public decimal Amount { get; set; }
+        public double Amount { get; set; }
 
         /// <summary>
         /// </summary>
@@ -67,12 +68,15 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Validate the object.
         /// </summary>
-        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// <exception cref="ValidationException">
         /// Thrown if validation fails
         /// </exception>
         public virtual void Validate()
         {
-            //Nothing to validate
+            if (AssetId == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "AssetId");
+            }
         }
     }
 }

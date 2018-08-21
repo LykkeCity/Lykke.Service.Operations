@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
     using Lykke.Service.Operations;
     using Lykke.Service.Operations.Client;
     using Lykke.Service.Operations.Client.AutorestClient;
+    using Microsoft.Rest;
     using Newtonsoft.Json;
     using System.Collections;
     using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the IcoSettingsModel class.
         /// </summary>
-        public IcoSettingsModel(IList<string> restrictedCountriesIso3 = default(IList<string>), string lKK2YAssetId = default(string))
+        public IcoSettingsModel(IList<string> restrictedCountriesIso3, string lKK2YAssetId)
         {
             RestrictedCountriesIso3 = restrictedCountriesIso3;
             LKK2YAssetId = lKK2YAssetId;
@@ -48,5 +49,22 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         [JsonProperty(PropertyName = "LKK2YAssetId")]
         public string LKK2YAssetId { get; set; }
 
+        /// <summary>
+        /// Validate the object.
+        /// </summary>
+        /// <exception cref="ValidationException">
+        /// Thrown if validation fails
+        /// </exception>
+        public virtual void Validate()
+        {
+            if (RestrictedCountriesIso3 == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "RestrictedCountriesIso3");
+            }
+            if (LKK2YAssetId == null)
+            {
+                throw new ValidationException(ValidationRules.CannotBeNull, "LKK2YAssetId");
+            }
+        }
     }
 }
