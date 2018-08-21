@@ -1,9 +1,11 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Sdk;
 using Lykke.Service.Operations.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using GlobalErrorHandlerMiddleware = Lykke.Service.Operations.Middleware.GlobalErrorHandlerMiddleware;
 
 namespace Lykke.Service.Operations
 {
@@ -35,9 +37,12 @@ namespace Lykke.Service.Operations
         [UsedImplicitly]
         public void Configure(IApplicationBuilder app)
         {
+            CreateErrorResponse errorResponseFactory = ex => new { ex.Message };
+
             app.UseLykkeConfiguration(options =>
             {
-                options.SwaggerOptions = _swaggerOptions;                
+                options.WithMiddleware = x => x.UseMiddleware<GlobalErrorHandlerMiddleware>("Operations", errorResponseFactory);
+                options.SwaggerOptions = _swaggerOptions;
             });
         }
     }
