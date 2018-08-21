@@ -5,9 +5,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Autofac;
+using Castle.Core.Logging;
 using Common;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
+using Lykke.Logs;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Modules;
@@ -45,7 +48,8 @@ namespace Lykke.Service.Operations.Tests
                 var response = client.GetAsync("http://settings.lykke-settings.svc.cluster.local/755d5e98-fe7e-480d-8f14-23e55a90d485_Operations").GetAwaiter().GetResult();
                 settings = JsonConvert.DeserializeObject<AppSettings>(response.Content.ReadAsStringAsync().GetAwaiter().GetResult());
             }
-                        
+
+            builder.RegisterInstance(EmptyLogFactory.Instance).As<ILogFactory>();
             builder.RegisterType<WorkflowCommandHandler>().SingleInstance();
             builder.RegisterType<SolarCoinCommandHandler>().SingleInstance();
             builder.RegisterType<MeSaga>().SingleInstance();                   
@@ -65,8 +69,8 @@ namespace Lykke.Service.Operations.Tests
         [Test]
         public async Task Test()
         {
-            var cqrsEngine = _container.Resolve<ICqrsEngine>();
-
+            var wf = _container.Resolve<CashoutSwiftWorkflow>();
+            
             await Task.Delay(60000);
         }
 

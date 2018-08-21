@@ -42,7 +42,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 {
                     var command = new Job.EthereumCore.Contracts.Cqrs.Commands.StartCashoutCommand
                     {
-                        Id = evt.Id,
+                        Id = input.OperationId,
                         AssetId = input.AssetId,
                         Amount = input.Amount,
                         FromAddress = input.EthHotWallet,
@@ -55,7 +55,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 {
                     var command = new SolarCashOutCommand
                     {
-                        Id = evt.Id.ToString(),
+                        Id = input.OperationId.ToString(),
                         ClientId = input.ClientId.ToString(),
                         Address = input.ToAddress,
                         Amount = input.Amount
@@ -67,7 +67,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 {
                     var commnad = new Bitcoin.Contracts.Commands.StartCashoutCommand
                     {
-                        Id = evt.Id,
+                        Id = input.OperationId,
                         AssetId = input.AssetId,
                         Amount = input.Amount,
                         Address = input.ToAddress
