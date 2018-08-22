@@ -78,7 +78,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         {
             if (wfResult.State == WorkflowState.Corrupted)
             {
-                _log.Critical(operation.Type + "Workflow", context: wfResult);
+                _log.Critical(operation.Type + "Workflow", context: wfResult, message: $"Workflow for operation [{operation.Id}] has corrupted!");
 
                 operation.Corrupt();
 
