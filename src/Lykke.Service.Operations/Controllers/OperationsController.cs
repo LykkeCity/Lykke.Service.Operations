@@ -241,7 +241,7 @@ namespace Lykke.Service.Operations.Controllers
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
-            await HandleWorkflow("CashoutSwiftWorkflow", operation);
+            await HandleWorkflow(OperationType.CashoutSwift + "Workflow", operation);
 
             return Created(Url.Action("Get", "Operations", new { id }), id);
         }
@@ -269,7 +269,7 @@ namespace Lykke.Service.Operations.Controllers
             operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
             await _operationsRepository.Save(operation);
             
-            await HandleWorkflow("CashoutWorkflow", operation);
+            await HandleWorkflow(OperationType.Cashout + "Workflow", operation);
 
             return Created(Url.Action("Get", "Operations", new { id }), id);
         }
