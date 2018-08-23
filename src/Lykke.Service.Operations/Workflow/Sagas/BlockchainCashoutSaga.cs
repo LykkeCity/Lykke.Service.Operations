@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Common;
+using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Bitcoin.Contracts;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
@@ -18,6 +20,13 @@ namespace Lykke.Service.Operations.Workflow.Sagas
 {
     public class BlockchainCashoutSaga
     {
+        private readonly ILog _log;
+
+        public BlockchainCashoutSaga(ILogFactory logFactory)
+        {
+            _log = logFactory.CreateLog(this);
+        }
+
         [UsedImplicitly]
         public async Task Handle(ExternalExecutionActivityCreatedEvent evt, ICommandSender commandSender)
         {
@@ -34,9 +43,11 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                         Amount = input.Amount,
                         ToAddress = input.ToAddress,
                         ClientId = input.ClientId
-                    };
+                    };                    
 
                     commandSender.SendCommand(command, BlockchainCashoutProcessorBoundedContext.Name);
+
+                    _log.Info($"StartCashoutCommand for BIL has sent. Operation [{command.OperationId}]", command);
                 }
                 else if (input.AssetBlockchain == "Ethereum")
                 {
@@ -50,6 +61,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                     };
 
                     commandSender.SendCommand(command, EthereumBoundedContext.Name);
+
+                    _log.Info($"StartCashoutCommand for Ethereum has sent. Operation [{command.Id}]", command);
                 }
                 else if (input.AssetId == "SLR")
                 {
@@ -62,10 +75,12 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                     };
 
                     commandSender.SendCommand(command, "Solarcoin");
+
+                    _log.Info($"StartCashoutCommand for Solarcoin has sent. Operation [{command.Id}]", command);
                 }                
                 else if (input.AssetBlockchain == "Bitcoin" && input.AssetBlockchainWithdrawal)
                 {
-                    var commnad = new Bitcoin.Contracts.Commands.StartCashoutCommand
+                    var command = new Bitcoin.Contracts.Commands.StartCashoutCommand
                     {
                         Id = input.OperationId,
                         AssetId = input.AssetId,
@@ -73,7 +88,9 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                         Address = input.ToAddress
                     };
 
-                    commandSender.SendCommand(commnad, BitcoinBoundedContext.Name);
+                    commandSender.SendCommand(command, BitcoinBoundedContext.Name);
+
+                    _log.Info($"StartCashoutCommand for Bitcoin has sent. Operation [{command.Id}]", command);
                 }
             }
         }        

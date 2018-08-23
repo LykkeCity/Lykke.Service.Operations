@@ -1,25 +1,24 @@
-﻿using System.Diagnostics;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Common;
+using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Service.Assets.Client;
-using Lykke.Service.Operations.Modules;
-using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow.Commands;
-using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.PostProcessing.Contracts.Cqrs.Events;
-using Newtonsoft.Json;
 
 namespace Lykke.Service.Operations.Workflow.Sagas
 {
     public class MeSaga
     {
+        private readonly ILog _log;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
 
-        public MeSaga(IAssetsServiceWithCache assetsServiceWithCache)
+        public MeSaga(ILogFactory log, IAssetsServiceWithCache assetsServiceWithCache)
         {
+            _log = log.CreateLog(this);
             _assetsServiceWithCache = assetsServiceWithCache;
         }
 
@@ -35,10 +34,16 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         [UsedImplicitly]
         public async Task Handle(CashOutProcessedEvent evt, ICommandSender commandSender)
         {
+            _log.Info($"CashOutProcessedEvent for operation [{evt.OperationId}] received", evt);
+
             var asset = await _assetsServiceWithCache.TryGetAssetAsync(evt.AssetId);
 
             if (asset.SwiftWithdrawal || asset.ForwardWithdrawal)
+            {
+                _log.Info($"CashOutProcessedEvent for operation [{evt.OperationId}] skipped (swift or forward)", evt);
+
                 return;
+            }
 
             var command = new CompleteActivityCommand
             {
@@ -59,6 +64,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         [UsedImplicitly]
         public async Task Handle(MeCashoutFailedEvent evt, ICommandSender commandSender)
         {
+            _log.Info($"MeCashoutFailedEvent for operation [{evt.OperationId}] received", evt);
+
             var command = new FailActivityCommand
             {
                 OperationId = evt.OperationId,

@@ -44,6 +44,8 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(CreateCashoutCommand command, IEventPublisher eventPublisher)
         {
+            _log.Info($"CreateCashoutCommand received. Operation [{command.OperationId}]", command);
+
             // TODO: obsolete
             command.GlobalSettings.EthereumHotWallet = _ethereumHotWallet;
 
@@ -62,9 +64,11 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         }
 
         [UsedImplicitly]
-        public async Task<CommandHandlingResult> Handle(ExecuteOperationCommand cmd, IEventPublisher eventPublisher)
+        public async Task<CommandHandlingResult> Handle(ExecuteOperationCommand command, IEventPublisher eventPublisher)
         {
-            var operation = await _operationsRepository.Get(cmd.OperationId);
+            _log.Info($"ExecuteOperationCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
 
             var wf = _workflowFactory(operation.Type + "Workflow", operation);
             var wfResult = wf.Run(operation);            
@@ -76,6 +80,8 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
         private async Task HandleWorkflow(Operation operation, Execution<Operation> wfResult, IEventPublisher eventPublisher)
         {
+            _log.Info($"Handle workflow result: [{wfResult.State}]. Operation [{operation.Id}]", wfResult);
+
             if (wfResult.State == WorkflowState.Corrupted)
             {
                 _log.Critical(operation.Type + "Workflow", context: wfResult, message: $"Workflow for operation [{operation.Id}] has corrupted!");
@@ -132,20 +138,22 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         }
 
         [UsedImplicitly]
-        public async Task<CommandHandlingResult> Handle(CompleteActivityCommand cmd, IEventPublisher eventPublisher)
+        public async Task<CommandHandlingResult> Handle(CompleteActivityCommand command, IEventPublisher eventPublisher)
         {
-            var operation = await _operationsRepository.Get(cmd.OperationId);
+            _log.Info($"CompleteActivityCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
 
             if (operation == null)
             {
-                _log.Warning(nameof(CompleteActivityCommand), context: cmd, message: $"operation [{cmd.OperationId}] not found!");
+                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] not found!");
 
                 return CommandHandlingResult.Ok();
             }
 
             if (operation.Status == OperationStatus.Completed)
             {
-                _log.Warning(nameof(CompleteActivityCommand), context: cmd, message: $"operation [{cmd.OperationId}] already completed!");
+                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] already completed!");
 
                 return CommandHandlingResult.Ok();
             }
@@ -153,7 +161,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             if (operation.ExecutingActivity() == null)
                 return new CommandHandlingResult { Retry = true, RetryDelay = (long) TimeSpan.FromSeconds(5).TotalMilliseconds };
 
-            var wfResult = await _workflowService.CompleteActivity(operation, cmd.ActivityId, JObject.Parse(cmd.Output));
+            var wfResult = await _workflowService.CompleteActivity(operation, command.ActivityId, JObject.Parse(command.Output));
 
             if (wfResult != null)
                 await HandleWorkflow(operation, wfResult, eventPublisher);
@@ -162,19 +170,21 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         }
 
         [UsedImplicitly]
-        public async Task<CommandHandlingResult> Handle(FailActivityCommand cmd, IEventPublisher eventPublisher)
+        public async Task<CommandHandlingResult> Handle(FailActivityCommand command, IEventPublisher eventPublisher)
         {
-            var operation = await _operationsRepository.Get(cmd.OperationId);
-            var activity = operation.Activities.SingleOrDefault(o => !cmd.ActivityId.HasValue && o.IsExecuting || o.ActivityId == cmd.ActivityId);
+            _log.Info($"FailActivityCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+            var activity = operation.Activities.SingleOrDefault(o => !command.ActivityId.HasValue && o.IsExecuting || o.ActivityId == command.ActivityId);
 
             if (activity == null)
             {
-                _log.Warning("FailActivity", context: new { activity, cmd.Output }, message: "Executing activity not found");
+                _log.Warning("FailActivity", context: new { activity, command.Output }, message: "Executing activity not found");
 
                 return CommandHandlingResult.Ok();
             }
 
-            activity.Fail(cmd.Output);
+            activity.Fail(command.Output);
 
             await _operationsRepository.Save(operation);
 
