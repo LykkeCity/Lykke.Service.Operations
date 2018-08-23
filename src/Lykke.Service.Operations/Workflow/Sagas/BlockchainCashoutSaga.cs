@@ -11,7 +11,6 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract.Events;
 using Lykke.Job.EthereumCore.Contracts.Cqrs;
-using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.Operations.Workflow.Events;
 using Newtonsoft.Json;
@@ -98,6 +97,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         [UsedImplicitly]
         public async Task Handle(Bitcoin.Contracts.Events.CashoutCompletedEvent evt, ICommandSender commandSender)
         {
+            _log.Info($"CashoutCompletedEvent for Bitcoin received. Operation [{evt.OperationId}]", evt);
+
             var command = new CompleteActivityCommand
             {
                 OperationId = evt.OperationId,
@@ -113,6 +114,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         [UsedImplicitly]
         public async Task Handle(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent evt, ICommandSender commandSender)
         {
+            _log.Info($"CashoutCompletedEvent for Ethereum received. Operation [{evt.OperationId}]", evt);
+
             var command = new CompleteActivityCommand
             {
                 OperationId = evt.OperationId,
@@ -125,6 +128,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         [UsedImplicitly]
         public async Task Handle(SolarCashOutCompletedEvent evt, ICommandSender commandSender)
         {
+            _log.Info($"CashoutCompletedEvent for Solarcoin received. Operation [{evt.OperationId}]", evt);
+
             var command = new CompleteActivityCommand
             {
                 OperationId = new Guid(evt.OperationId),
@@ -137,6 +142,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         [UsedImplicitly]
         public async Task Handle(CashoutCompletedEvent evt, ICommandSender commandSender)
         {
+            _log.Info($"CashoutCompletedEvent for BIL received. Operation [{evt.OperationId}]", evt);
+
             var command = new CompleteActivityCommand
             {
                 OperationId = evt.OperationId,
@@ -151,6 +158,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
 
         public async Task Handle(OperationExecutionFailedEvent evt, ICommandSender commandSender)
         {
+            _log.Info($"OperationExecutionFailedEvent for BIL received. Operation [{evt.OperationId}]", evt);
+
             var command = new FailActivityCommand
             {
                 OperationId = evt.OperationId,
