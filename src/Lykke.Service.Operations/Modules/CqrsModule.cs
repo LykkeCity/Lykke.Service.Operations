@@ -107,7 +107,8 @@ namespace Lykke.Service.Operations.Modules
                                 typeof(OperationCorruptedEvent),
                                 typeof(OperationFailedEvent),
                                 typeof(ExternalExecutionActivityCreatedEvent))                            
-                            .With("events"),
+                                .With("events")
+                                .WithLoopback(),
 
                         Register.BoundedContext("solarcoin")
                             .ListeningCommands(typeof(SolarCashOutCommand)).On("commands")
