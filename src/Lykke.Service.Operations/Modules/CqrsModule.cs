@@ -98,6 +98,7 @@ namespace Lykke.Service.Operations.Modules
                                 typeof(CompleteActivityCommand), 
                                 typeof(FailActivityCommand))
                                 .On("commands")
+                                .WithLoopback()
                                 .WithCommandsHandler<WorkflowCommandHandler>()                            
                             .PublishingEvents(
                                 typeof(LimitOrderCreatedEvent),
@@ -143,7 +144,7 @@ namespace Lykke.Service.Operations.Modules
 
                         Register.Saga<WorkflowSaga>("workflow-saga")
                             .ListeningEvents(typeof(OperationCreatedEvent)).From("operations").On("events")
-                            .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands")
+                            .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands")                        
                     );
                 })
                 .As<ICqrsEngine>()
