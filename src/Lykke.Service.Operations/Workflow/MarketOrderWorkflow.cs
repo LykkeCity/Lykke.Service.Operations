@@ -22,6 +22,7 @@ namespace Lykke.Service.Operations.Workflow
     {
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly IMatchingEngineClient _matchingEngineClient;
+        private ILog _log;
 
         public MarketOrderWorkflow(
             Operation operation,
@@ -30,6 +31,7 @@ namespace Lykke.Service.Operations.Workflow
             IFeeCalculatorClient feeCalculatorClient,
             IMatchingEngineClient matchingEngineClient) : base(operation, logFactory, activityFactory)
         {
+            _log = logFactory.CreateLog(this);
             _feeCalculatorClient = feeCalculatorClient;
             _matchingEngineClient = matchingEngineClient;
 
@@ -111,7 +113,11 @@ namespace Lykke.Service.Operations.Workflow
                 throw new ApplicationException("Me is not available");
 
             if (response.Status != MeStatusCodes.Ok)
+            {
+                _log.Warning($"ME returned invalid status code: [{response.Status}]", context: response);
+
                 throw new ApplicationException(response.Status.Format());
+            }
 
             return new
             {
