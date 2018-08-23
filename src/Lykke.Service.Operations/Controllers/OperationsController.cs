@@ -241,7 +241,7 @@ namespace Lykke.Service.Operations.Controllers
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
-            await HandleWorkflow("SwiftCashoutWorkflow", operation);
+            await HandleWorkflow("CashoutSwiftWorkflow", operation);
 
             return Created(Url.Action("Get", "Operations", new { id }), id);
         }
