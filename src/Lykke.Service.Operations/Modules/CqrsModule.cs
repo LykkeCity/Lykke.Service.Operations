@@ -16,6 +16,7 @@ using Lykke.Job.EthereumCore.Contracts.Cqrs;
 using Lykke.Messaging;
 using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
+using Lykke.Messaging.Serialization;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Services;
@@ -71,13 +72,13 @@ namespace Lykke.Service.Operations.Modules
           
             var sagasEndpointResolver = new RabbitMqConventionEndpointResolver(
                 "SagasRabbitMq",
-                "messagepack",
+                SerializationFormat.MessagePack,
                 environment: "lykke",
                 exclusiveQueuePostfix: "k8s");
 
             var sagasProtobufEndpointResolver = new RabbitMqConventionEndpointResolver(
                 "SagasRabbitMq",
-                "protobuf",
+                SerializationFormat.ProtoBuf,
                 environment: "lykke",
                 exclusiveQueuePostfix: "k8s");
 
