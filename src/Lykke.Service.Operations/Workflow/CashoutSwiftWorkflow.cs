@@ -1,6 +1,5 @@
 ﻿using System;
 using Common;
-using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Cqrs;

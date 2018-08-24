@@ -9,7 +9,6 @@ using GlobalErrorHandlerMiddleware = Lykke.Service.Operations.Middleware.GlobalE
 
 namespace Lykke.Service.Operations
 {
-
     [UsedImplicitly]
     public class Startup
     {

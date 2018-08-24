@@ -11,6 +11,7 @@
         LimitOrder,
         NewOrder,
         CashoutSwift,
-        Cashout
+        Cashout,
+        StopLimitOrder
     }
 }

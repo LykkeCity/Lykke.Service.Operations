@@ -81,8 +81,8 @@ namespace Lykke.Service.Operations.Workflow
                 SourceClientId = input.ClientId,
                 TargetClientId = fee.TargetWalletId ?? input.TargetClientId,
                 Type = fee.Amount == 0m
-                    ? MatchingEngine.Connector.Models.Common.FeeType.NO_FEE
-                    : MatchingEngine.Connector.Models.Common.FeeType.CLIENT_FEE,
+                    ? Lykke.MatchingEngine.Connector.Models.Common.FeeType.NO_FEE
+                    : Lykke.MatchingEngine.Connector.Models.Common.FeeType.CLIENT_FEE,
                 AssetId = string.IsNullOrEmpty(fee.TargetAssetId)
                     ? Array.Empty<string>()
                     : new[] { fee.TargetAssetId }

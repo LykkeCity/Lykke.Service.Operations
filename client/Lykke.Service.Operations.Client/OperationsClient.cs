@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -73,9 +72,14 @@ namespace Lykke.Service.Operations.Client
             return (await _operationsApi.ApiOperationsOrderByIdMarketPostAsync(id, _mapper.Map<AutorestClient.Models.CreateMarketOrderCommand>(marketOrderCommand))).Value;
         }
 
-        public async Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand marketOrderCommand)
+        public async Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand limitOrderCommand)
         {
-            return (await _operationsApi.ApiOperationsOrderByIdLimitPostAsync(id, _mapper.Map<AutorestClient.Models.CreateLimitOrderCommand>(marketOrderCommand))).Value;
+            return (await _operationsApi.ApiOperationsOrderByIdLimitPostAsync(id, _mapper.Map<AutorestClient.Models.CreateLimitOrderCommand>(limitOrderCommand))).Value;
+        }
+
+        public async Task<Guid> PlaceStopLimitOrder(Guid id, CreateStopLimitOrderCommand stopLimitOrderCommand)
+        {
+            return (await _operationsApi.ApiOperationsOrderByIdStoplimitPostAsync(id, _mapper.Map<AutorestClient.Models.CreateStopLimitOrderCommand>(stopLimitOrderCommand))).Value;
         }
 
         public async Task<Guid> CreateSwiftCashout(Guid id, CreateSwiftCashoutCommand createSwiftCashoutCommand)

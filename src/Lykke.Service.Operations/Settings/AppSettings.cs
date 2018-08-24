@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using JetBrains.Annotations;
 using Lykke.Sdk.Settings;
 using Lykke.Service.AssetDisclaimers.Client;
@@ -48,7 +47,7 @@ namespace Lykke.Service.Operations.Settings
     {
         public string ServiceUrl { get; set; }
     }
-    
+
     public class SagasRabbitMq
     {
         [AmqpCheck]

@@ -155,6 +155,36 @@ namespace Lykke.Service.Operations.Client.AutorestClient
                     return _result.Body;
                 }
             }
+        
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='id'>
+            /// </param>
+            /// <param name='command'>
+            /// </param>
+            public static System.Guid? ApiOperationsOrderByIdStoplimitPost(this IOperationsAPI operations, System.Guid id, CreateStopLimitOrderCommand command = default(CreateStopLimitOrderCommand))
+            {
+                return operations.ApiOperationsOrderByIdStoplimitPostAsync(id, command).GetAwaiter().GetResult();
+            }
+    
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='id'>
+            /// </param>
+            /// <param name='command'>
+            /// </param>
+            /// <param name='cancellationToken'>
+            /// The cancellation token.
+            /// </param>
+            public static async Task<System.Guid?> ApiOperationsOrderByIdStoplimitPostAsync(this IOperationsAPI operations, System.Guid id, CreateStopLimitOrderCommand command = default(CreateStopLimitOrderCommand), CancellationToken cancellationToken = default(CancellationToken))
+            {
+                using (var _result = await operations.ApiOperationsOrderByIdStoplimitPostWithHttpMessagesAsync(id, command, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
+            }
 
             /// <param name='operations'>
             /// The operations group for this extension method.

@@ -57,6 +57,7 @@ namespace Lykke.Service.Operations.Modules
                 .As<IBlockchainCashoutPreconditionsCheckClient>()
                 .SingleInstance();
 
+
             builder.Register(ctx => new BlockchainWalletsClient(
                     _settings.CurrentValue.BlockchainWalletsServiceClient.ServiceUrl,
                     ctx.Resolve<ILogFactory>().CreateLog("BlockchainWalletsClient")))

@@ -21,7 +21,7 @@ namespace Lykke.Service.Operations.Modules
     public class ServiceModule : Module
     {
         private readonly IReloadingManager<AppSettings> _settings;
-        
+
         public ServiceModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
@@ -32,7 +32,6 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterType<OperationsRepository>()
                 .As<IOperationsRepository>()
                 .SingleInstance();
-            
             builder.Register<ILimitOrdersRepository>(ctx =>
                 new LimitOrdersRepository(AzureTableStorage<LimitOrderEntity>.Create(_settings.ConnectionString(x => x.OperationsService.Db.HMarketOrdersConnString),
                     "LimitOrders", ctx.Resolve<ILogFactory>()))).SingleInstance();

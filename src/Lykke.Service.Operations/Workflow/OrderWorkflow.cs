@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Service.Operations.Core.Domain;
