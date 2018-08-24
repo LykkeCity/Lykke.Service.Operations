@@ -456,7 +456,7 @@ namespace Lykke.Service.Operations.Controllers
             if (operation.Status == OperationStatus.Confirmed)
                 return;
 
-            if (operation.Status != OperationStatus.Created && operation.Status != OperationStatus.Accepted) // todo: accepted?
+            if (operation.Status != OperationStatus.Created && operation.Status != OperationStatus.Accepted)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be confirmed"));
             
             switch (operation.Type)

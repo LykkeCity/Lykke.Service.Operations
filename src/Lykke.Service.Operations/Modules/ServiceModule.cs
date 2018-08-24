@@ -57,7 +57,7 @@ namespace Lykke.Service.Operations.Modules
             var redis = new RedisCache(new RedisCacheOptions
             {
                 Configuration = _settings.CurrentValue.RedisSettings.Configuration,
-                InstanceName = "FinanceDataCacheInstance"
+                InstanceName = "AddressExtensionsInstance"
             });
 
             builder.RegisterInstance(redis).As<IDistributedCache>().SingleInstance();
