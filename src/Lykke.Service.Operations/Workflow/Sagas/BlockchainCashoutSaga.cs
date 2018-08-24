@@ -165,7 +165,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 OperationId = evt.OperationId,
                 Output = new
                 {
-                    ErrorCode = evt.ErrorCode.ToString(),
+                    ErrorCode = "BIL error",
                     ErrorMessage = evt.Error
                 }.ToJson()
             };
