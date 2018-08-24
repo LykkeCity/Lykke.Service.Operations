@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Autofac;
-using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Bitcoin.Contracts;
 using Lykke.Common.Log;
@@ -19,7 +18,6 @@ using Lykke.Messaging.RabbitMq;
 using Lykke.Messaging.Serialization;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
-using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.Operations.Workflow.CommandHandlers;
 using Lykke.Service.Operations.Workflow.Commands;
@@ -49,8 +47,9 @@ namespace Lykke.Service.Operations.Modules
             };
             
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>();
-            
-            builder.RegisterType<WorkflowCommandHandler>()
+
+            builder.RegisterType<WorkflowCommandHandler>().SingleInstance();
+            builder.RegisterType<CommandHandler>()
                 .WithParameter("ethereumHotWallet", _settings.CurrentValue.EthereumServiceClient.HotwalletAddress)
                 .SingleInstance();
             builder.RegisterType<SolarCoinCommandHandler>().SingleInstance();
@@ -68,7 +67,7 @@ namespace Lykke.Service.Operations.Modules
                             rabbitMqSagasSettings.Password, "None", "RabbitMq")
                     }
                 }),
-                new RabbitMqTransportFactory(ctx.Resolve<ILogFactory>()))).As<IMessagingEngine>();
+                new RabbitMqTransportFactory(ctx.Resolve<ILogFactory>()))).As<IMessagingEngine>().SingleInstance();
           
             var sagasEndpointResolver = new RabbitMqConventionEndpointResolver(
                 "SagasRabbitMq",
@@ -94,7 +93,10 @@ namespace Lykke.Service.Operations.Modules
 
                         Register.BoundedContext("operations")
                             .ListeningCommands(
-                                typeof(CreateCashoutCommand),
+                                typeof(CreateCashoutCommand))
+                                .On("commands")                                
+                                .WithCommandsHandler<CommandHandler>()
+                            .ListeningCommands(
                                 typeof(ExecuteOperationCommand),
                                 typeof(CompleteActivityCommand), 
                                 typeof(FailActivityCommand))
@@ -146,7 +148,11 @@ namespace Lykke.Service.Operations.Modules
 
                         Register.Saga<WorkflowSaga>("workflow-saga")
                             .ListeningEvents(typeof(OperationCreatedEvent)).From("operations").On("events")
-                            .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands")                        
+                            .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands"),
+
+                        Register.DefaultRouting
+                            .PublishingCommands(typeof(ExecuteOperationCommand), typeof(CompleteActivityCommand), typeof(FailActivityCommand))
+                                .To("operations").With("commands")
                     );
                 })
                 .As<ICqrsEngine>()

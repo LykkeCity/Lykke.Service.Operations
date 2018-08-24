@@ -7,14 +7,11 @@ using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Service.Operations.Contracts;
-using Lykke.Service.Operations.Contracts.Commands;
-using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Workflow;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Workflow.CommandHandlers
@@ -25,42 +22,17 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         private readonly IOperationsRepository _operationsRepository;
         private readonly IWorkflowService _workflowService;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
-        private readonly string _ethereumHotWallet;
-
+        
         public WorkflowCommandHandler(
-            ILogFactory logFactory, 
-            IOperationsRepository operationsRepository, 
+            ILogFactory logFactory,
+            IOperationsRepository operationsRepository,
             IWorkflowService workflowService,
-            Func<string, Operation, OperationWorkflow> workflowFactory,
-            string ethereumHotWallet)
+            Func<string, Operation, OperationWorkflow> workflowFactory)
         {
             _log = logFactory.CreateLog(this);
             _operationsRepository = operationsRepository;
             _workflowService = workflowService;
             _workflowFactory = workflowFactory;
-            _ethereumHotWallet = ethereumHotWallet;
-        }
-
-        [UsedImplicitly]
-        public async Task<CommandHandlingResult> Handle(CreateCashoutCommand command, IEventPublisher eventPublisher)
-        {
-            _log.Info($"CreateCashoutCommand received. Operation [{command.OperationId}]", command);
-
-            // TODO: obsolete
-            command.GlobalSettings.EthereumHotWallet = _ethereumHotWallet;
-
-            var operation = await _operationsRepository.Get(command.OperationId);
-
-            if (operation != null)
-                return CommandHandlingResult.Ok();
-
-            operation = new Operation();
-            operation.Create(command.OperationId, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
-            await _operationsRepository.Save(operation);
-
-            eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id });
-
-            return CommandHandlingResult.Ok();
         }
 
         [UsedImplicitly]
@@ -71,9 +43,71 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             var operation = await _operationsRepository.Get(command.OperationId);
 
             var wf = _workflowFactory(operation.Type + "Workflow", operation);
-            var wfResult = wf.Run(operation);            
+            var wfResult = wf.Run(operation);
 
             await HandleWorkflow(operation, wfResult, eventPublisher);
+
+            return CommandHandlingResult.Ok();
+        }
+
+        [UsedImplicitly]
+        public async Task<CommandHandlingResult> Handle(CompleteActivityCommand command, IEventPublisher eventPublisher)
+        {
+            _log.Info($"CompleteActivityCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+
+            if (operation == null)
+            {
+                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] not found!");
+
+                return CommandHandlingResult.Ok();
+            }
+
+            if (operation.Status == OperationStatus.Completed)
+            {
+                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] already completed!");
+
+                return CommandHandlingResult.Ok();
+            }
+
+            if (operation.ExecutingActivity() == null)
+            {
+                _log.Info($"Executing activity for operation [{operation.Id}] is null. Retrying...");
+
+                return new CommandHandlingResult
+                {
+                    Retry = true,
+                    RetryDelay = (long) TimeSpan.FromSeconds(5).TotalMilliseconds
+                };
+            }
+
+            var wfResult = await _workflowService.CompleteActivity(operation, command.ActivityId, JObject.Parse(command.Output));
+
+            if (wfResult != null)
+                await HandleWorkflow(operation, wfResult, eventPublisher);
+
+            return CommandHandlingResult.Ok();
+        }
+
+        [UsedImplicitly]
+        public async Task<CommandHandlingResult> Handle(FailActivityCommand command, IEventPublisher eventPublisher)
+        {
+            _log.Info($"FailActivityCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+            var activity = operation.Activities.SingleOrDefault(o => !command.ActivityId.HasValue && o.IsExecuting || o.ActivityId == command.ActivityId);
+
+            if (activity == null)
+            {
+                _log.Warning("FailActivity", context: new { command.Output }, message: $"Executing activity for operation [{command.OperationId}] not found");
+
+                return CommandHandlingResult.Ok();
+            }
+
+            activity.Fail(command.Output);
+
+            await _operationsRepository.Save(operation);
 
             return CommandHandlingResult.Ok();
         }
@@ -99,8 +133,6 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             {
                 operation.Fail();
 
-                await _operationsRepository.Save(operation);
-
                 string errorMessage = operation.OperationValues.ErrorMessage;
                 string errorCode = operation.OperationValues.ErrorCode;
                 JArray errors = operation.OperationValues.ValidationErrors;
@@ -110,6 +142,8 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                     errorCode = errors.First()["ErrorCode"].ToString();
                     errorMessage = errors.First()["ErrorMessage"].ToString();
                 }
+
+                await _operationsRepository.Save(operation);                
 
                 eventPublisher.PublishEvent(new OperationFailedEvent
                 {
@@ -126,7 +160,8 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
                 eventPublisher.PublishEvent(new ExternalExecutionActivityCreatedEvent
                 {
-                    Id = executingActivity.ActivityId,
+                    OperationId = operation.Id,
+                    ActivityId = executingActivity.ActivityId,
                     Type = executingActivity.Type,
                     Input = executingActivity.Input
                 });
@@ -135,60 +170,6 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             {
                 await _operationsRepository.Save(operation);
             }
-        }
-
-        [UsedImplicitly]
-        public async Task<CommandHandlingResult> Handle(CompleteActivityCommand command, IEventPublisher eventPublisher)
-        {
-            _log.Info($"CompleteActivityCommand received. Operation [{command.OperationId}]", command);
-
-            var operation = await _operationsRepository.Get(command.OperationId);
-
-            if (operation == null)
-            {
-                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] not found!");
-
-                return CommandHandlingResult.Ok();
-            }
-
-            if (operation.Status == OperationStatus.Completed)
-            {
-                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] already completed!");
-
-                return CommandHandlingResult.Ok();
-            }
-
-            if (operation.ExecutingActivity() == null)
-                return new CommandHandlingResult { Retry = true, RetryDelay = (long) TimeSpan.FromSeconds(5).TotalMilliseconds };
-
-            var wfResult = await _workflowService.CompleteActivity(operation, command.ActivityId, JObject.Parse(command.Output));
-
-            if (wfResult != null)
-                await HandleWorkflow(operation, wfResult, eventPublisher);
-
-            return CommandHandlingResult.Ok();
-        }
-
-        [UsedImplicitly]
-        public async Task<CommandHandlingResult> Handle(FailActivityCommand command, IEventPublisher eventPublisher)
-        {
-            _log.Info($"FailActivityCommand received. Operation [{command.OperationId}]", command);
-
-            var operation = await _operationsRepository.Get(command.OperationId);
-            var activity = operation.Activities.SingleOrDefault(o => !command.ActivityId.HasValue && o.IsExecuting || o.ActivityId == command.ActivityId);
-
-            if (activity == null)
-            {
-                _log.Warning("FailActivity", context: new { activity, command.Output }, message: "Executing activity not found");
-
-                return CommandHandlingResult.Ok();
-            }
-
-            activity.Fail(command.Output);
-
-            await _operationsRepository.Save(operation);
-
-            return CommandHandlingResult.Ok();
         }
     }
 }

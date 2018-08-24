@@ -472,7 +472,7 @@ namespace Lykke.Service.Operations.Controllers
 
                         _cqrsEngine.PublishEvent(new ExternalExecutionActivityCreatedEvent
                         {
-                            Id = executingActivity.ActivityId,
+                            ActivityId = executingActivity.ActivityId,
                             Type = executingActivity.Type,
                             Input = executingActivity.Input
                         }, "operations");
