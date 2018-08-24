@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Extensions;
+using Lykke.Service.Operations.Workflow.Activities;
 using Lykke.Workflow;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
@@ -11,23 +12,36 @@ using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
 namespace Lykke.Service.Operations.Core.Domain
 {
-    public class Operation : IHasId, IExecutionObserver, IWorkflowPersister<Operation>
+    public class Operation : IHasId, IExecutionObserver, IActivityExecutor, IWorkflowPersister<Operation>
     {
-        private readonly List<OperationActivity> _activities = new List<OperationActivity>();
-        
+        private dynamic _operationValues;
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
         public Guid ClientId { get; set; }
         public OperationType Type { get; set; }
         public OperationStatus Status { get; set; }
-        public string Context { get; set; }        
+        public string Context { get; set; }
+
         [BsonIgnore]
-        public dynamic OperationValues { get; set; }
+        public dynamic OperationValues
+        {
+            get
+            {
+                if (_operationValues == null)
+                    _operationValues = JObject.Parse(Context);
+
+                return _operationValues;
+            }
+            set { _operationValues = value; }
+        }
+
         [BsonIgnore]
         public JObject OperationValuesJObject
         {
             get => (JObject)OperationValues;            
-        }        
+        }
+
+        public List<OperationActivity> Activities { get; set; } = new List<OperationActivity>();
 
         public WorkflowState WorkflowState { get; set; }
         public string InputValues { get; set; }
@@ -35,8 +49,7 @@ namespace Lykke.Service.Operations.Core.Domain
         public Operation()
         {            
             WorkflowState = WorkflowState.None;
-            InputValues = "{}";
-            OperationValues = JObject.Parse("{}");
+            InputValues = Context = "{}";
         }
 
         public void Create(Guid id, Guid clientId, OperationType type, string inputValues)
@@ -58,12 +71,12 @@ namespace Lykke.Service.Operations.Core.Domain
 
         public void ActivityStarted(Guid activityExecutionId, string node, string activityType, object inputValues)
         {
-            _activities.Add(new OperationActivity(activityExecutionId, node, activityType, inputValues.ToJsonString()));
+            Activities.Add(new OperationActivity(activityExecutionId, node, activityType, inputValues.ToJsonString()));
         }
 
         public void ActivityFinished(Guid activityExecutionId, string node, string activityType, object outputValues)
         {
-            var activity = _activities.Single(om => om.ActivityId == activityExecutionId);
+            var activity = Activities.Single(om => om.ActivityId == activityExecutionId);
                 
             activity.Status = ActivityResult.Succeeded;
             activity.Finished = DateTime.UtcNow;            
@@ -72,7 +85,7 @@ namespace Lykke.Service.Operations.Core.Domain
 
         public void ActivityFailed(Guid activityExecutionId, string node, string activityType, object outputValues)
         {
-            var activity = _activities.Single(om => om.ActivityId == activityExecutionId);
+            var activity = Activities.Single(om => om.ActivityId == activityExecutionId);
 
             activity.Output = outputValues.ToJsonString();
             activity.Status = ActivityResult.Failed;
@@ -80,18 +93,18 @@ namespace Lykke.Service.Operations.Core.Domain
 
         public void ActivityCorrupted(Guid activityExecutionId, string node, string activityType)
         {
-            var activity = _activities.Single(om => om.ActivityId == activityExecutionId);
+            var activity = Activities.Single(om => om.ActivityId == activityExecutionId);
 
             activity.Status = ActivityResult.None;
         }
 
         public void Save(Operation context, Execution<Operation> execution)
         {
-            _activities.ForEach(oa => oa.IsExecuting = false);
+            Activities.ForEach(oa => oa.IsExecuting = false);
             
             foreach (var ea in execution.ExecutingActivities)
             {
-                _activities.Single(a => a.ActivityId == ea.Id && a.Name == ea.Node).IsExecuting = true;
+                Activities.Single(a => a.ActivityId == ea.Id && a.Name == ea.Node).IsExecuting = true;
             }
 
             var workflowState = WorkflowState;
@@ -112,7 +125,17 @@ namespace Lykke.Service.Operations.Core.Domain
 
         public Execution<Operation> Load(Operation context)
         {
-            throw new NotImplementedException();
+            var executingActivities = Activities.Where(a => a.IsExecuting)
+                .Select(a => new ActivityExecution(a.Name, a.ActivityId))
+                .ToList();
+
+            var execution = new Execution<Operation>
+            {
+                State = WorkflowState
+            };
+
+            execution.ExecutingActivities.AddRange(executingActivities);
+            return execution;
         }
 
         public void ApplyValuesChanges()
@@ -123,6 +146,44 @@ namespace Lykke.Service.Operations.Core.Domain
         public void Confirm()
         {
             Status = OperationStatus.Confirmed;
+        }
+
+        public ActivityResult Execute<TInput, TOutput, TFailOutput>(Guid activityExecutionId, string activityType, string nodeName,
+            TInput input, Action<TOutput> processOutput, Action<TFailOutput> processFailOutput)
+        {
+            return ActivityResult.Pending;
+        }
+
+        public void Accept()
+        {
+            Status = OperationStatus.Accepted;
+        }
+
+        public void Complete()
+        {
+            Status = OperationStatus.Completed;
+        }
+
+        public void Corrupt()
+        {
+            Status = OperationStatus.Corrupted;
+        }
+
+        public OperationActivity GetConfirmationActivity()
+        {
+            return Activities.LastOrDefault(a => a.Type == "RequestConfirmation" && a.Status == ActivityResult.None);
+        }
+
+        public OperationActivity ExecutingActivity()
+        {
+            return Activities.SingleOrDefault(o => o.IsExecuting);
+        }
+
+        public void CompleteActivity(Guid activityId, object output)
+        {
+            var activity = Activities.Single(a => a.ActivityId == activityId && a.Status == ActivityResult.None);
+
+            activity.Complete(JObject.FromObject(output));
         }
     }
 }

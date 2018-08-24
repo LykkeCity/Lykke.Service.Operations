@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Commands;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Client
@@ -14,6 +15,8 @@ namespace Lykke.Service.Operations.Client
             CreateMap<CreateTransferCommand, AutorestClient.Models.CreateTransferCommand>();
             CreateMap<CreateNewOrderCommand, AutorestClient.Models.CreateNewOrderCommand>();
             CreateMap<CreateSwiftCashoutCommand, AutorestClient.Models.CreateSwiftCashoutCommand>();
+            CreateMap<CreateCashoutCommand, AutorestClient.Models.CreateCashoutCommand>();
+            CreateMap<ConfirmCommand, AutorestClient.Models.ConfirmCommand>();
         }
     }
 }

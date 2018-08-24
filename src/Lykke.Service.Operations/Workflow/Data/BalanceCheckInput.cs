@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Lykke.Service.Operations.Workflow.Data
 {
+    [Obsolete("use BalanceInput")]
     public class BalanceCheckInput
     {
         public string AssetId { get; set; }

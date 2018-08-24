@@ -1,4 +1,5 @@
-﻿using Lykke.SettingsReader.Attributes;
+﻿using System;
+using Lykke.SettingsReader.Attributes;
 
 namespace Lykke.Service.Operations.Settings.ServiceSettings
 {
@@ -7,6 +8,8 @@ namespace Lykke.Service.Operations.Settings.ServiceSettings
         public DbSettings Db { get; set; }
 
         public ServicesSettings Services { get; set; }
+
+        public TimeSpan BlockchainAddressCacheExpiration { get; set; }        
     }
 
     public class ServicesSettings

@@ -38,7 +38,9 @@ namespace Lykke.Service.Operations.Contracts
         /// Addition information related to the operation. Currently <see cref="NewOrderContext"/> or <see cref="TransferContext"/>/>
         /// </summary>
         [Obsolete("Delete when all dependent services will have a nuget version > 2.0.1")]
-        public JObject Context { get; set; }  
+        public JObject Context { get; set; }
+
+        public object Activities { get; set; } 
         
         /// <summary>
         /// Addition information related to the operation. Currently <see cref="NewOrderContext"/> or <see cref="TransferContext"/>/>

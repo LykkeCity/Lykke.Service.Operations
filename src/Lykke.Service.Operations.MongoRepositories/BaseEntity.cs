@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
-using AzureStorage;
-using Lykke.Service.Operations.Core.Repositories;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 
-namespace Lykke.Service.Operations.MongoRepositories
+namespace Lykke.Service.Operations.Repositories
 {
     public class BaseEntity : TableEntity
     {

@@ -1,0 +1,175 @@
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Common;
+using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common.Log;
+using Lykke.Cqrs;
+using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Services;
+using Lykke.Service.Operations.Workflow.Commands;
+using Lykke.Service.Operations.Workflow.Events;
+using Lykke.Workflow;
+using Newtonsoft.Json.Linq;
+
+namespace Lykke.Service.Operations.Workflow.CommandHandlers
+{
+    public class WorkflowCommandHandler
+    {
+        private readonly ILog _log;
+        private readonly IOperationsRepository _operationsRepository;
+        private readonly IWorkflowService _workflowService;
+        private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
+        
+        public WorkflowCommandHandler(
+            ILogFactory logFactory,
+            IOperationsRepository operationsRepository,
+            IWorkflowService workflowService,
+            Func<string, Operation, OperationWorkflow> workflowFactory)
+        {
+            _log = logFactory.CreateLog(this);
+            _operationsRepository = operationsRepository;
+            _workflowService = workflowService;
+            _workflowFactory = workflowFactory;
+        }
+
+        [UsedImplicitly]
+        public async Task<CommandHandlingResult> Handle(ExecuteOperationCommand command, IEventPublisher eventPublisher)
+        {
+            _log.Info($"ExecuteOperationCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+
+            var wf = _workflowFactory(operation.Type + "Workflow", operation);
+            var wfResult = wf.Run(operation);
+
+            await HandleWorkflow(operation, wfResult, eventPublisher);
+
+            return CommandHandlingResult.Ok();
+        }
+
+        [UsedImplicitly]
+        public async Task<CommandHandlingResult> Handle(CompleteActivityCommand command, IEventPublisher eventPublisher)
+        {
+            _log.Info($"CompleteActivityCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+
+            if (operation == null)
+            {
+                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] not found!");
+
+                return CommandHandlingResult.Ok();
+            }
+
+            if (operation.Status == OperationStatus.Completed)
+            {
+                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] already completed!");
+
+                return CommandHandlingResult.Ok();
+            }
+
+            if (operation.ExecutingActivity() == null)
+            {
+                _log.Info($"Executing activity for operation [{operation.Id}] is null. Retrying...");
+
+                return new CommandHandlingResult
+                {
+                    Retry = true,
+                    RetryDelay = (long) TimeSpan.FromSeconds(5).TotalMilliseconds
+                };
+            }
+
+            var wfResult = await _workflowService.CompleteActivity(operation, command.ActivityId, JObject.Parse(command.Output));
+
+            if (wfResult != null)
+                await HandleWorkflow(operation, wfResult, eventPublisher);
+
+            return CommandHandlingResult.Ok();
+        }
+
+        [UsedImplicitly]
+        public async Task<CommandHandlingResult> Handle(FailActivityCommand command, IEventPublisher eventPublisher)
+        {
+            _log.Info($"FailActivityCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+            var activity = operation.Activities.SingleOrDefault(o => !command.ActivityId.HasValue && o.IsExecuting || o.ActivityId == command.ActivityId);
+
+            if (activity == null)
+            {
+                _log.Warning("FailActivity", context: new { command.Output }, message: $"Executing activity for operation [{command.OperationId}] not found");
+
+                return CommandHandlingResult.Ok();
+            }
+
+            activity.Fail(command.Output);
+
+            await _operationsRepository.Save(operation);
+
+            return CommandHandlingResult.Ok();
+        }
+
+        private async Task HandleWorkflow(Operation operation, Execution<Operation> wfResult, IEventPublisher eventPublisher)
+        {
+            _log.Info($"Handle workflow result: [{wfResult.State}]. Operation [{operation.Id}]", wfResult);
+
+            if (wfResult.State == WorkflowState.Corrupted)
+            {
+                _log.Critical(operation.Type + "Workflow", context: wfResult, message: $"Workflow for operation [{operation.Id}] has corrupted!");
+
+                operation.Corrupt();
+
+                await _operationsRepository.Save(operation);
+
+                eventPublisher.PublishEvent(new OperationCorruptedEvent
+                {
+                    OperationId = operation.Id
+                });
+            }
+            else if (wfResult.State == WorkflowState.Failed)
+            {
+                operation.Fail();
+
+                string errorMessage = operation.OperationValues.ErrorMessage;
+                string errorCode = operation.OperationValues.ErrorCode;
+                JArray errors = operation.OperationValues.ValidationErrors;
+
+                if (errors != null)
+                {
+                    errorCode = errors.First()["ErrorCode"].ToString();
+                    errorMessage = errors.First()["ErrorMessage"].ToString();
+                }
+
+                await _operationsRepository.Save(operation);                
+
+                eventPublisher.PublishEvent(new OperationFailedEvent
+                {
+                    OperationId = operation.Id,
+                    ErrorCode = errorCode,
+                    ErrorMessage = errorMessage
+                });
+            }
+            else if (wfResult.State == WorkflowState.InProgress)
+            {
+                var executingActivity = operation.Activities.Single(a => a.IsExecuting);
+
+                await _operationsRepository.Save(operation);
+
+                eventPublisher.PublishEvent(new ExternalExecutionActivityCreatedEvent
+                {
+                    OperationId = operation.Id,
+                    ActivityId = executingActivity.ActivityId,
+                    Type = executingActivity.Type,
+                    Input = executingActivity.Input
+                });
+            }
+            else
+            {
+                await _operationsRepository.Save(operation);
+            }
+        }
+    }
+}

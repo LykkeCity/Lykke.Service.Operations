@@ -1,8 +1,10 @@
 ﻿using System;
 using Common.Log;
 using JetBrains.Annotations;
-using Lykke.MatchingEngine.Connector.Abstractions.Models;
+using Lykke.Common.Log;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
+using Lykke.MatchingEngine.Connector.Models.Api;
+using Lykke.MatchingEngine.Connector.Models.Common;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Data;
@@ -20,14 +22,16 @@ namespace Lykke.Service.Operations.Workflow
     {
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly IMatchingEngineClient _matchingEngineClient;
+        private ILog _log;
 
         public MarketOrderWorkflow(
             Operation operation,
-            ILog log,
+            ILogFactory logFactory,
             IActivityFactory activityFactory,
             IFeeCalculatorClient feeCalculatorClient,
-            IMatchingEngineClient matchingEngineClient) : base(operation, log, activityFactory)
+            IMatchingEngineClient matchingEngineClient) : base(operation, logFactory, activityFactory)
         {
+            _log = logFactory.CreateLog(this);
             _feeCalculatorClient = feeCalculatorClient;
             _matchingEngineClient = matchingEngineClient;
 
@@ -72,13 +76,13 @@ namespace Lykke.Service.Operations.Workflow
             {
                 Size = (double)fee.Amount,
                 SizeType = fee.Type == FeeType.Absolute
-                    ? (int)FeeSizeType.ABSOLUTE
-                    : (int)FeeSizeType.PERCENTAGE,
+                    ? FeeSizeType.ABSOLUTE
+                    : FeeSizeType.PERCENTAGE,
                 SourceClientId = input.ClientId,
                 TargetClientId = fee.TargetWalletId ?? input.TargetClientId,
                 Type = fee.Amount == 0m
-                    ? (int)MarketOrderFeeType.NO_FEE
-                    : (int)MarketOrderFeeType.CLIENT_FEE,
+                    ? MatchingEngine.Connector.Models.Common.FeeType.NO_FEE
+                    : MatchingEngine.Connector.Models.Common.FeeType.CLIENT_FEE,
                 AssetId = string.IsNullOrEmpty(fee.TargetAssetId)
                     ? Array.Empty<string>()
                     : new[] { fee.TargetAssetId }
@@ -95,7 +99,9 @@ namespace Lykke.Service.Operations.Workflow
                 ReservedLimitVolume = null,
                 Straight = input.Straight,
                 Volume = Math.Abs(input.Volume),
-                OrderAction = input.OrderAction == OrderAction.Buy ? MatchingEngine.Connector.Abstractions.Models.OrderAction.Buy : MatchingEngine.Connector.Abstractions.Models.OrderAction.Sell
+                OrderAction = input.OrderAction == OrderAction.Buy 
+                    ? MatchingEngine.Connector.Models.Common.OrderAction.Buy 
+                    : MatchingEngine.Connector.Models.Common.OrderAction.Sell
             };
 
             if (input.Fee != null)
@@ -107,7 +113,11 @@ namespace Lykke.Service.Operations.Workflow
                 throw new ApplicationException("Me is not available");
 
             if (response.Status != MeStatusCodes.Ok)
+            {
+                _log.Warning($"ME returned invalid status code: [{response.Status}]", context: response);
+
                 throw new ApplicationException(response.Status.Format());
+            }
 
             return new
             {

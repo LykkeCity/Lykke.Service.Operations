@@ -20,12 +20,13 @@ namespace Lykke.Service.Operations.Workflow.Activities
             const string defaultErrorCode = "PredicateValidator";
 
             var result = m_Validator.Validate<TInput>(input);
+            
             if (!result.IsValid)
             {
                 var validationErrors = result.Errors.Select(e => new ValidationError
                 {
                     PropertyName = e.PropertyName,
-                    ErrorCode = e.ErrorCode.Equals(defaultErrorCode, StringComparison.InvariantCultureIgnoreCase) ? e.PropertyName : e.ErrorCode,
+                    ErrorCode = e.CustomState != null ? e.CustomState.ToString() : (e.ErrorCode.Equals(defaultErrorCode, StringComparison.InvariantCultureIgnoreCase) ? e.PropertyName : e.ErrorCode),
                     ErrorMessage = e.ErrorMessage
                 }).ToArray();
 

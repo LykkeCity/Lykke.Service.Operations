@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
@@ -15,12 +16,12 @@ namespace Lykke.Service.Operations.Workflow
     {
         public OrderWorkflow(
             Operation operation, 
-            ILog log, 
-            IActivityFactory activityFactory) : base(operation, log, activityFactory)
+            ILogFactory logFactory, 
+            IActivityFactory activityFactory) : base(operation, logFactory, activityFactory)
         {            
             Configure(cfg => 
                 cfg
-                    .Do("Client validation").OnFail("Fail operation")                                        
+                    .Do("Client validation").OnFail("Fail operation")
                     .Do("Asset validation").OnFail("Fail operation")
                     .Do("Asset pair validation").OnFail("Fail operation")
                     .Do("AssetPair: base asset kyc validation").OnFail("Fail operation")
@@ -53,8 +54,7 @@ namespace Lykke.Service.Operations.Workflow
             ValidationNode<ClientInput>("Client validation")
                 .WithInput(context => new ClientInput
                 {
-                    TradesBlocked = context.OperationValues.Client.TradesBlocked,
-                    BackupDone = context.OperationValues.Client.BackupDone
+                    OperationsBlocked = context.OperationValues.Client.TradesBlocked                    
                 })
                 .MergeFailOutput(output => output);
             

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using FluentValidation;
+﻿using FluentValidation;
 using JetBrains.Annotations;
-using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Limitations.Client;
 using Lykke.Service.Operations.Workflow.Data;
 
@@ -19,7 +15,7 @@ namespace Lykke.Service.Operations.Workflow.Validation
                 {
                     var result = await limitationsServiceClient.CheckAsync(input.ClientId, input.AssetId,
                         (double) volume,
-                        CurrencyOperationType.SwiftTransferOut);
+                        input.OperationType);
 
                     ctx.Rule.MessageBuilder = c => result.FailMessage;
 

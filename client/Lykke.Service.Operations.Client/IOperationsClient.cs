@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Commands;
 
 namespace Lykke.Service.Operations.Client
 {
@@ -13,7 +14,7 @@ namespace Lykke.Service.Operations.Client
         Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand);
         Task Cancel(Guid id);
         Task Complete(Guid id);
-        Task Confirm(Guid id);
+        Task Confirm(Guid id, ConfirmCommand confirmCommand = null);
         Task Fail(Guid id);
 
         /// <summary>
@@ -28,5 +29,6 @@ namespace Lykke.Service.Operations.Client
         Task<Guid> PlaceLimitOrder(Guid id, CreateLimitOrderCommand marketOrderCommand);
 
         Task<Guid> CreateSwiftCashout(Guid id, CreateSwiftCashoutCommand createSwiftCashoutCommand);
+        Task<Guid> CreateCashout(Guid id, CreateCashoutCommand createSwiftCashoutCommand);
     }
 }

@@ -8,6 +8,7 @@ using AutoMapper;
 using JetBrains.Annotations;
 using Lykke.Service.Operations.Client.AutorestClient;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Commands;
 
 namespace Lykke.Service.Operations.Client
 {
@@ -34,6 +35,9 @@ namespace Lykke.Service.Operations.Client
         public async Task<OperationModel> Get(Guid id)
         {
             var op = await _operationsApi.ApiOperationsByIdGetAsync(id);
+
+            if (op == null)
+                return null;
 
             var result = _mapper.Map<OperationModel>(op);
 
@@ -70,6 +74,11 @@ namespace Lykke.Service.Operations.Client
             return (await _operationsApi.ApiOperationsCashoutByIdSwiftPostAsync(id, _mapper.Map<AutorestClient.Models.CreateSwiftCashoutCommand>(createSwiftCashoutCommand))).Value;
         }
 
+        public async Task<Guid> CreateCashout(Guid id, CreateCashoutCommand createSwiftCashoutCommand)
+        {
+            return (await _operationsApi.ApiOperationsCashoutByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateCashoutCommand>(createSwiftCashoutCommand))).Value;
+        }
+
         public Task Cancel(Guid id)
         {
             return _operationsApi.ApiOperationsCancelByIdPostAsync(id);
@@ -80,9 +89,9 @@ namespace Lykke.Service.Operations.Client
             return _operationsApi.ApiOperationsCompleteByIdPostAsync(id);
         }
 
-        public Task Confirm(Guid id)
+        public Task Confirm(Guid id, ConfirmCommand confirmCommand = null)
         {
-            return _operationsApi.ApiOperationsConfirmByIdPostAsync(id);
+            return _operationsApi.ApiOperationsConfirmByIdPostAsync(id, _mapper.Map<AutorestClient.Models.ConfirmCommand>(confirmCommand));
         }
 
         public Task Fail(Guid id)

@@ -1,19 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Contracts.Operations;
 using Lykke.Cqrs;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
+using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
+using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow;
+using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
 using Lykke.Workflow;
@@ -35,7 +41,9 @@ namespace Lykke.Service.Operations.Controllers
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
+        private readonly IWorkflowService _workflowService;
         private readonly ICqrsEngine _cqrsEngine;
+        private readonly EthereumServiceClientSettings _ethereumServiceClientSettings;
         private readonly ILog _log;
         private readonly IMapper _mapper;
 
@@ -45,8 +53,10 @@ namespace Lykke.Service.Operations.Controllers
             IPushNotificationsAPI pushNotificationsApi,
             IAssetsServiceWithCache assetsServiceWithCache,
             Func<string, Operation, OperationWorkflow> workflowFactory,
+            IWorkflowService workflowService,
             ICqrsEngine cqrsEngine,
-            ILog log,
+            EthereumServiceClientSettings ethereumServiceClientSettings,
+            ILogFactory log,
             IMapper mapper)
         {
             _operationsRepository = operationsRepository;
@@ -54,14 +64,17 @@ namespace Lykke.Service.Operations.Controllers
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
             _workflowFactory = workflowFactory;
+            _workflowService = workflowService;
             _cqrsEngine = cqrsEngine;
-            _log = log;
+            _ethereumServiceClientSettings = ethereumServiceClientSettings;
+            _log = log.CreateLog(this);
             _mapper = mapper;
         }
 
         [HttpGet]
         [Route("{id}")]
         [ProducesResponseType(typeof(OperationModel), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(void), (int)HttpStatusCode.NotFound)]
         public async Task<OperationModel> Get(Guid id)
         {
             var operation = await _operationsRepository.Get(id);
@@ -149,6 +162,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+            await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
@@ -186,6 +200,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+            await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
@@ -222,10 +237,39 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(context, Formatting.Indented));
+            await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
-            await HandleWorkflow("SwiftCashoutWorkflow", operation);
+            await HandleWorkflow(OperationType.CashoutSwift + "Workflow", operation);
+
+            return Created(Url.Action("Get", "Operations", new { id }), id);
+        }
+
+        [HttpPost]
+        [Route("cashout/{id}")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
+            if (!ModelState.IsValid)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+
+            // TODO: temp, ugly
+            command.GlobalSettings.EthereumHotWallet = _ethereumServiceClientSettings.HotwalletAddress;
+
+            operation = new Operation();
+            operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
+            await _operationsRepository.Save(operation);
+            
+            await HandleWorkflow(OperationType.Cashout + "Workflow", operation);
 
             return Created(Url.Action("Get", "Operations", new { id }), id);
         }
@@ -241,7 +285,9 @@ namespace Lykke.Service.Operations.Controllers
             {
                 _log.WriteFatalError(workflowType, JsonConvert.SerializeObject(wfResult, Formatting.Indented));
 
-                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult("InternalError", wfResult.Error));
+                ModelState.AddModelError("InternalError", wfResult.Error);
+
+                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult(ModelState));
             }
 
             if (operation.Status == OperationStatus.Failed)
@@ -259,10 +305,10 @@ namespace Lykke.Service.Operations.Controllers
                 string errorCode = operation.OperationValues.ErrorCode;
 
                 if (!string.IsNullOrWhiteSpace(errorMessage))
-                    modelState.AddModelError(errorCode, errorMessage);
+                    modelState.AddModelError(errorCode ?? "Error", errorMessage);
 
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
-            }
+            }            
         }
 
         [HttpPost]
@@ -396,7 +442,8 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("confirm/{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public async Task Confirm(Guid id)
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        public async Task Confirm(Guid id, [FromBody]ConfirmCommand cmd)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -409,23 +456,37 @@ namespace Lykke.Service.Operations.Controllers
             if (operation.Status == OperationStatus.Confirmed)
                 return;
 
-            if (operation.Status != OperationStatus.Created) // todo: accepted?
+            if (operation.Status != OperationStatus.Created && operation.Status != OperationStatus.Accepted)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be confirmed"));
-
-            operation.OperationValues = JObject.Parse(operation.Context);
-
+            
             switch (operation.Type)
             {
-                case OperationType.MarketOrder:
-                    await HandleWorkflow("MarketOrderWorkflow", operation);
-                    break;
-                case OperationType.LimitOrder:
-                    await HandleWorkflow("LimitOrderWorkflow", operation);
-                    break;
+                case OperationType.Cashout:
+                    var activityId = operation.GetConfirmationActivity().ActivityId;
+                    var activityOutput = JObject.FromObject(new { cmd.Confirmation });
+                    var wfState = await _workflowService.CompleteActivity(operation, activityId, activityOutput);
+
+                    if (wfState.State == WorkflowState.InProgress)
+                    {
+                        var executingActivity = operation.Activities.Single(a => a.IsExecuting);
+
+                        _cqrsEngine.PublishEvent(new ExternalExecutionActivityCreatedEvent
+                        {
+                            ActivityId = executingActivity.ActivityId,
+                            Type = executingActivity.Type,
+                            Input = executingActivity.Input
+                        }, "operations");
+                    }
+                    else if (wfState.State == WorkflowState.Complete)
+                    {
+                        if (operation.Status == OperationStatus.Failed)                        
+                            throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", operation.OperationValues.ErrorMessage?.ToString()));
+                    }
+                    break;                
                 default:
                     await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
                     break;
             }
-        }
+        }        
     }
 }

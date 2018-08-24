@@ -1,9 +1,11 @@
 ﻿using System;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
-using Lykke.MatchingEngine.Connector.Abstractions.Models;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
+using Lykke.MatchingEngine.Connector.Models.Api;
+using Lykke.MatchingEngine.Connector.Models.Common;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
@@ -14,7 +16,6 @@ using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
-using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 using OrderAction = Lykke.Service.Operations.Contracts.Orders.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow
@@ -29,12 +30,12 @@ namespace Lykke.Service.Operations.Workflow
 
         public LimitOrderWorkflow(
             Operation operation,
-            ILog log,
+            ILogFactory logFactory,
             IActivityFactory activityFactory,
             IFeeCalculatorClient feeCalculatorClient,
             ILimitOrdersRepository limitOrdersRepository,
             IMatchingEngineClient matchingEngineClient,
-            ICqrsEngine cqrsEngine) : base(operation, log, activityFactory)
+            ICqrsEngine cqrsEngine) : base(operation, logFactory, activityFactory)
         {
             _feeCalculatorClient = feeCalculatorClient;
             _limitOrdersRepository = limitOrdersRepository;
@@ -140,15 +141,15 @@ namespace Lykke.Service.Operations.Workflow
                 MakerSize = (double)fee.MakerFeeSize,
                 TakerSize = (double)fee.TakerFeeSize,
                 MakerFeeModificator = (double)fee.MakerFeeModificator,
-                MakerSizeType = fee.MakerFeeType == FeeType.Absolute
-                    ? (int)FeeSizeType.ABSOLUTE
-                    : (int)FeeSizeType.PERCENTAGE,
-                TakerSizeType = fee.TakerFeeType == FeeType.Absolute
-                    ? (int)FeeSizeType.ABSOLUTE
-                    : (int)FeeSizeType.PERCENTAGE,
+                MakerSizeType = fee.MakerFeeType == FeeCalculator.AutorestClient.Models.FeeType.Absolute
+                    ? FeeSizeType.ABSOLUTE
+                    : FeeSizeType.PERCENTAGE,
+                TakerSizeType = fee.TakerFeeType == FeeCalculator.AutorestClient.Models.FeeType.Absolute
+                    ? FeeSizeType.ABSOLUTE
+                    : FeeSizeType.PERCENTAGE,
                 SourceClientId = input.ClientId,
                 TargetClientId = input.TargetClientId,
-                Type = fee.MakerFeeSize == 0m && fee.TakerFeeSize == 0m ? (int)LimitOrderFeeType.NO_FEE : (int)LimitOrderFeeType.CLIENT_FEE
+                Type = fee.MakerFeeSize == 0m && fee.TakerFeeSize == 0m ? FeeType.NO_FEE : FeeType.CLIENT_FEE
             };
         }
 
@@ -160,8 +161,8 @@ namespace Lykke.Service.Operations.Workflow
                 ClientId = input.ClientId,
                 AssetPairId = input.AssetPairId,
                 OrderAction = input.OrderAction == OrderAction.Buy
-                    ? MatchingEngine.Connector.Abstractions.Models.OrderAction.Buy
-                    : MatchingEngine.Connector.Abstractions.Models.OrderAction.Sell,
+                    ? Lykke.MatchingEngine.Connector.Models.Common.OrderAction.Buy
+                    : Lykke.MatchingEngine.Connector.Models.Common.OrderAction.Sell,
                 Price = input.Price,
                 Volume = Math.Abs(input.Volume),
                 Fee = input.Fee,

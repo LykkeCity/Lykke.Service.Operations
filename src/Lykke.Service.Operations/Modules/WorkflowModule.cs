@@ -24,6 +24,7 @@ namespace Lykke.Service.Operations.Modules
 
             builder.RegisterGeneric(typeof(ValidationActivity<>));
             builder.RegisterGeneric(typeof(DelegateActivity<,>));
+            builder.RegisterGeneric(typeof(GenericActivity<,,>));
 
             builder.RegisterType<ActivityFactory>().As<IActivityFactory>();
 

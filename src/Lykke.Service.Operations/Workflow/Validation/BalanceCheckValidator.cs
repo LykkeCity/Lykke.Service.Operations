@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using FluentValidation;
 using JetBrains.Annotations;
 using Lykke.Service.Balances.AutorestClient.Models;
@@ -9,6 +10,7 @@ using Lykke.Service.Operations.Workflow.Data;
 namespace Lykke.Service.Operations.Workflow.Validation
 {
     [UsedImplicitly]
+    [Obsolete("use BalanceValidator and use balance from context")]
     public class BalanceCheckValidator : AbstractValidator<BalanceCheckInput>
     {
         private readonly IBalancesClient _balancesClient;

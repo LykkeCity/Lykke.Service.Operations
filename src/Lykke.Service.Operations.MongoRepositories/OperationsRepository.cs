@@ -5,7 +5,7 @@ using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using MongoDB.Driver;
 
-namespace Lykke.Service.Operations.MongoRepositories
+namespace Lykke.Service.Operations.Repositories
 {
     public class OperationsRepository : MongoRepository<Operation>, IOperationsRepository
     {
