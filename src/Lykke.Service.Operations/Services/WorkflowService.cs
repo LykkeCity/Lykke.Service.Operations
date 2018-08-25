@@ -31,7 +31,7 @@ namespace Lykke.Service.Operations.Services
 
             if (activity == null)
             {
-                _log.WriteWarning("CompleteActivity", context: new { activityOutput }, info: "Executing activity not found");
+                _log.Warning("CompleteActivity", context: new { activityOutput }, message: $"Executing activity for operation [{operation.Id}] not found");
 
                 return null;
             }

@@ -283,8 +283,8 @@ namespace Lykke.Service.Operations.Controllers
 
             if (wfResult.State == WorkflowState.Corrupted)
             {
-                _log.WriteFatalError(workflowType, JsonConvert.SerializeObject(wfResult, Formatting.Indented));
-
+                _log.Critical(operation.Type + "Workflow", context: wfResult, message: $"Workflow for operation [{operation.Id}] has corrupted!");
+                
                 ModelState.AddModelError("InternalError", wfResult.Error);
 
                 throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult(ModelState));

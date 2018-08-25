@@ -342,7 +342,7 @@ namespace Lykke.Service.Operations.Workflow
             {
                 var message = $"{res.Code}: {res.Message}";
 
-                _log.WriteWarning("Me cashout fail", new { input.OperationId, ErrorMessage = message }, message);
+                _log.Warning(message, context: new { input.OperationId, ErrorMessage = message });
 
                 throw new InvalidOperationException(message);
             }
