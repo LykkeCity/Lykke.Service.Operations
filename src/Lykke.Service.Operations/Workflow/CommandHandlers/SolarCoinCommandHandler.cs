@@ -23,7 +23,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
         public async Task<CommandHandlingResult> Handle(SolarCashOutCommand command, IEventPublisher eventPublisher)
         {
-            _log.WriteInfo(nameof(SolarCoinCommandHandler), command.ToJson(), "SolarCashOutCommand received");
+            _log.Info(nameof(SolarCoinCommandHandler), "SolarCashOutCommand received", command.ToJson());
 
             var slrAddress = new SolarCoinAddress(command.Address);
 
