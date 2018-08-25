@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class SwiftCashoutClientModel
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the SwiftCashoutClientModel class.
         /// </summary>
-        public SwiftCashoutClientModel(System.Guid id, string kycStatus)
+        public SwiftCashoutClientModel(System.Guid id, string kycStatus = default(string))
         {
             Id = id;
             KycStatus = kycStatus;
@@ -55,10 +50,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (KycStatus == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "KycStatus");
-            }
+            
         }
     }
 }

@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class CreateLimitOrderCommand
     {
@@ -27,7 +22,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         /// <param name="orderAction">Possible values include: 'Buy',
         /// 'Sell'</param>
-        public CreateLimitOrderCommand(AssetPairModel assetPair, double volume, double price, OrderAction orderAction, ClientModel client, GlobalSettingsModel globalSettings)
+        public CreateLimitOrderCommand(double volume, decimal price, OrderAction orderAction, AssetPairModel assetPair = default(AssetPairModel), ClientModel client = default(ClientModel), GlobalSettingsModel globalSettings = default(GlobalSettingsModel))
         {
             AssetPair = assetPair;
             Volume = volume;
@@ -56,7 +51,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Price")]
-        public double Price { get; set; }
+        public decimal Price { get; set; }
 
         /// <summary>
         /// Gets or sets possible values include: 'Buy', 'Sell'
@@ -82,30 +77,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (AssetPair == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AssetPair");
-            }
-            if (Client == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Client");
-            }
-            if (GlobalSettings == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "GlobalSettings");
-            }
-            if (AssetPair != null)
-            {
-                AssetPair.Validate();
-            }
-            if (Client != null)
-            {
-                Client.Validate();
-            }
-            if (GlobalSettings != null)
-            {
-                GlobalSettings.Validate();
-            }
+            AssetPair?.Validate();
+            Client?.Validate();
+            GlobalSettings?.Validate();
         }
     }
 }

@@ -4,12 +4,7 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class AssetShortModel
     {

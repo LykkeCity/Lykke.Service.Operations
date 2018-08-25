@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class AssetModel
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the AssetModel class.
         /// </summary>
-        public AssetModel(string id, string displayId, int accuracy, bool isTradable, bool isTrusted, bool kycNeeded, string lykkeEntityId, string blockchain)
+        public AssetModel(int accuracy, bool isTradable, bool isTrusted, bool kycNeeded, string id = default(string), string displayId = default(string), string lykkeEntityId = default(string), string blockchain = default(string))
         {
             Id = id;
             DisplayId = displayId;
@@ -91,22 +86,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Id == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Id");
-            }
-            if (DisplayId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "DisplayId");
-            }
-            if (LykkeEntityId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "LykkeEntityId");
-            }
-            if (Blockchain == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Blockchain");
-            }
+            
         }
     }
 }

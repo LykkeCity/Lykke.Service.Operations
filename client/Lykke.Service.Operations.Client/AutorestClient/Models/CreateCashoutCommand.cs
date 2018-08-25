@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class CreateCashoutCommand
     {
@@ -25,7 +20,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateCashoutCommand class.
         /// </summary>
-        public CreateCashoutCommand(System.Guid operationId, string destinationAddress, string destinationAddressExtension, double volume, AssetCashoutModel asset, ClientCashoutModel client, GlobalSettingsCashoutModel globalSettings)
+        public CreateCashoutCommand(System.Guid operationId, decimal volume, string destinationAddress = default(string), string destinationAddressExtension = default(string), AssetCashoutModel asset = default(AssetCashoutModel), ClientCashoutModel client = default(ClientCashoutModel), GlobalSettingsCashoutModel globalSettings = default(GlobalSettingsCashoutModel))
+
         {
             OperationId = operationId;
             DestinationAddress = destinationAddress;
@@ -60,7 +56,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Volume")]
-        public double Volume { get; set; }
+        public decimal Volume { get; set; }
 
         /// <summary>
         /// </summary>
@@ -85,38 +81,9 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (DestinationAddress == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "DestinationAddress");
-            }
-            if (DestinationAddressExtension == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "DestinationAddressExtension");
-            }
-            if (Asset == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Asset");
-            }
-            if (Client == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Client");
-            }
-            if (GlobalSettings == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "GlobalSettings");
-            }
-            if (Asset != null)
-            {
-                Asset.Validate();
-            }
-            if (Client != null)
-            {
-                Client.Validate();
-            }
-            if (GlobalSettings != null)
-            {
-                GlobalSettings.Validate();
-            }
+            Asset?.Validate();
+            Client?.Validate();
+            GlobalSettings?.Validate();
         }
     }
 }

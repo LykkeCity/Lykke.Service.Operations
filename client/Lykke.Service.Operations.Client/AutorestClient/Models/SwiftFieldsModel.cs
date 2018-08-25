@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class SwiftFieldsModel
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the SwiftFieldsModel class.
         /// </summary>
-        public SwiftFieldsModel(string bic, string accNumber, string accName, string accHolderAddress, string bankName, string accHolderCountry, string accHolderZipCode, string accHolderCity)
+        public SwiftFieldsModel(string bic = default(string), string accNumber = default(string), string accName = default(string), string accHolderAddress = default(string), string bankName = default(string), string accHolderCountry = default(string), string accHolderZipCode = default(string), string accHolderCity = default(string))
         {
             Bic = bic;
             AccNumber = accNumber;
@@ -91,38 +86,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Bic == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Bic");
-            }
-            if (AccNumber == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AccNumber");
-            }
-            if (AccName == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AccName");
-            }
-            if (AccHolderAddress == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AccHolderAddress");
-            }
-            if (BankName == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "BankName");
-            }
-            if (AccHolderCountry == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AccHolderCountry");
-            }
-            if (AccHolderZipCode == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AccHolderZipCode");
-            }
-            if (AccHolderCity == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AccHolderCity");
-            }
+            
         }
     }
 }

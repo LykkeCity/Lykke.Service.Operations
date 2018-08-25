@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class ClientModel
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the ClientModel class.
         /// </summary>
-        public ClientModel(System.Guid id, bool tradesBlocked, bool backupDone, string kycStatus, PersonalDataModel personalData)
+        public ClientModel(System.Guid id, bool tradesBlocked, bool backupDone, string kycStatus = default(string), PersonalDataModel personalData = default(PersonalDataModel))
         {
             Id = id;
             TradesBlocked = tradesBlocked;
@@ -73,18 +68,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (KycStatus == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "KycStatus");
-            }
-            if (PersonalData == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "PersonalData");
-            }
-            if (PersonalData != null)
-            {
-                PersonalData.Validate();
-            }
+            PersonalData?.Validate();
         }
     }
 }

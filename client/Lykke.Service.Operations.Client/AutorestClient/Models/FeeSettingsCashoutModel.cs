@@ -27,7 +27,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the FeeSettingsCashoutModel class.
         /// </summary>
-        public FeeSettingsCashoutModel(IDictionary<string, string> targetClients)
+        public FeeSettingsCashoutModel(IDictionary<string, string> targetClients = default(IDictionary<string, string>))
         {
             TargetClients = targetClients;
             CustomInit();
@@ -51,10 +51,6 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (TargetClients == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "TargetClients");
-            }
         }
     }
 }

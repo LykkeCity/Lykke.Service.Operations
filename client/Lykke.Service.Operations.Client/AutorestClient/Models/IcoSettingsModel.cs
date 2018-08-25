@@ -27,7 +27,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the IcoSettingsModel class.
         /// </summary>
-        public IcoSettingsModel(IList<string> restrictedCountriesIso3, string lKK2YAssetId)
+        public IcoSettingsModel(IList<string> restrictedCountriesIso3 = default(IList<string>), string lKK2YAssetId = default(string))
         {
             RestrictedCountriesIso3 = restrictedCountriesIso3;
             LKK2YAssetId = lKK2YAssetId;
@@ -57,14 +57,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (RestrictedCountriesIso3 == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "RestrictedCountriesIso3");
-            }
-            if (LKK2YAssetId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "LKK2YAssetId");
-            }
+            
         }
     }
 }

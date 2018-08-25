@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class CreateSwiftCashoutCommand
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateSwiftCashoutCommand class.
         /// </summary>
-        public CreateSwiftCashoutCommand(SwiftCashoutAssetModel asset, double volume, SwiftCashoutClientModel client, SwiftFieldsModel swift, SwiftCashoutSettingsModel cashoutSettings)
+        public CreateSwiftCashoutCommand(decimal volume, SwiftCashoutAssetModel asset = default(SwiftCashoutAssetModel), SwiftCashoutClientModel client = default(SwiftCashoutClientModel), SwiftFieldsModel swift = default(SwiftFieldsModel), SwiftCashoutSettingsModel cashoutSettings = default(SwiftCashoutSettingsModel))
         {
             Asset = asset;
             Volume = volume;
@@ -48,7 +43,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Volume")]
-        public double Volume { get; set; }
+        public decimal Volume { get; set; }
 
         /// <summary>
         /// </summary>
@@ -73,38 +68,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Asset == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Asset");
-            }
-            if (Client == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Client");
-            }
-            if (Swift == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Swift");
-            }
-            if (CashoutSettings == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "CashoutSettings");
-            }
-            if (Asset != null)
-            {
-                Asset.Validate();
-            }
-            if (Client != null)
-            {
-                Client.Validate();
-            }
-            if (Swift != null)
-            {
-                Swift.Validate();
-            }
-            if (CashoutSettings != null)
-            {
-                CashoutSettings.Validate();
-            }
+            Asset?.Validate();
+            Client?.Validate();
+            Swift?.Validate();
+            CashoutSettings?.Validate();
         }
     }
 }

@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class ConfirmCommand
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the ConfirmCommand class.
         /// </summary>
-        public ConfirmCommand(string confirmation)
+        public ConfirmCommand(string confirmation = default(string))
         {
             Confirmation = confirmation;
             CustomInit();
@@ -49,10 +44,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Confirmation == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Confirmation");
-            }
+            
         }
     }
 }

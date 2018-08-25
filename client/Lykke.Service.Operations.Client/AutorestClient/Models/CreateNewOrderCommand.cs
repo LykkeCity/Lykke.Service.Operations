@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class CreateNewOrderCommand
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateNewOrderCommand class.
         /// </summary>
-        public CreateNewOrderCommand(System.Guid walletId, string clientOrderId)
+        public CreateNewOrderCommand(System.Guid walletId, string clientOrderId = default(string))
         {
             WalletId = walletId;
             ClientOrderId = clientOrderId;
@@ -55,10 +50,6 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (ClientOrderId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "ClientOrderId");
-            }
             if (ClientOrderId != null)
             {
                 if (ClientOrderId.Length > 50)

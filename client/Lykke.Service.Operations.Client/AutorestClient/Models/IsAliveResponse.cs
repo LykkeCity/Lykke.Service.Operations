@@ -4,15 +4,9 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Collections;
     using System.Collections.Generic;
-    using System.Linq;
 
     public partial class IsAliveResponse
     {
@@ -27,7 +21,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the IsAliveResponse class.
         /// </summary>
-        public IsAliveResponse(string name, string version, string env, bool isDebug, IList<IssueIndicator> issueIndicators)
+        public IsAliveResponse(bool isDebug, string name = default(string), string version = default(string), string env = default(string), IList<IssueIndicator> issueIndicators = default(IList<IssueIndicator>))
         {
             Name = name;
             Version = version;
@@ -44,27 +38,27 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "name")]
+        [JsonProperty(PropertyName = "Name")]
         public string Name { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "version")]
+        [JsonProperty(PropertyName = "Version")]
         public string Version { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "env")]
+        [JsonProperty(PropertyName = "Env")]
         public string Env { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "isDebug")]
+        [JsonProperty(PropertyName = "IsDebug")]
         public bool IsDebug { get; set; }
 
         /// <summary>
         /// </summary>
-        [JsonProperty(PropertyName = "issueIndicators")]
+        [JsonProperty(PropertyName = "IssueIndicators")]
         public IList<IssueIndicator> IssueIndicators { get; set; }
 
         /// <summary>
@@ -75,32 +69,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Name == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Name");
-            }
-            if (Version == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Version");
-            }
-            if (Env == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Env");
-            }
-            if (IssueIndicators == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "IssueIndicators");
-            }
-            if (IssueIndicators != null)
-            {
-                foreach (var element in IssueIndicators)
-                {
-                    if (element != null)
-                    {
-                        element.Validate();
-                    }
-                }
-            }
+            
         }
     }
 }

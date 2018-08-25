@@ -4,15 +4,9 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Collections;
     using System.Collections.Generic;
-    using System.Linq;
 
     public partial class GlobalSettingsModel
     {
@@ -27,7 +21,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the GlobalSettingsModel class.
         /// </summary>
-        public GlobalSettingsModel(IList<string> blockedAssetPairs, bool bitcoinBlockchainOperationsDisabled, bool btcOperationsDisabled, IcoSettingsModel icoSettings, FeeSettingsModel feeSettings)
+        public GlobalSettingsModel(bool bitcoinBlockchainOperationsDisabled, bool btcOperationsDisabled, IList<string> blockedAssetPairs = default(IList<string>), IcoSettingsModel icoSettings = default(IcoSettingsModel), FeeSettingsModel feeSettings = default(FeeSettingsModel))
         {
             BlockedAssetPairs = blockedAssetPairs;
             BitcoinBlockchainOperationsDisabled = bitcoinBlockchainOperationsDisabled;
@@ -75,26 +69,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (BlockedAssetPairs == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "BlockedAssetPairs");
-            }
-            if (IcoSettings == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "IcoSettings");
-            }
-            if (FeeSettings == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "FeeSettings");
-            }
-            if (IcoSettings != null)
-            {
-                IcoSettings.Validate();
-            }
-            if (FeeSettings != null)
-            {
-                FeeSettings.Validate();
-            }
+            IcoSettings?.Validate();
+            FeeSettings?.Validate();
         }
     }
 }

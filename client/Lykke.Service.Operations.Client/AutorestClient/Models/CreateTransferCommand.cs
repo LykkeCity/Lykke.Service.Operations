@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class CreateTransferCommand
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateTransferCommand class.
         /// </summary>
-        public CreateTransferCommand(System.Guid clientId, string assetId, double amount, System.Guid sourceWalletId, System.Guid walletId)
+        public CreateTransferCommand(System.Guid clientId, decimal amount, System.Guid sourceWalletId, System.Guid walletId, string assetId = default(string))
         {
             ClientId = clientId;
             AssetId = assetId;
@@ -53,7 +48,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "Amount")]
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
 
         /// <summary>
         /// </summary>
@@ -73,10 +68,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (AssetId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AssetId");
-            }
+            
         }
     }
 }

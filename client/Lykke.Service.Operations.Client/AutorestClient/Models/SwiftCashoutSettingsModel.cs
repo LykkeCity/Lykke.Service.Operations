@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class SwiftCashoutSettingsModel
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the SwiftCashoutSettingsModel class.
         /// </summary>
-        public SwiftCashoutSettingsModel(string hotwalletTargetId, string feeTargetId)
+        public SwiftCashoutSettingsModel(string hotwalletTargetId = default(string), string feeTargetId = default(string))
         {
             HotwalletTargetId = hotwalletTargetId;
             FeeTargetId = feeTargetId;
@@ -55,14 +50,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (HotwalletTargetId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "HotwalletTargetId");
-            }
-            if (FeeTargetId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "FeeTargetId");
-            }
+            
         }
     }
 }

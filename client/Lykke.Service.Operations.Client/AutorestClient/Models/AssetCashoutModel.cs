@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class AssetCashoutModel
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the AssetCashoutModel class.
         /// </summary>
-        public AssetCashoutModel(string id, string displayId, int multiplierPower, string assetAddress, int accuracy, string blockchain, string type, bool isTradable, bool isTrusted, bool kycNeeded, string blockchainIntegrationLayerId, double cashoutMinimalAmount, double lowVolumeAmount, bool blockchainWithdrawal, string lykkeEntityId)
+        public AssetCashoutModel(int multiplierPower, int accuracy, bool isTradable, bool isTrusted, bool kycNeeded, decimal cashoutMinimalAmount, decimal lowVolumeAmount, bool blockchainWithdrawal, string id = default(string), string displayId = default(string), string assetAddress = default(string), string blockchain = default(string), string type = default(string), string blockchainIntegrationLayerId = default(string), string lykkeEntityId = default(string))
         {
             Id = id;
             DisplayId = displayId;
@@ -108,12 +103,12 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "CashoutMinimalAmount")]
-        public double CashoutMinimalAmount { get; set; }
+        public decimal CashoutMinimalAmount { get; set; }
 
         /// <summary>
         /// </summary>
         [JsonProperty(PropertyName = "LowVolumeAmount")]
-        public double LowVolumeAmount { get; set; }
+        public decimal LowVolumeAmount { get; set; }
 
         /// <summary>
         /// </summary>
@@ -133,34 +128,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Id == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Id");
-            }
-            if (DisplayId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "DisplayId");
-            }
-            if (AssetAddress == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "AssetAddress");
-            }
-            if (Blockchain == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Blockchain");
-            }
-            if (Type == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Type");
-            }
-            if (BlockchainIntegrationLayerId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "BlockchainIntegrationLayerId");
-            }
-            if (LykkeEntityId == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "LykkeEntityId");
-            }
+            
         }
     }
 }

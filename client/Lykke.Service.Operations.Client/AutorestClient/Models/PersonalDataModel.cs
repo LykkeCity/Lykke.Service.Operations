@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class PersonalDataModel
     {
@@ -25,7 +20,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the PersonalDataModel class.
         /// </summary>
-        public PersonalDataModel(string country, string countryFromID, string countryFromPOA)
+        public PersonalDataModel(string country = default(string), string countryFromID = default(string), string countryFromPOA = default(string))
         {
             Country = country;
             CountryFromID = countryFromID;
@@ -61,18 +56,6 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Country == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Country");
-            }
-            if (CountryFromID == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "CountryFromID");
-            }
-            if (CountryFromPOA == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "CountryFromPOA");
-            }
         }
     }
 }

@@ -4,13 +4,8 @@
 
 namespace Lykke.Service.Operations.Client.AutorestClient.Models
 {
-    using Lykke.Service;
-    using Lykke.Service.Operations;
-    using Lykke.Service.Operations.Client;
-    using Lykke.Service.Operations.Client.AutorestClient;
     using Microsoft.Rest;
     using Newtonsoft.Json;
-    using System.Linq;
 
     public partial class OperationModel
     {
@@ -31,7 +26,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <param name="status">Possible values include: 'Created',
         /// 'Accepted', 'Confirmed', 'Completed', 'Canceled', 'Failed',
         /// 'Corrupted'</param>
-        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context, object activities, string contextJson)
+        public OperationModel(System.Guid id, System.DateTime created, OperationType type, OperationStatus status, System.Guid clientId, object context = default(object), object activities = default(object), string contextJson = default(string))
         {
             Id = id;
             Created = created;
@@ -102,18 +97,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </exception>
         public virtual void Validate()
         {
-            if (Context == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Context");
-            }
-            if (Activities == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "Activities");
-            }
-            if (ContextJson == null)
-            {
-                throw new ValidationException(ValidationRules.CannotBeNull, "ContextJson");
-            }
+            
         }
     }
 }
