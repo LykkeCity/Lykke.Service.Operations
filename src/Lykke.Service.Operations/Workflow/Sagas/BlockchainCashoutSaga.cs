@@ -73,7 +73,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                         Amount = input.Amount
                     };
 
-                    commandSender.SendCommand(command, "Solarcoin");
+                    commandSender.SendCommand(command, "solarcoin");
 
                     _log.Info($"StartCashoutCommand for Solarcoin has sent. Operation [{command.Id}]", command);
                 }                
