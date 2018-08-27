@@ -164,7 +164,7 @@ namespace Lykke.Service.Operations.Controllers
             operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
             await _operationsRepository.Save(operation);
 
-            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
+            //_cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
             await HandleWorkflow("MarketOrderWorkflow", operation);
 
@@ -202,7 +202,7 @@ namespace Lykke.Service.Operations.Controllers
             operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
             await _operationsRepository.Save(operation);
 
-            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
+            //_cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
             await HandleWorkflow("LimitOrderWorkflow", operation);
 
@@ -239,7 +239,7 @@ namespace Lykke.Service.Operations.Controllers
             operation.Create(id, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(context, Formatting.Indented));
             await _operationsRepository.Save(operation);
 
-            _cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
+            //_cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
             await HandleWorkflow(OperationType.CashoutSwift + "Workflow", operation);
 
