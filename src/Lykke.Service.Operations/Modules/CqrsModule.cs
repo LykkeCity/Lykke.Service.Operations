@@ -146,9 +146,9 @@ namespace Lykke.Service.Operations.Modules
                             .PublishingCommands(typeof(Bitcoin.Contracts.Commands.StartCashoutCommand)).To(BitcoinBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).To("operations").With("commands"),
 
-                        Register.Saga<WorkflowSaga>("workflow-saga")
-                            .ListeningEvents(typeof(OperationCreatedEvent)).From("operations").On("events")
-                            .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands"),
+                        //Register.Saga<WorkflowSaga>("workflow-saga")
+                        //    .ListeningEvents(typeof(OperationCreatedEvent)).From("operations").On("events")
+                        //    .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands"),
 
                         Register.DefaultRouting
                             .PublishingCommands(typeof(ExecuteOperationCommand), typeof(CompleteActivityCommand), typeof(FailActivityCommand))
