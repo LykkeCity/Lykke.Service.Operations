@@ -8,7 +8,7 @@ namespace Lykke.Service.Operations.Core.Domain
     public interface IOperationsRepository
     {        
         Task<Operation> Get(Guid id);
-        Task<IEnumerable<Operation>> Get(Guid clientId, OperationStatus status);
+        Task<IEnumerable<Operation>> Get(Guid? clientId, OperationStatus? status, OperationType? type);
         Task Create(Operation operation);
         Task UpdateStatus(Guid id, OperationStatus status);
         Task Update(Operation operation);

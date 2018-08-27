@@ -11,12 +11,12 @@ namespace Lykke.Service.Operations.Repositories
     {
         public OperationsRepository(IMongoDatabase database) : base(database)
         {
-            GetCollection().Indexes.CreateOneAsync(Builders<Operation>.IndexKeys.Ascending(_ => _.ClientId).Ascending(_ => _.Status));
+            GetCollection().Indexes.CreateOneAsync(Builders<Operation>.IndexKeys.Ascending(_ => _.ClientId).Ascending(_ => _.Status).Ascending(_ => _.Type));
         }
 
-        public async Task<IEnumerable<Operation>> Get(Guid clientId, OperationStatus status)
+        public async Task<IEnumerable<Operation>> Get(Guid? clientId, OperationStatus? status, OperationType? type)
         {
-            return await FilterBy(x => x.ClientId == clientId && x.Status == status);
+            return await FilterBy(x => (!clientId.HasValue || x.ClientId == clientId) && (!status.HasValue || x.Status == status) && (type.HasValue || x.Type == type));
         }
 
         public async Task Create(Operation operation)

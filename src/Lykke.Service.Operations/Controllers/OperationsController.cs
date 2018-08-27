@@ -88,11 +88,24 @@ namespace Lykke.Service.Operations.Controllers
         }
 
         [HttpGet]
+        [Obsolete()]
         [Route("{clientId}/list/{status}")]
         [ProducesResponseType(typeof(IEnumerable<OperationModel>), (int)HttpStatusCode.OK)]
         public async Task<IEnumerable<OperationModel>> Get(Guid clientId, OperationStatus status)
         {
-            var operations = await _operationsRepository.Get(clientId, status);
+            var operations = await _operationsRepository.Get(clientId, status, null);
+
+            var result = _mapper.Map<IEnumerable<Operation>, IEnumerable<OperationModel>>(operations);
+
+            return result;
+        }
+
+        [HttpGet]
+        [Route("")]
+        [ProducesResponseType(typeof(IEnumerable<OperationModel>), (int)HttpStatusCode.OK)]
+        public async Task<IEnumerable<OperationModel>> Get(Guid? clientId, OperationStatus? status, OperationType? type)
+        {
+            var operations = await _operationsRepository.Get(clientId, status, type);
 
             var result = _mapper.Map<IEnumerable<Operation>, IEnumerable<OperationModel>>(operations);
 
