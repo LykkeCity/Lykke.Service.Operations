@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Autofac;
-using JetBrains.Annotations;
-using Lykke.Bitcoin.Contracts;
 using Lykke.Common.Log;
+using Lykke.Bitcoin.Contracts;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
@@ -40,12 +38,12 @@ namespace Lykke.Service.Operations.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
-            Messaging.Serialization.MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
+            MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
             var rabbitMqSagasSettings = new RabbitMQ.Client.ConnectionFactory
             {
                 Uri = _settings.CurrentValue.SagasRabbitMq.RabbitConnectionString
             };
-            
+
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>();
 
             builder.RegisterType<WorkflowCommandHandler>().SingleInstance();
@@ -146,9 +144,9 @@ namespace Lykke.Service.Operations.Modules
                             .PublishingCommands(typeof(Bitcoin.Contracts.Commands.StartCashoutCommand)).To(BitcoinBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).To("operations").With("commands"),
 
-                        //Register.Saga<WorkflowSaga>("workflow-saga")
-                        //    .ListeningEvents(typeof(OperationCreatedEvent)).From("operations").On("events")
-                        //    .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands"),
+                        Register.Saga<WorkflowSaga>("workflow-saga")
+                            .ListeningEvents(typeof(OperationCreatedEvent)).From("operations").On("events")
+                            .PublishingCommands(typeof(ExecuteOperationCommand)).To("operations").With("commands"),
 
                         Register.DefaultRouting
                             .PublishingCommands(typeof(ExecuteOperationCommand), typeof(CompleteActivityCommand), typeof(FailActivityCommand))
@@ -158,26 +156,6 @@ namespace Lykke.Service.Operations.Modules
                 .As<ICqrsEngine>()
                 .SingleInstance()
                 .AutoActivate();
-        }
-
-        internal class AutofacDependencyResolver : IDependencyResolver
-        {
-            private readonly IComponentContext _context;
-
-            public AutofacDependencyResolver([NotNull] IComponentContext kernel)
-            {
-                _context = kernel ?? throw new ArgumentNullException(nameof(kernel));
-            }
-
-            public object GetService(Type type)
-            {
-                return _context.Resolve(type);
-            }
-
-            public bool HasService(Type type)
-            {
-                return _context.IsRegistered(type);
-            }
         }
     }
 }
