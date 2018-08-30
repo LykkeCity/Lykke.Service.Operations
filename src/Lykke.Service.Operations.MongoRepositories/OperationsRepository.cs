@@ -14,9 +14,14 @@ namespace Lykke.Service.Operations.Repositories
             GetCollection().Indexes.CreateOneAsync(Builders<Operation>.IndexKeys.Ascending(_ => _.ClientId).Ascending(_ => _.Status).Ascending(_ => _.Type));
         }
 
-        public async Task<IEnumerable<Operation>> Get(Guid? clientId, OperationStatus? status, OperationType? type)
+        public async Task<IEnumerable<Operation>> Get(Guid? clientId, OperationStatus? status, OperationType? type, int? skip = 0, int? take = 10)
         {
-            return await FilterBy(x => (!clientId.HasValue || x.ClientId == clientId) && (!status.HasValue || x.Status == status) && (type.HasValue || x.Type == type));
+            return await GetCollection()
+                .Find(x => (clientId == null || x.ClientId == clientId) && (status == null || x.Status == status) && (type == null|| x.Type == type))
+                .SortByDescending(x => x.Created)
+                .Skip(skip)
+                .Limit(take)
+                .ToListAsync();
         }
 
         public async Task Create(Operation operation)

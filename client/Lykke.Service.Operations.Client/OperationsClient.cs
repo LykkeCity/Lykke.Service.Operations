@@ -49,6 +49,15 @@ namespace Lykke.Service.Operations.Client
             return (await _operationsApi.ApiOperationsByClientIdListByStatusGetAsync(clientId, _mapper.Map<AutorestClient.Models.OperationStatus>(status))).Select(_mapper.Map<OperationModel>);
         }
 
+        public async Task<IEnumerable<OperationModel>> Get(Guid? clientId, OperationStatus? status, OperationType? type, int? skip = 0, int? take = 10)
+        {
+            return (await _operationsApi.ApiOperationsGetAsync(
+                clientId, 
+                _mapper.Map<AutorestClient.Models.OperationStatus>(status), 
+                _mapper.Map<AutorestClient.Models.OperationType>(type),
+                skip, take)).Select(_mapper.Map<OperationModel>);
+        }
+
         public async Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand)
         {
             return (await _operationsApi.ApiOperationsTransferByIdPostAsync(id, _mapper.Map<AutorestClient.Models.CreateTransferCommand>(transferCommand))).Value;

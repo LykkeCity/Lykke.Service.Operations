@@ -91,7 +91,7 @@ namespace Lykke.Service.Operations.Modules
                         true,
                         Register.DefaultEndpointResolver(sagasEndpointResolver),
 
-                        Register.BoundedContext("operations")
+                        Register.BoundedContext("operations")                            
                             .ListeningCommands(
                                 typeof(CreateCashoutCommand))
                                 .On("commands")                                
