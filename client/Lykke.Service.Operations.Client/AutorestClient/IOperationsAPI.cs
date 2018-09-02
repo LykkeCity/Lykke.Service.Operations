@@ -67,6 +67,28 @@ namespace Lykke.Service.Operations.Client.AutorestClient
         /// </param>
         Task<HttpOperationResponse<IList<OperationModel>>> ApiOperationsByClientIdListByStatusGetWithHttpMessagesAsync(System.Guid clientId, OperationStatus status, Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <param name='clientId'>
+        /// </param>
+        /// <param name='status'>
+        /// Possible values include: 'Created', 'Accepted', 'Confirmed',
+        /// 'Completed', 'Canceled', 'Failed', 'Corrupted'
+        /// </param>
+        /// <param name='type'>
+        /// Possible values include: 'Transfer', 'VisaCardPayment',
+        /// 'MarketOrder', 'LimitOrder', 'NewOrder', 'CashoutSwift', 'Cashout'
+        /// </param>
+        /// <param name='skip'>
+        /// </param>
+        /// <param name='take'>
+        /// </param>
+        /// <param name='customHeaders'>
+        /// The headers that will be added to request.
+        /// </param>
+        /// <param name='cancellationToken'>
+        /// The cancellation token.
+        /// </param>
+        Task<HttpOperationResponse<IList<OperationModel>>> ApiOperationsGetWithHttpMessagesAsync(System.Guid? clientId = default(System.Guid?), OperationStatus? status = default(OperationStatus?), OperationType? type = default(OperationType?), int? skip = default(int?), int? take = default(int?), Dictionary<string, List<string>> customHeaders = null, CancellationToken cancellationToken = default(CancellationToken));
+
         /// <summary>
         /// Registers a new order with attached client order Id.
         /// </summary>

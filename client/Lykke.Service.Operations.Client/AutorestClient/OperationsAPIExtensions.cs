@@ -60,9 +60,38 @@ namespace Lykke.Service.Operations.Client.AutorestClient
             /// <param name='cancellationToken'>
             /// The cancellation token.
             /// </param>
+            [System.Obsolete()]
             public static async Task<IList<OperationModel>> ApiOperationsByClientIdListByStatusGetAsync(this IOperationsAPI operations, System.Guid clientId, OperationStatus status, CancellationToken cancellationToken = default(CancellationToken))
             {
                 using (var _result = await operations.ApiOperationsByClientIdListByStatusGetWithHttpMessagesAsync(clientId, status, null, cancellationToken).ConfigureAwait(false))
+                {
+                    return _result.Body;
+                }
+            }
+
+            /// <param name='operations'>
+            /// The operations group for this extension method.
+            /// </param>
+            /// <param name='clientId'>
+            /// </param>
+            /// <param name='status'>
+            /// Possible values include: 'Created', 'Accepted', 'Confirmed', 'Completed',
+            /// 'Canceled', 'Failed', 'Corrupted'
+            /// </param>
+            /// <param name='type'>
+            /// Possible values include: 'Transfer', 'VisaCardPayment', 'MarketOrder',
+            /// 'LimitOrder', 'NewOrder', 'CashoutSwift', 'Cashout'
+            /// </param>
+            /// <param name='skip'>
+            /// </param>
+            /// <param name='take'>
+            /// </param>
+            /// <param name='cancellationToken'>
+            /// The cancellation token.
+            /// </param>
+            public static async Task<IList<OperationModel>> ApiOperationsGetAsync(this IOperationsAPI operations, System.Guid? clientId = default(System.Guid?), OperationStatus? status = default(OperationStatus?), OperationType? type = default(OperationType?), int? skip = default(int?), int? take = default(int?), CancellationToken cancellationToken = default(CancellationToken))
+            {
+                using (var _result = await operations.ApiOperationsGetWithHttpMessagesAsync(clientId, status, type, skip, take, null, cancellationToken).ConfigureAwait(false))
                 {
                     return _result.Body;
                 }

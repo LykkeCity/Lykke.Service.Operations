@@ -11,6 +11,7 @@ namespace Lykke.Service.Operations.Client
     {
         Task<OperationModel> Get(Guid id);
         Task<IEnumerable<OperationModel>> Get(Guid clientId, OperationStatus status);
+        Task<IEnumerable<OperationModel>> Get(Guid? clientId, OperationStatus? status, OperationType? type, int? skip = 0, int? take = 10);
         Task<Guid> Transfer(Guid id, CreateTransferCommand transferCommand);
         Task Cancel(Guid id);
         Task Complete(Guid id);
