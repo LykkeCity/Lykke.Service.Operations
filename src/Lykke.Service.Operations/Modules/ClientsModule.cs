@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net.Http;
 using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using Lykke.Common.Log;
 using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Assets.Client;
@@ -17,19 +16,16 @@ using Lykke.Service.Operations.Settings;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.RateCalculator.Client;
 using Lykke.SettingsReader;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lykke.Service.Operations.Modules
 {
     public class ClientsModule : Module
     {
         private readonly IReloadingManager<AppSettings> _settings;
-        private readonly IServiceCollection _services;
 
         public ClientsModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
-            _services = new ServiceCollection();
         }
 
         protected override void Load(ContainerBuilder builder)
@@ -42,11 +38,10 @@ namespace Lykke.Service.Operations.Modules
                 .As<IPushNotificationsAPI>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.OperationsService.Services.PushNotificationsUrl));
 
-            _services.RegisterAssetsClient(new AssetServiceSettings
-            {
-                AssetsCacheExpirationPeriod = _settings.CurrentValue.Assets.CacheExpirationPeriod,
-                BaseUri = new Uri(_settings.CurrentValue.Assets.ServiceUrl)
-            });
+            builder.RegisterAssetsClient(AssetServiceSettings.Create(
+                new Uri(_settings.CurrentValue.Assets.ServiceUrl),
+                _settings.CurrentValue.Assets.CacheExpirationPeriod
+            ));
 
             builder.RegisterInstance(_settings.CurrentValue.EthereumServiceClient);
 
@@ -75,11 +70,9 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterFeeCalculatorClient(_settings.CurrentValue.FeeCalculatorServiceClient.ServiceUrl);
 
             builder.RegisterInstance<IAssetDisclaimersClient>(new AssetDisclaimersClient(_settings.CurrentValue.AssetDisclaimersServiceClient));
-            builder.BindMeClient(_settings.CurrentValue.MatchingEngineClient.IpEndpoint.GetClientIpEndPoint(), socketLog: null, ignoreErrors: true);
+            builder.RegisgterMeClient(_settings.CurrentValue.MatchingEngineClient.IpEndpoint.GetClientIpEndPoint());
             builder.RegisterLimitationsServiceClient(_settings.CurrentValue.LimitationServiceClient.ServiceUrl);
             builder.RegisterInstance<IExchangeOperationsServiceClient>(new ExchangeOperationsServiceClient(_settings.CurrentValue.ExchangeOperationsServiceClient.ServiceUrl));
-
-            builder.Populate(_services);
         }
     }
 }
