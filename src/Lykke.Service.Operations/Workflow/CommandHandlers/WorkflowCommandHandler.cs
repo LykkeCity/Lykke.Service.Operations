@@ -7,11 +7,14 @@ using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow.Commands;
+using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Workflow;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Workflow.CommandHandlers
@@ -22,7 +25,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         private readonly IOperationsRepository _operationsRepository;
         private readonly IWorkflowService _workflowService;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
-        
+
         public WorkflowCommandHandler(
             ILogFactory logFactory,
             IOperationsRepository operationsRepository,
@@ -45,7 +48,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             var wf = _workflowFactory(operation.Type + "Workflow", operation);
             var wfResult = wf.Run(operation);
 
-            await HandleWorkflow(operation, wfResult, eventPublisher);
+            await HandleWorkflow(operation, wfResult, eventPublisher, OperationStatus.Created);
 
             return CommandHandlingResult.Ok();
         }
@@ -78,14 +81,16 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                 return new CommandHandlingResult
                 {
                     Retry = true,
-                    RetryDelay = (long) TimeSpan.FromSeconds(5).TotalMilliseconds
+                    RetryDelay = (long)TimeSpan.FromSeconds(5).TotalMilliseconds
                 };
             }
+
+            var previousStatus = operation.Status;
 
             var wfResult = await _workflowService.CompleteActivity(operation, command.ActivityId, JObject.Parse(command.Output));
 
             if (wfResult != null)
-                await HandleWorkflow(operation, wfResult, eventPublisher);
+                await HandleWorkflow(operation, wfResult, eventPublisher, previousStatus);
 
             return CommandHandlingResult.Ok();
         }
@@ -109,10 +114,23 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
             await _operationsRepository.Save(operation);
 
+            if (!string.IsNullOrWhiteSpace(command.Output))
+            {
+                var output = JObject.Parse(command.Output);
+
+                eventPublisher.PublishEvent(new OperationFailedEvent
+                {
+                    ClientId = operation.ClientId,
+                    OperationId = operation.Id,
+                    ErrorCode = output.ContainsKey("ErrorCode") ? output["ErrorCode"].ToString() : null,
+                    ErrorMessage = output.ContainsKey("ErrorMessage") ? output["ErrorMessage"].ToString() : null
+                });
+            }
+
             return CommandHandlingResult.Ok();
         }
 
-        private async Task HandleWorkflow(Operation operation, Execution<Operation> wfResult, IEventPublisher eventPublisher)
+        private async Task HandleWorkflow(Operation operation, Execution<Operation> wfResult, IEventPublisher eventPublisher, OperationStatus previousStatus)
         {
             _log.Info($"Handle workflow result: [{wfResult.State}]. Operation [{operation.Id}]", wfResult);
 
@@ -129,7 +147,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                     OperationId = operation.Id
                 });
             }
-            else if (wfResult.State == WorkflowState.Failed)
+            else if (wfResult.State == WorkflowState.Failed || operation.Status == OperationStatus.Failed)
             {
                 operation.Fail();
 
@@ -143,10 +161,11 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                     errorMessage = errors.First()["ErrorMessage"].ToString();
                 }
 
-                await _operationsRepository.Save(operation);                
+                await _operationsRepository.Save(operation);
 
                 eventPublisher.PublishEvent(new OperationFailedEvent
                 {
+                    ClientId = operation.ClientId,
                     OperationId = operation.Id,
                     ErrorCode = errorCode,
                     ErrorMessage = errorMessage
@@ -158,17 +177,51 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
                 await _operationsRepository.Save(operation);
 
-                eventPublisher.PublishEvent(new ExternalExecutionActivityCreatedEvent
-                {
-                    OperationId = operation.Id,
-                    ActivityId = executingActivity.ActivityId,
-                    Type = executingActivity.Type,
-                    Input = executingActivity.Input
-                });
+                SendExternalActivityEvent(eventPublisher, operation, executingActivity);
+
+                // need to fire OperationConfirmed event to notify consumers
+                if (previousStatus != operation.Status && operation.Status == OperationStatus.Confirmed)
+                    eventPublisher.PublishEvent(new OperationConfirmedEvent
+                    {
+                        ClientId = operation.ClientId,
+                        OperationId = operation.Id
+                    });
             }
             else
             {
                 await _operationsRepository.Save(operation);
+
+                if (operation.Status == OperationStatus.Completed)
+                    eventPublisher.PublishEvent(new OperationCompletedEvent
+                    {
+                        OperationId = operation.Id,
+                        ClientId = operation.ClientId
+                    });
+            }
+        }
+
+        private void SendExternalActivityEvent(IEventPublisher eventPublisher, Operation operation, OperationActivity pendingActivity)
+        {
+            if (pendingActivity.Type == "RequestConfirmation")
+            {
+                var input = JsonConvert.DeserializeObject<ConfirmationRequestInput>(pendingActivity.Input);
+
+                eventPublisher.PublishEvent(new OperationConfirmationRequestedEvent
+                {
+                    OperationId = operation.Id,
+                    ClientId = operation.ClientId,
+                    ConfirmationType = input.ConfirmationType
+                });
+            }
+            else
+            {
+                eventPublisher.PublishEvent(new ExternalExecutionActivityCreatedEvent
+                {
+                    OperationId = operation.Id,
+                    ActivityId = pendingActivity.ActivityId,
+                    Type = pendingActivity.Type,
+                    Input = pendingActivity.Input
+                });
             }
         }
     }

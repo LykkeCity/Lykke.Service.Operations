@@ -169,11 +169,6 @@ namespace Lykke.Service.Operations.Core.Domain
             Status = OperationStatus.Corrupted;
         }
 
-        public OperationActivity GetConfirmationActivity()
-        {
-            return Activities.LastOrDefault(a => a.Type == "RequestConfirmation" && a.Status == ActivityResult.None);
-        }
-
         public OperationActivity ExecutingActivity()
         {
             return Activities.SingleOrDefault(o => o.IsExecuting);

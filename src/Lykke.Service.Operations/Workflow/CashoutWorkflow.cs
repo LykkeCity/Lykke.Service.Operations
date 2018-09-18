@@ -31,8 +31,8 @@ namespace Lykke.Service.Operations.Workflow
         private readonly IBlockchainCashoutPreconditionsCheckClient _blockchainCashoutPreconditionsCheckClient;
 
         public CashoutWorkflow(
-            Operation operation, 
-            ILogFactory log, 
+            Operation operation,
+            ILogFactory log,
             IActivityFactory activityFactory,
             BlockchainAddress blockchainAddress,
             IFeeCalculatorClient feeCalculatorClient,
@@ -43,9 +43,9 @@ namespace Lykke.Service.Operations.Workflow
             _feeCalculatorClient = feeCalculatorClient;
             _exchangeOperationsServiceClient = exchangeOperationsServiceClient;
             _blockchainCashoutPreconditionsCheckClient = blockchainCashoutPreconditionsCheckClient;
-            
+
             Configure(cfg =>
-                cfg                    
+                cfg
                     .Do("Global validation").OnFail("Fail operation")
                     .Do("Client validation").OnFail("Fail operation")
                     .Do("Asset validation").OnFail("Fail operation")
@@ -65,7 +65,7 @@ namespace Lykke.Service.Operations.Workflow
                         .ContinueWith("Limits validation")
                     .WithBranch()
                         .Do("Limits validation").OnFail("Fail operation")
-                        .Do("Calculate fee").OnFail("Fail operation")                        
+                        .Do("Calculate fee").OnFail("Fail operation")
                         .Do("Accept operation").OnFail("Fail operation")
                         .On("2FA is disabled").DeterminedAs(context => !(bool)context.OperationValues.GlobalSettings.TwoFactorEnabled)
                             .ContinueWith("Send to ME")
@@ -78,7 +78,7 @@ namespace Lykke.Service.Operations.Workflow
                     .WithBranch()
                         .Do("Send to ME").OnFail("Fail operation")
                         .Do("Confirm operation")
-                        .Do("Wait for results from ME")                                       
+                        .Do("Wait for results from ME")
                         .Do("Settle on blockchain")
                         .Do("Complete operation")
                         .ContinueWith("Send operation status")
@@ -93,7 +93,7 @@ namespace Lykke.Service.Operations.Workflow
             ValidationNode<GlobalInput>("Global validation")
                 .WithInput(context => new GlobalInput
                 {
-                    CashoutBlocked = context.OperationValues.GlobalSettings.CashOutBlocked                   
+                    CashoutBlocked = context.OperationValues.GlobalSettings.CashOutBlocked
                 })
                 .MergeFailOutput(output => output);
 
@@ -119,17 +119,17 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     DisplayId = context.OperationValues.Asset.DisplayId,
                     IsTradable = context.OperationValues.Asset.IsTradable,
-                    IsTrusted = context.OperationValues.Asset.IsTrusted                    
+                    IsTrusted = context.OperationValues.Asset.IsTrusted
                 })
                 .MergeFailOutput(output => output);
 
             ValidationNode<BalanceInput>("Balance validation")
                 .WithInput(context => new BalanceInput
-                {                    
+                {
                     Balance = context.OperationValues.Client.Balance,
                     Volume = context.OperationValues.Volume
                 })
-                .MergeFailOutput(output => output);            
+                .MergeFailOutput(output => output);
 
             ValidationNode<AssetKycInput>("Kyc validation")
                 .WithInput(context => new AssetKycInput
@@ -147,7 +147,7 @@ namespace Lykke.Service.Operations.Workflow
                     ClientId = context.OperationValues.Client.Id,
                     LykkeEntityId1 = context.OperationValues.Asset.LykkeEntityId
                 })
-                .MergeFailOutput(output => output);            
+                .MergeFailOutput(output => output);
 
             DelegateNode<AjustmentInput, AjustmentOutput>("BTC ajust volume on low remainder", input => AjustBtcVolume(input))
                 .WithInput(context => new AjustmentInput
@@ -155,8 +155,8 @@ namespace Lykke.Service.Operations.Workflow
                     AssetId = context.OperationValues.Asset.Id,
                     AssetAccuracy = context.OperationValues.Asset.Accuracy,
                     CashoutMinimalAmount = context.OperationValues.Asset.CashoutMinimalAmount,
-                    Balance = context.OperationValues.Client.Balance,                    
-                    Volume = context.OperationValues.Volume,                    
+                    Balance = context.OperationValues.Client.Balance,
+                    Volume = context.OperationValues.Volume,
                 })
                 .MergeOutput(output => output);
 
@@ -172,13 +172,13 @@ namespace Lykke.Service.Operations.Workflow
                     DestinationAddress = context.OperationValues.DestinationAddress,
                     DestinationAddressExtension = context.OperationValues.DestinationAddressExtension,
                     BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId
-                })               
+                })
                 .MergeOutput(output => !string.IsNullOrWhiteSpace(output)
                     ? new
                     {
                         DestinationAddress = output
                     }
-                    : (object)new {})
+                    : (object)new { })
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode<BilInput, BilOutput>("BIL check", input => BilCheck(input))
@@ -217,7 +217,7 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             Node("Request confirmation", i => i.RequestConfirmation())
-                .WithInput(context => new { })
+                .WithInput(context => new ConfirmationRequestInput { ConfirmationType = context.OperationValues.Client.ConfirmationType })
                 .MergeOutput(output => output)
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
@@ -227,14 +227,15 @@ namespace Lykke.Service.Operations.Workflow
                     ClientId = context.OperationValues.Client.Id,
                     PubKeyAddress = context.OperationValues.Client.BitcoinAddress,
                     Challenge = context.OperationValues.SignChallenge,
-                    Confirmation = context.OperationValues.Confirmation
+                    Confirmation = context.OperationValues.Confirmation,
+                    ConfirmationType = context.OperationValues.Client.ConfirmationType
                 })
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode<CashoutMeInput>("Send to ME", i => SendToMe(i))
                 .WithInput(context => new CashoutMeInput
                 {
-                    OperationId = context.Id,                    
+                    OperationId = context.Id,
                     ClientId = context.OperationValues.Client.Id,
                     DestinationAddress = context.OperationValues.DestinationAddress,
                     Volume = context.OperationValues.Volume,
@@ -243,7 +244,7 @@ namespace Lykke.Service.Operations.Workflow
                     CashoutTargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClients["Cashout"],
                     FeeSize = context.OperationValues.Fee.Size,
                     FeeType = context.OperationValues.Fee.Type
-                })                
+                })
                 .MergeFailOutput(e => new
                 {
                     ErrorCode = "MeError",
@@ -288,7 +289,7 @@ namespace Lykke.Service.Operations.Workflow
                 feeClientId: input.CashoutTargetClientId,
                 feeSize: input.FeeSize,
                 feeSizeType: input.FeeType == FeeType.Absolute ? FeeSizeType.ABSOLUTE : FeeSizeType.PERCENTAGE).GetAwaiter().GetResult();
-            
+
             if (!res.IsOk())
             {
                 var message = $"{res.Code}: {res.Message}";
@@ -301,16 +302,25 @@ namespace Lykke.Service.Operations.Workflow
 
         private void ValidateConfirmation(ValidateConfirmationInput input)
         {
-            var address = new BitcoinPubKeyAddress(input.PubKeyAddress);
-            var verifyResult = false;
-            try
+            if (input.ConfirmationType == "google")
             {
-                verifyResult = address.VerifyMessage(input.Challenge, input.Confirmation);
+                // confirmation code has already been validated
             }
-            catch { }
+            else
+            {
+                var address = new BitcoinPubKeyAddress(input.PubKeyAddress);
+                var verifyResult = false;
+                try
+                {
+                    verifyResult = address.VerifyMessage(input.Challenge, input.Confirmation);
+                }
+                catch
+                {
+                }
 
-            if (!verifyResult)
-                throw new InvalidOperationException("Signature is invalid");            
+                if (!verifyResult)
+                    throw new InvalidOperationException("Signature is invalid");
+            }
         }
 
         private BilOutput BilCheck(BilInput input)
@@ -330,14 +340,14 @@ namespace Lykke.Service.Operations.Workflow
         }
 
         private object CalculateFee(CalculateCashoutFeeInput input)
-        {            
+        {
             return _feeCalculatorClient.GetCashoutFeesAsync(input.AssetId).ConfigureAwait(false).GetAwaiter().GetResult()
                     .FirstOrDefault() ?? new CashoutFee
-                {
-                    AssetId = input.AssetId,
-                    Size = 0,
-                    Type = FeeType.Absolute
-                };
+                    {
+                        AssetId = input.AssetId,
+                        Size = 0,
+                        Type = FeeType.Absolute
+                    };
         }
 
         private AjustmentOutput AjustBtcVolume(AjustmentInput input)

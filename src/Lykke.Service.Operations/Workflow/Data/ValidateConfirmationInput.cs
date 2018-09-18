@@ -6,5 +6,6 @@
         public string PubKeyAddress { get; set; }
         public string Challenge { get; set; }
         public string Confirmation { get; set; }
+        public string ConfirmationType { get; set; }
     }
 }

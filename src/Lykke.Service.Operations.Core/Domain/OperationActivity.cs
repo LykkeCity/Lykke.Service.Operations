@@ -39,6 +39,7 @@ namespace Lykke.Service.Operations.Core.Domain
             Output = outputValues;
             IsExecutedExternally = true;
             Status = ActivityResult.Failed;
+            IsExecuting = false;
         }
     }
 }
