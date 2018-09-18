@@ -88,5 +88,36 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
             return CommandHandlingResult.Ok();
         }
+
+        [UsedImplicitly]
+        public async Task<CommandHandlingResult> Handle(CreateSwiftCashoutCommand command, IEventPublisher eventPublisher)
+        {
+            _log.Info($"CreateSwiftCashoutCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+
+            if (operation != null)
+            {
+                _log.Warning($"CreateSwiftCashoutCommand with id [{command.OperationId}] received, but operation already exists!", context: command);
+
+                eventPublisher.PublishEvent(new OperationFailedEvent
+                {
+                    ClientId = command.Client.Id,
+                    OperationId = command.OperationId,
+                    ErrorCode = "DuplicatedOperation",
+                    ErrorMessage = "Operation with same id alredy exists"
+                });
+
+                return CommandHandlingResult.Ok();
+            }
+
+            operation = new Operation();
+            operation.Create(command.OperationId, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(command, Formatting.Indented));
+            await _operationsRepository.Save(operation);
+
+            eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id });
+
+            return CommandHandlingResult.Ok();
+        }
     }
 }
