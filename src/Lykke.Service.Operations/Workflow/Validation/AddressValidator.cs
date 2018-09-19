@@ -1,20 +1,19 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Numerics;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Common.Log;
+﻿using Common.Log;
 using FluentValidation;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
 using Nethereum.Util;
 using Newtonsoft.Json;
+using System;
+using System.IO;
+using System.Net;
+using System.Numerics;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.Operations.Workflow.Validation
 {
@@ -222,15 +221,6 @@ namespace Lykke.Service.Operations.Workflow.Validation
     {       
         bool IsValidAddress(string address);
         bool IsValidAddressWithHexPrefix(string address);
-        Task<decimal> GetBalanceOnAdapterAsync(string assetAddress, int assetMultiplierPower, int assetAccuracy, string address);        
-        Task<EthCashoutEstimation> EstimateCashOutAsync(
-            string operationId, 
-            string assetAddress, 
-            int assetMultiplierPower, 
-            int assetAccuracy, 
-            string fromAddress, 
-            string toAddress, 
-            decimal amount);
 
         Task<bool> IsAllowed(string destinationAddress);
     }
@@ -254,67 +244,6 @@ namespace Lykke.Service.Operations.Workflow.Validation
             _ethereumApi = ethereumApi;
             _log = log.CreateLog(this);
             _addressUtil = new AddressUtil();
-        }
-
-        public async Task<decimal> GetBalanceOnAdapterAsync(string assetAddress, int assetMultiplierPower, int assetAccuracy, string address)
-        {
-            var response = await _ethereumApi.ApiCoinAdapterBalanceByCoinAdapterAddressByUserAddressGetAsync(assetAddress, address);
-
-            if (response is ApiException error)
-            {
-                var ex = new InvalidOperationException("Unable to retreive adapter balance");
-                ex.Data.Add(error.Error.Code, error.Error.Message);
-
-                throw ex;
-            }
-
-            if (response is BalanceModel res)
-            {
-                return EthServiceHelpers.ConvertFromContract(res.Amount, assetMultiplierPower, assetAccuracy);
-            }
-
-            throw new Exception("Unknown response");
-        }
-
-        public async Task<EthCashoutEstimation> EstimateCashOutAsync(
-            string operationId, 
-            string assetAddress, 
-            int assetMultiplierPower, 
-            int assetAccuracy, 
-            string fromAddress, 
-            string toAddress, 
-            decimal amount)
-        {
-            var response = await _ethereumApi.ApiExchangeEstimateCashoutGasPostAsync(new TransferModel
-            {
-                Amount = EthServiceHelpers.ConvertToContract(amount, assetMultiplierPower, assetAccuracy),
-                CoinAdapterAddress = assetAddress,
-                ToAddress = toAddress,
-                FromAddress = fromAddress,
-                Id = new Guid(operationId),
-                Sign = string.Empty
-            });
-
-            if (response is ApiException error)
-            {
-                var ex = new InvalidOperationException("Ethereum cashout estimation has failed");
-                ex.Data.Add(error.Error.Code.ToString(), error.Error.Message);
-
-                throw ex;
-            }
-
-            if (response is EstimatedGasModel res)
-            {
-                return new EthCashoutEstimation
-                {
-                    IsAllowed = res.IsAllowed,
-                    GasAmount = res.EstimatedGas
-                };
-            }
-
-            _log.Warning("Unknown response from ethereum api", context: response);
-
-            throw new Exception("Unknown response");
         }
 
         public async Task<bool> IsAllowed(string destinationAddress)
@@ -365,43 +294,6 @@ namespace Lykke.Service.Operations.Workflow.Validation
                 return _addressUtil.IsChecksumAddress(address);
             };
         }
-    }
-
-    public class EthCashoutEstimation
-    {
-        public bool IsAllowed { get; set; }
-        public string GasAmount { get; set; }
-    }
-
-    public static class EthServiceHelpers
-    {
-        public static string ConvertToContract(decimal amount, int multiplier, int accuracy)
-        {
-            if (accuracy > multiplier)
-                throw new ArgumentException("accuracy > multiplier");
-
-            amount *= (decimal)Math.Pow(10, accuracy);
-            multiplier -= accuracy;
-            var res = (BigInteger)amount * BigInteger.Pow(10, multiplier);
-
-            return res.ToString();
-        }
-
-        public static decimal ConvertFromContract(string amount, int multiplier, int accuracy)
-        {
-            if (accuracy > multiplier)
-                throw new ArgumentException("accuracy > multiplier");
-
-            multiplier -= accuracy;
-
-            var val = BigInteger.Parse(amount);
-            var res = (decimal)(val / BigInteger.Pow(10, multiplier));
-            res /= (decimal)Math.Pow(10, accuracy);
-
-            return res;
-        }
-
-
     }
 
     public class SolarCoinAddress
