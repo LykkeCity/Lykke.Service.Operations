@@ -10,5 +10,6 @@ namespace Lykke.Service.Operations.Contracts.Cashout
 
         public FeeSettingsCashoutModel FeeSettings { get; set; }
         public bool TwoFactorEnabled { get; set; }
+        public int MaxConfirmationAttempts { get; set; }
     }
 }

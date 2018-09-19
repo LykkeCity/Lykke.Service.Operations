@@ -12,6 +12,7 @@ using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Services.Blockchain;
 using Lykke.Service.Operations.Workflow.Data;
+using Lykke.Service.Operations.Workflow.Exceptions;
 using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
@@ -70,11 +71,15 @@ namespace Lykke.Service.Operations.Workflow
                         .On("2FA is disabled").DeterminedAs(context => !(bool)context.OperationValues.GlobalSettings.TwoFactorEnabled)
                             .ContinueWith("Send to ME")
                         .On("2FA is enabled").DeterminedAs(context => (bool)context.OperationValues.GlobalSettings.TwoFactorEnabled)
-                            .ContinueWith("Create sign challenge")
+                            .ContinueWith("Start confirmation process")
                     .WithBranch()
-                        .Do("Create sign challenge").OnFail("Fail operation")
+                        .Do("Start confirmation process").OnFail("Fail operation")
                         .Do("Request confirmation").OnFail("Fail operation")
-                        .Do("Validate confirmation").OnFail("Fail operation").ContinueWith("Send to ME")
+                        .Do("Validate confirmation").OnFail("Fail operation")
+                        .On("Confirmation invalid").DeterminedAs(context => !(bool)context.OperationValues.Confirmation.IsValid)
+                            .ContinueWith("Start confirmation process")
+                        .On("Confirmation valid").DeterminedAs(context => (bool)context.OperationValues.Confirmation.IsValid)
+                            .ContinueWith("Send to ME")
                     .WithBranch()
                         .Do("Send to ME").OnFail("Fail operation")
                         .Do("Confirm operation")
@@ -205,9 +210,6 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeFailOutput(output => output);
 
-            DelegateNode("Create sign challenge", input => new { SignChallenge = Guid.NewGuid() })
-                .MergeFailOutput(e => new { ErrorMessage = e.Message });
-
             DelegateNode<CalculateCashoutFeeInput, object>("Calculate fee", input => CalculateFee(input))
                 .WithInput(context => new CalculateCashoutFeeInput
                 {
@@ -216,20 +218,34 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeOutput(output => new { Fee = output })
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
+            DelegateNode<StartConfirmationInput, object>("Start confirmation process", input => StartConfirmationProcess(input))
+                .WithInput(context => new StartConfirmationInput
+                {
+                    ConfirmationAttemptsCount = (int?)context.OperationValues.Confirmation?.ConfirmationAttemptsCount ?? 0,
+                    MaxConfirmationAttempts = context.OperationValues.GlobalSettings.MaxConfirmationAttempts
+                })
+                .MergeOutput(output => new { Confirmation = output })
+                .MergeFailOutput(failOutput => new { ErrorCode = WorkflowException.GetExceptionCode(failOutput), ErrorMessage = failOutput.Message });
+
             Node("Request confirmation", i => i.RequestConfirmation())
-                .WithInput(context => new ConfirmationRequestInput { ConfirmationType = context.OperationValues.Client.ConfirmationType })
+                .WithInput(context => new ConfirmationRequestInput
+                {
+                    OperationId = context.Id,
+                    ClientId = context.ClientId,
+                    ConfirmationType = context.OperationValues.Client.ConfirmationType
+                })
                 .MergeOutput(output => output)
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
-            DelegateNode<ValidateConfirmationInput>("Validate confirmation", input => ValidateConfirmation(input))
+            Node("Validate confirmation", i => i.ValidateConfirmation())
                 .WithInput(context => new ValidateConfirmationInput
                 {
+                    OperationId = context.Id,
                     ClientId = context.OperationValues.Client.Id,
-                    PubKeyAddress = context.OperationValues.Client.BitcoinAddress,
-                    Challenge = context.OperationValues.SignChallenge,
-                    Confirmation = context.OperationValues.Confirmation,
+                    Confirmation = context.OperationValues.Confirmation.Code,
                     ConfirmationType = context.OperationValues.Client.ConfirmationType
                 })
+                .MergeOutput(output => output)
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode<CashoutMeInput>("Send to ME", i => SendToMe(i))
@@ -300,29 +316,6 @@ namespace Lykke.Service.Operations.Workflow
             }
         }
 
-        private void ValidateConfirmation(ValidateConfirmationInput input)
-        {
-            if (input.ConfirmationType == "google")
-            {
-                // confirmation code has already been validated
-            }
-            else
-            {
-                var address = new BitcoinPubKeyAddress(input.PubKeyAddress);
-                var verifyResult = false;
-                try
-                {
-                    verifyResult = address.VerifyMessage(input.Challenge, input.Confirmation);
-                }
-                catch
-                {
-                }
-
-                if (!verifyResult)
-                    throw new InvalidOperationException("Signature is invalid");
-            }
-        }
-
         private BilOutput BilCheck(BilInput input)
         {
             var result = _blockchainCashoutPreconditionsCheckClient.ValidateCashoutAsync(new CashoutValidateModel()
@@ -348,6 +341,16 @@ namespace Lykke.Service.Operations.Workflow
                         Size = 0,
                         Type = FeeType.Absolute
                     };
+        }
+
+        private object StartConfirmationProcess(StartConfirmationInput input)
+        {
+            var currentAttemptsCount = input.ConfirmationAttemptsCount + 1;
+
+            if (currentAttemptsCount > input.MaxConfirmationAttempts)
+                throw new WorkflowException("ConfirmationFailed", "Number of attempts exceeded");
+
+            return new { ConfirmationAttemptsCount = currentAttemptsCount };
         }
 
         private AjustmentOutput AjustBtcVolume(AjustmentInput input)

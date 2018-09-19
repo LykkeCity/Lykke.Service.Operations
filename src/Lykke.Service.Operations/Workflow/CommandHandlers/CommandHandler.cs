@@ -61,5 +61,32 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
             return CommandHandlingResult.Ok();
         }
+
+        [UsedImplicitly]
+        public async Task<CommandHandlingResult> Handle(ConfirmCommand command, IEventPublisher eventPublisher)
+        {
+            _log.Info($"ConfirmCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+
+            if (operation == null || operation.ClientId != command.ClientId)
+            {
+                _log.Warning($"ConfirmCommand with id [{command.OperationId}] received, but operation does not exists!", context: command);
+
+                eventPublisher.PublishEvent(new OperationFailedEvent
+                {
+                    ClientId = command.ClientId,
+                    OperationId = command.OperationId,
+                    ErrorCode = "OperationIsMissing",
+                    ErrorMessage = "Operation does not exist"
+                });
+
+                return CommandHandlingResult.Ok();
+            }
+
+            eventPublisher.PublishEvent(new ConfirmationReceivedEvent { OperationId = command.OperationId, Confirmation = command.Confirmation });
+
+            return CommandHandlingResult.Ok();
+        }
     }
 }

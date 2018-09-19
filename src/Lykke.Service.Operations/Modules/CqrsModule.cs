@@ -4,6 +4,8 @@ using Lykke.Common.Log;
 using Lykke.Bitcoin.Contracts;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
+using Lykke.Frontend.WampHost.Contracts;
+using Lykke.Frontend.WampHost.Contracts.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
@@ -15,6 +17,7 @@ using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Messaging.Serialization;
 using Lykke.Service.ConfirmationCodes.Contract;
+using Lykke.Service.ConfirmationCodes.Contract.Commands;
 using Lykke.Service.ConfirmationCodes.Contract.Events;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Commands;
@@ -58,6 +61,7 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterType<MeSaga>().SingleInstance();
             builder.RegisterType<BlockchainCashoutSaga>().SingleInstance();
             builder.RegisterType<WorkflowSaga>().SingleInstance();
+            builder.RegisterType<ConfirmationSaga>().SingleInstance();
 
             builder.Register(ctx => new MessagingEngine(ctx.Resolve<ILogFactory>(),
                 new TransportResolver(new Dictionary<string, TransportInfo>
@@ -94,7 +98,8 @@ namespace Lykke.Service.Operations.Modules
 
                         Register.BoundedContext(OperationsBoundedContext.Name)
                             .ListeningCommands(
-                                typeof(CreateCashoutCommand))
+                                typeof(CreateCashoutCommand),
+                                typeof(ConfirmCommand))
                                 .On("commands")
                                 .WithCommandsHandler<CommandHandler>()
                             .ListeningCommands(
@@ -113,7 +118,7 @@ namespace Lykke.Service.Operations.Modules
                                 typeof(OperationConfirmedEvent),
                                 typeof(OperationCompletedEvent),
                                 typeof(ExternalExecutionActivityCreatedEvent),
-                                typeof(OperationConfirmationRequestedEvent))
+                                typeof(ConfirmationReceivedEvent))
                                 .With("events")
                                 .WithLoopback(),
 
@@ -153,10 +158,21 @@ namespace Lykke.Service.Operations.Modules
                         Register.Saga<WorkflowSaga>("workflow-saga")
                             .ListeningEvents(typeof(OperationCreatedEvent))
                                 .From(OperationsBoundedContext.Name).On("events")
+                            .PublishingCommands(typeof(ExecuteOperationCommand))
+                                .To(OperationsBoundedContext.Name).With("commands"),
+
+                        Register.Saga<ConfirmationSaga>("confirmation-saga")
+                            .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent), typeof(ConfirmationReceivedEvent))
+                                .From(OperationsBoundedContext.Name).On("events")
                             .ListeningEvents(typeof(ConfirmationValidationPassedEvent), typeof(ConfirmationValidationFailedEvent))
                                 .From(ConfirmationCodesBoundedContext.Name).On("events")
-                            .PublishingCommands(typeof(ExecuteOperationCommand), typeof(CompleteActivityCommand), typeof(FailActivityCommand))
-                                .To(OperationsBoundedContext.Name).With("commands"),
+                            .PublishingCommands(typeof(RequestConfirmationCommand))
+                                .To(WampHostBoundedContext.Name).With("commands")
+                                .WithEndpointResolver(sagasProtobufEndpointResolver)
+                            .PublishingCommands(typeof(CompleteActivityCommand))
+                                .To(OperationsBoundedContext.Name).With("commands")
+                            .PublishingCommands(typeof(ValidateConfirmationCommand))
+                                .To(ConfirmationCodesBoundedContext.Name).With("commands"),
 
                         Register.DefaultRouting
                             .PublishingCommands(typeof(ExecuteOperationCommand), typeof(CompleteActivityCommand), typeof(FailActivityCommand))

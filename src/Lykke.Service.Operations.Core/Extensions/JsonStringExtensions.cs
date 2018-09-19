@@ -18,6 +18,7 @@ namespace Lykke.Service.Operations.Core.Extensions
         public static string ToJsonString(this object @object, bool indent = false)
         {
             if (@object is Delegate) return "{}";
+            if (@object is Exception ex) return JsonConvert.SerializeObject(new { ex.Message }, indent ? Formatting.Indented : Formatting.None);
             return JsonConvert.SerializeObject(@object, indent ? Formatting.Indented : Formatting.None);
         }
 

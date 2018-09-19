@@ -185,7 +185,13 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
                 await _operationsRepository.Save(operation);
 
-                SendExternalActivityEvent(eventPublisher, operation, executingActivity);
+                eventPublisher.PublishEvent(new ExternalExecutionActivityCreatedEvent
+                {
+                    OperationId = operation.Id,
+                    ActivityId = executingActivity.ActivityId,
+                    Type = executingActivity.Type,
+                    Input = executingActivity.Input
+                });
 
                 // need to fire OperationConfirmed event to notify consumers
                 if (previousStatus != operation.Status && operation.Status == OperationStatus.Confirmed)
@@ -205,31 +211,6 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                         OperationId = operation.Id,
                         ClientId = operation.ClientId
                     });
-            }
-        }
-
-        private void SendExternalActivityEvent(IEventPublisher eventPublisher, Operation operation, OperationActivity pendingActivity)
-        {
-            if (pendingActivity.Type == "RequestConfirmation")
-            {
-                var input = JsonConvert.DeserializeObject<ConfirmationRequestInput>(pendingActivity.Input);
-
-                eventPublisher.PublishEvent(new OperationConfirmationRequestedEvent
-                {
-                    OperationId = operation.Id,
-                    ClientId = operation.ClientId,
-                    ConfirmationType = input.ConfirmationType
-                });
-            }
-            else
-            {
-                eventPublisher.PublishEvent(new ExternalExecutionActivityCreatedEvent
-                {
-                    OperationId = operation.Id,
-                    ActivityId = pendingActivity.ActivityId,
-                    Type = pendingActivity.Type,
-                    Input = pendingActivity.Input
-                });
             }
         }
     }

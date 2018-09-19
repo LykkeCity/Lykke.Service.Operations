@@ -76,6 +76,7 @@ namespace Lykke.Service.Operations.Workflow
     {
         Tuple<dynamic, dynamic, dynamic> WaitForResultsFromMe();
         Tuple<dynamic, dynamic, dynamic> RequestConfirmation();
+        Tuple<dynamic, dynamic, dynamic> ValidateConfirmation();
         Tuple<BlockchainCashoutInput, dynamic, dynamic> SettleOnBlockchain();
     }
 }
