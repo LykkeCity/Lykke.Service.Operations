@@ -101,6 +101,14 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             _log.Info($"FailActivityCommand received. Operation [{command.OperationId}]", command);
 
             var operation = await _operationsRepository.Get(command.OperationId);
+
+            if (operation == null)
+            {
+                _log.Warning(nameof(FailActivityCommand), context: command, message: $"operation [{command.OperationId}] not found!");
+
+                return CommandHandlingResult.Ok();
+            }
+
             var activity = operation.Activities.SingleOrDefault(o => !command.ActivityId.HasValue && o.IsExecuting || o.ActivityId == command.ActivityId);
 
             if (activity == null)
