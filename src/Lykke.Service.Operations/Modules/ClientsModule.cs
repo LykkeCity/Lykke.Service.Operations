@@ -42,18 +42,17 @@ namespace Lykke.Service.Operations.Modules
                 .As<IPushNotificationsAPI>()
                 .WithParameter("baseUri", new Uri(_settings.CurrentValue.OperationsService.Services.PushNotificationsUrl));
 
-            _services.RegisterAssetsClient(new AssetServiceSettings
-            {
-                AssetsCacheExpirationPeriod = _settings.CurrentValue.Assets.CacheExpirationPeriod,
-                BaseUri = new Uri(_settings.CurrentValue.Assets.ServiceUrl)
-            });
+            builder.RegisterAssetsClient(AssetServiceSettings.Create(
+                new Uri(_settings.CurrentValue.Assets.ServiceUrl),
+                _settings.CurrentValue.Assets.CacheExpirationPeriod
+            ));
 
             builder.RegisterInstance(_settings.CurrentValue.EthereumServiceClient);
 
             builder.RegisterInstance<IEthereumCoreAPI>(new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl), new HttpClient()));
 
             builder.Register(ctx => new BlockchainCashoutPreconditionsCheckClient(
-                    _settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient.ServiceUrl, 
+                    _settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient.ServiceUrl,
                     ctx.Resolve<ILogFactory>().CreateLog("BlockchainCashoutPreconditionsCheckClient")))
                 .As<IBlockchainCashoutPreconditionsCheckClient>()
                 .SingleInstance();
@@ -67,7 +66,7 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterRateCalculatorClient(_settings.CurrentValue.RateCalculatorServiceClient.ServiceUrl);
 
             builder.Register(ctx => new BalancesClient(
-                    _settings.CurrentValue.BalancesServiceClient.ServiceUrl, 
+                    _settings.CurrentValue.BalancesServiceClient.ServiceUrl,
                     ctx.Resolve<ILogFactory>().CreateLog("BalancesClient")))
                 .As<IBalancesClient>()
                 .SingleInstance();
