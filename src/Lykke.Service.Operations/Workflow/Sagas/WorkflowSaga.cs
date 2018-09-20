@@ -15,7 +15,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         {
             _log = logFactory.CreateLog(this);
         }
-
+        
         public async Task Handle(OperationCreatedEvent evt, ICommandSender commandSender)
         {
             _log.Info($"OperationCreatedEvent for operation [{evt.Id}] received", evt);

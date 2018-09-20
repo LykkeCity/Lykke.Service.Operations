@@ -1,15 +1,15 @@
 ﻿using System;
 using MessagePack;
 
-namespace Lykke.Service.Operations.Contracts.Commands
+namespace Lykke.Service.Operations.Contracts.Events
 {
+    /// <summary>
+    /// Fired when operation is confirmed
+    /// </summary>
     [MessagePackObject(keyAsPropertyName: true)]
-    public class ConfirmCommand
+    public class OperationConfirmedEvent
     {
         public Guid ClientId { get; set; }
-
         public Guid OperationId { get; set; }
-
-        public string Confirmation { get; set; }
     }
 }

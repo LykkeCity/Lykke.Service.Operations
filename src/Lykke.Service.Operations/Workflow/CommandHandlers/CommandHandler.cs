@@ -7,6 +7,7 @@ using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Workflow.Events;
 using Newtonsoft.Json;
 
 namespace Lykke.Service.Operations.Workflow.CommandHandlers
@@ -14,12 +15,12 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
     public class CommandHandler
     {
         private readonly ILog _log;
-        private readonly IOperationsRepository _operationsRepository;        
+        private readonly IOperationsRepository _operationsRepository;
         private readonly string _ethereumHotWallet;
 
         public CommandHandler(
-            ILogFactory logFactory, 
-            IOperationsRepository operationsRepository,            
+            ILogFactory logFactory,
+            IOperationsRepository operationsRepository,
             string ethereumHotWallet)
         {
             _log = logFactory.CreateLog(this);
@@ -41,6 +42,14 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             {
                 _log.Warning($"CreateCashoutCommand with id [{command.OperationId}] received, but operation already exists!", context: command);
 
+                eventPublisher.PublishEvent(new OperationFailedEvent
+                {
+                    ClientId = command.Client.Id,
+                    OperationId = command.OperationId,
+                    ErrorCode = "DuplicatedOperation",
+                    ErrorMessage = "Operation with same id alredy exists"
+                });
+
                 return CommandHandlingResult.Ok();
             }
 
@@ -51,6 +60,33 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id });
 
             return CommandHandlingResult.Ok();
-        }        
+        }
+
+        [UsedImplicitly]
+        public async Task<CommandHandlingResult> Handle(ConfirmCommand command, IEventPublisher eventPublisher)
+        {
+            _log.Info($"ConfirmCommand received. Operation [{command.OperationId}]", command);
+
+            var operation = await _operationsRepository.Get(command.OperationId);
+
+            if (operation == null || operation.ClientId != command.ClientId)
+            {
+                _log.Warning($"ConfirmCommand with id [{command.OperationId}] received, but operation does not exists!", context: command);
+
+                eventPublisher.PublishEvent(new OperationFailedEvent
+                {
+                    ClientId = command.ClientId,
+                    OperationId = command.OperationId,
+                    ErrorCode = "OperationIsMissing",
+                    ErrorMessage = "Operation does not exist"
+                });
+
+                return CommandHandlingResult.Ok();
+            }
+
+            eventPublisher.PublishEvent(new ConfirmationReceivedEvent { OperationId = command.OperationId, Confirmation = command.Confirmation });
+
+            return CommandHandlingResult.Ok();
+        }
     }
 }

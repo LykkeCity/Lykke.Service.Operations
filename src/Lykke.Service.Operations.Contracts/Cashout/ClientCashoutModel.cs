@@ -12,5 +12,6 @@ namespace Lykke.Service.Operations.Contracts.Cashout
         public bool CashOutBlocked { get; set; }
         public bool BackupDone { get; set; }
         public string KycStatus { get; set; }
+        public string ConfirmationType { get; set; }
     }
 }

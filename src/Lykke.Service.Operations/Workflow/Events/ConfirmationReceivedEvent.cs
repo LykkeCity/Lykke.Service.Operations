@@ -1,13 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using MessagePack;
 
 namespace Lykke.Service.Operations.Workflow.Events
 {
     [MessagePackObject(keyAsPropertyName: true)]
-    public class OperationFailedEvent
+    public class ConfirmationReceivedEvent
     {
         public Guid OperationId { get; set; }
-        public string ErrorCode { get; set; }
-        public string ErrorMessage { get; set; }
+
+        public string Confirmation { get; set; }
     }
 }

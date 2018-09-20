@@ -75,7 +75,8 @@ namespace Lykke.Service.Operations.Workflow
     public interface IActivityReference
     {
         Tuple<dynamic, dynamic, dynamic> WaitForResultsFromMe();
-        Tuple<dynamic, dynamic, dynamic> RequestConfirmation();
+        Tuple<ConfirmationRequestInput, dynamic, dynamic> RequestConfirmation();
+        Tuple<ValidateConfirmationInput, dynamic, dynamic> ValidateConfirmation();
         Tuple<BlockchainCashoutInput, dynamic, dynamic> SettleOnBlockchain();
     }
 }

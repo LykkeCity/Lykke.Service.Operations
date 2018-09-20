@@ -4,12 +4,14 @@ using MessagePack;
 namespace Lykke.Service.Operations.Contracts.Events
 {
     /// <summary>
-    /// Fired when operation is created
+    /// Fired when operation is failed
     /// </summary>
     [MessagePackObject(keyAsPropertyName: true)]
-    public class OperationCreatedEvent
+    public class OperationFailedEvent
     {
-        public Guid Id { get; set; }
         public Guid ClientId { get; set; }
+        public Guid OperationId { get; set; }
+        public string ErrorCode { get; set; }
+        public string ErrorMessage { get; set; }
     }
 }

@@ -475,26 +475,6 @@ namespace Lykke.Service.Operations.Controllers
             switch (operation.Type)
             {
                 case OperationType.Cashout:
-                    var activityId = operation.GetConfirmationActivity().ActivityId;
-                    var activityOutput = JObject.FromObject(new { cmd.Confirmation });
-                    var wfState = await _workflowService.CompleteActivity(operation, activityId, activityOutput);
-
-                    if (wfState.State == WorkflowState.InProgress)
-                    {
-                        var executingActivity = operation.Activities.Single(a => a.IsExecuting);
-
-                        _cqrsEngine.PublishEvent(new ExternalExecutionActivityCreatedEvent
-                        {
-                            ActivityId = executingActivity.ActivityId,
-                            Type = executingActivity.Type,
-                            Input = executingActivity.Input
-                        }, "operations");
-                    }
-                    else if (wfState.State == WorkflowState.Complete)
-                    {
-                        if (operation.Status == OperationStatus.Failed)                        
-                            throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", operation.OperationValues.ErrorMessage?.ToString()));
-                    }
                     break;                
                 default:
                     await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
