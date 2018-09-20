@@ -45,6 +45,7 @@ namespace Lykke.Service.Operations.Modules
         protected override void Load(ContainerBuilder builder)
         {
             MessagePackSerializerFactory.Defaults.FormatterResolver = MessagePack.Resolvers.ContractlessStandardResolver.Instance;
+
             var rabbitMqSagasSettings = new RabbitMQ.Client.ConnectionFactory
             {
                 Uri = _settings.CurrentValue.SagasRabbitMq.RabbitConnectionString
@@ -95,7 +96,6 @@ namespace Lykke.Service.Operations.Modules
                         new DefaultEndpointProvider(),
                         true,
                         Register.DefaultEndpointResolver(sagasEndpointResolver),
-
                         Register.BoundedContext(OperationsBoundedContext.Name)
                             .ListeningCommands(
                                 typeof(CreateCashoutCommand),

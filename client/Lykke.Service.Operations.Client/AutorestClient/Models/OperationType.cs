@@ -32,7 +32,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         [EnumMember(Value = "CashoutSwift")]
         CashoutSwift,
         [EnumMember(Value = "Cashout")]
-        Cashout
+        Cashout,
+        [EnumMember(Value = "StopLimitOrder")]
+        StopLimitOrder
+        
     }
     internal static class OperationTypeEnumExtension
     {
@@ -57,6 +60,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
                     return "CashoutSwift";
                 case OperationType.Cashout:
                     return "Cashout";
+                case OperationType.StopLimitOrder:
+                    return "StopLimitOrder";
             }
             return null;
         }
@@ -79,6 +84,8 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
                     return OperationType.CashoutSwift;
                 case "Cashout":
                     return OperationType.Cashout;
+                case "StopLimitOrder":
+                    return OperationType.StopLimitOrder;
             }
             return null;
         }

@@ -1,45 +1,37 @@
 ﻿using System;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.MatchingEngine.Connector.Models.Common;
 using Lykke.Service.FeeCalculator.Client;
-using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
-using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Exceptions;
 using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
+using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 using OrderAction = Lykke.Service.Operations.Contracts.Orders.OrderAction;
 
 namespace Lykke.Service.Operations.Workflow
 {
     [UsedImplicitly]
-    public class LimitOrderWorkflow : OrderWorkflow
+    public class StopLimitOrderWorkflow : OrderWorkflow
     {
         private readonly IFeeCalculatorClient _feeCalculatorClient;
-        private readonly ILimitOrdersRepository _limitOrdersRepository;
         private readonly IMatchingEngineClient _matchingEngineClient;
-        private readonly ICqrsEngine _cqrsEngine;
 
-        public LimitOrderWorkflow(
+        public StopLimitOrderWorkflow(
             Operation operation,
             ILogFactory logFactory,
             IActivityFactory activityFactory,
             IFeeCalculatorClient feeCalculatorClient,
-            ILimitOrdersRepository limitOrdersRepository,
-            IMatchingEngineClient matchingEngineClient,
-            ICqrsEngine cqrsEngine) : base(operation, logFactory, activityFactory)
+            IMatchingEngineClient matchingEngineClient) : base(operation, logFactory, activityFactory)
         {
             _feeCalculatorClient = feeCalculatorClient;
-            _limitOrdersRepository = limitOrdersRepository;
             _matchingEngineClient = matchingEngineClient;
-            _cqrsEngine = cqrsEngine;
 
             DelegateNode<CalculateLoFeeInput, LimitOrderFeeModel>("Calculate fee", input => CalculateFee(input))
                 .WithInput(context => new CalculateLoFeeInput
@@ -53,78 +45,34 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeOutput(output => new { Fee = output })
                 .MergeFailOutput(output => output);
 
-            DelegateNode<MeLoOrderInput, object>("Send to ME", input => SendToMe(input))
-                .WithInput(context => new MeLoOrderInput
+            DelegateNode<MeStopLoOrderInput, object>("Send to ME", input => SendToMe(input))
+                .WithInput(context => new MeStopLoOrderInput
                 {
                     Id = context.Id.ToString(),
                     AssetPairId = context.OperationValues.AssetPair.Id,
                     ClientId = context.OperationValues.Client.Id,
                     OrderAction = context.OperationValues.OrderAction,
                     Volume = (double)context.OperationValues.Volume,
-                    Price = (double)context.OperationValues.Price,
+                    LowerLimitPrice = (double?)context.OperationValues.LowerLimitPrice,
+                    LowerPrice = (double?)context.OperationValues.LowerPrice,
+                    UpperLimitPrice = (double?)context.OperationValues.UpperLimitPrice,
+                    UpperPrice = (double?)context.OperationValues.UpperPrice,
                     Fee = ((JObject)context.OperationValues.Fee)?.ToObject<LimitOrderFeeModel>()
                 })
                 .MergeOutput(output => new { Me = output })
                 .MergeFailOutput(output => new { ErrorMessage = output.Message, ErrorCode = WorkflowException.GetExceptionCode(output) });
-
-            DelegateNode("Create limit order", input => CreateLimitOrder(input));
-            DelegateNode("Process limit order after Me", input => PostProcessLimitOrder(input));
         }
 
         protected override WorkflowConfiguration<Operation> ConfigurePreMeNodes(WorkflowConfiguration<Operation> configuration)
         {
             return configuration
-                .Do("Create limit order").OnFail("Fail operation");
+                .Do("Create stop limit order").OnFail("Fail operation");
         }
 
         protected override WorkflowConfiguration<Operation> ConfigurePostMeNodes(WorkflowConfiguration<Operation> configuration)
         {
             return configuration
-                .Do("Process limit order after Me").OnFail("Fail operation");
-        }
-
-        private void CreateLimitOrder(Operation input)
-        {
-            var volume = Math.Abs((double)input.OperationValues.Volume);
-
-            if ((OrderAction)input.OperationValues.OrderAction == OrderAction.Sell)
-                volume = volume * -1;
-
-            _limitOrdersRepository.CreateAsync(LimitOrder.Create(
-                input.Id.ToString(),
-                input.ClientId.ToString(),
-                (string)input.OperationValues.AssetPair.Id,
-                volume,
-                (double)input.OperationValues.Price,
-                volume)).ConfigureAwait(false).GetAwaiter().GetResult();
-
-            _cqrsEngine.PublishEvent(new LimitOrderCreatedEvent
-            {
-                Id = input.Id,
-                OrderAction = input.OperationValues.OrderAction,
-                AssetPairId = input.OperationValues.AssetPair.Id,
-                Volume = input.OperationValues.Volume,
-                Price = input.OperationValues.Price
-            }, "operations");
-        }
-
-        private void PostProcessLimitOrder(Operation input)
-        {
-            if (input.OperationValues.Me.Status != MeStatusCodes.Ok)
-            {
-                var order = _limitOrdersRepository.GetOrderAsync(input.Id.ToString()).ConfigureAwait(false).GetAwaiter().GetResult();
-
-                _limitOrdersRepository.FinishAsync(order, (string)input.OperationValues.Me.Status).ConfigureAwait(false).GetAwaiter().GetResult();
-
-                _cqrsEngine.PublishEvent(new LimitOrderRejectedEvent
-                {
-                    Id = input.Id,
-                    OrderAction = input.OperationValues.OrderAction,
-                    AssetPairId = input.OperationValues.AssetPair.Id,
-                    Volume = input.OperationValues.Volume,
-                    Price = input.OperationValues.Price
-                }, "operations");
-            }
+                .Do("Process stop limit order after Me").OnFail("Fail operation");
         }
 
         private LimitOrderFeeModel CalculateFee(CalculateLoFeeInput input)
@@ -140,10 +88,10 @@ namespace Lykke.Service.Operations.Workflow
                 MakerSize = (double)fee.MakerFeeSize,
                 TakerSize = (double)fee.TakerFeeSize,
                 MakerFeeModificator = (double)fee.MakerFeeModificator,
-                MakerSizeType = fee.MakerFeeType == FeeCalculator.AutorestClient.Models.FeeType.Absolute
+                MakerSizeType = fee.MakerFeeType == FeeType.Absolute
                     ? FeeSizeType.ABSOLUTE
                     : FeeSizeType.PERCENTAGE,
-                TakerSizeType = fee.TakerFeeType == FeeCalculator.AutorestClient.Models.FeeType.Absolute
+                TakerSizeType = fee.TakerFeeType == FeeType.Absolute
                     ? FeeSizeType.ABSOLUTE
                     : FeeSizeType.PERCENTAGE,
                 SourceClientId = input.ClientId,
@@ -154,9 +102,9 @@ namespace Lykke.Service.Operations.Workflow
             };
         }
 
-        private object SendToMe(MeLoOrderInput input)
+        private object SendToMe(MeStopLoOrderInput input)
         {
-            var limitOrderModel = new LimitOrderModel
+            var stopLimitOrderModel = new StopLimitOrderModel
             {
                 Id = input.Id,
                 ClientId = input.ClientId,
@@ -164,12 +112,15 @@ namespace Lykke.Service.Operations.Workflow
                 OrderAction = input.OrderAction == OrderAction.Buy
                     ? MatchingEngine.Connector.Models.Common.OrderAction.Buy
                     : MatchingEngine.Connector.Models.Common.OrderAction.Sell,
-                Price = input.Price,
+                LowerLimitPrice = input.LowerLimitPrice,
+                LowerPrice = input.LowerPrice,
+                UpperLimitPrice = input.UpperLimitPrice,
+                UpperPrice = input.UpperPrice,
                 Volume = Math.Abs(input.Volume),
                 Fee = input.Fee,
             };
 
-            var response = _matchingEngineClient.PlaceLimitOrderAsync(limitOrderModel).ConfigureAwait(false).GetAwaiter().GetResult();
+            var response = _matchingEngineClient.PlaceStopLimitOrderAsync(stopLimitOrderModel).ConfigureAwait(false).GetAwaiter().GetResult();
 
             if (response == null)
                 throw new ApplicationException("Me is not available.");
@@ -183,11 +134,6 @@ namespace Lykke.Service.Operations.Workflow
                 response.Message,
                 response.TransactionId
             };
-        }
-
-        protected override void OnMeFail(Operation context)
-        {
-            _limitOrdersRepository.RemoveAsync(context.Id.ToString(), context.ClientId.ToString()).ConfigureAwait(false).GetAwaiter().GetResult();
         }
     }
 }

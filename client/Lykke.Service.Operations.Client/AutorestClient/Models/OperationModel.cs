@@ -62,7 +62,7 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Gets or sets possible values include: 'Transfer',
         /// 'VisaCardPayment', 'MarketOrder', 'LimitOrder', 'NewOrder',
-        /// 'CashoutSwift', 'Cashout'
+        /// 'CashoutSwift', 'Cashout', 'StopLimitOrder'
         /// </summary>
         [JsonProperty(PropertyName = "Type")]
         public OperationType Type { get; set; }

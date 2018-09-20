@@ -141,7 +141,6 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, cmd.WalletId, OperationType.NewOrder, JsonConvert.SerializeObject(context));
-
             await _operationsRepository.Create(operation);
 
             return Created(Url.Action("Get", new { id }), id);
@@ -176,8 +175,6 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
             await _operationsRepository.Save(operation);
-
-            //_cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
             await HandleWorkflow("MarketOrderWorkflow", operation);
 
@@ -215,10 +212,46 @@ namespace Lykke.Service.Operations.Controllers
             operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
             await _operationsRepository.Save(operation);
 
-            //_cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
-
             await HandleWorkflow("LimitOrderWorkflow", operation);
 
+            return Created(Url.Action("Get", new { id }), id);
+        }
+        
+        [HttpPost]
+        [Route("order/{id}/stoplimit")]
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
+        public async Task<IActionResult> StopLimitOrder(Guid id, [FromBody] CreateStopLimitOrderCommand command)
+        {
+            if (id == Guid.Empty)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+
+            if (!ModelState.IsValid)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+
+            var operation = await _operationsRepository.Get(id);
+
+            if (operation != null)
+                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+
+            var context = new
+            {
+                Asset = command.AssetPair.BaseAsset,
+                command.AssetPair,
+                command.Volume,
+                command.LowerLimitPrice,
+                command.LowerPrice,
+                command.UpperLimitPrice,
+                command.UpperPrice,
+                command.OrderAction,
+                command.Client,
+                command.GlobalSettings
+            };
+
+            operation = new Operation();
+            operation.Create(id, command.Client.Id, OperationType.StopLimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+            await _operationsRepository.Save(operation);
+
+            await HandleWorkflow("StopLimitOrderWorkflow", operation);
 
             return Created(Url.Action("Get", new { id }), id);
         }
@@ -251,8 +284,6 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(context, Formatting.Indented));
             await _operationsRepository.Save(operation);
-
-            //_cqrsEngine.PublishEvent(new OperationCreatedEvent { Id = id, ClientId = command.Client.Id }, "operations");
 
             await HandleWorkflow(OperationType.CashoutSwift + "Workflow", operation);
 
@@ -321,7 +352,7 @@ namespace Lykke.Service.Operations.Controllers
                     modelState.AddModelError(errorCode ?? "Error", errorMessage);
 
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
-            }            
+            }
         }
 
         [HttpPost]
@@ -475,11 +506,11 @@ namespace Lykke.Service.Operations.Controllers
             switch (operation.Type)
             {
                 case OperationType.Cashout:
-                    break;                
+                    break;
                 default:
                     await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
                     break;
             }
-        }        
+        }
     }
 }
