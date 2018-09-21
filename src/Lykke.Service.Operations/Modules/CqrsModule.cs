@@ -96,10 +96,12 @@ namespace Lykke.Service.Operations.Modules
                         new DefaultEndpointProvider(),
                         true,
                         Register.DefaultEndpointResolver(sagasEndpointResolver),
+
                         Register.BoundedContext(OperationsBoundedContext.Name)
                             .ListeningCommands(
                                 typeof(CreateCashoutCommand),
-                                typeof(ConfirmCommand))
+                                typeof(ConfirmCommand),
+                                typeof(CreateSwiftCashoutCommand))
                                 .On("commands")
                                 .WithCommandsHandler<CommandHandler>()
                             .ListeningCommands(

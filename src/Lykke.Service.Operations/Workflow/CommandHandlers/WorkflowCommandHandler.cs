@@ -205,6 +205,13 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             {
                 await _operationsRepository.Save(operation);
 
+                if (operation.Status == OperationStatus.Confirmed)
+                    eventPublisher.PublishEvent(new OperationConfirmedEvent
+                    {
+                        OperationId = operation.Id,
+                        ClientId = operation.ClientId
+                    });
+
                 if (operation.Status == OperationStatus.Completed)
                     eventPublisher.PublishEvent(new OperationCompletedEvent
                     {
