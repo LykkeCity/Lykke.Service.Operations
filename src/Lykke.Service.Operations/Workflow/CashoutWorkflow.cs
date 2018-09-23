@@ -20,8 +20,6 @@ using NBitcoin;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
-using Lykke.MatchingEngine.Connector.Abstractions.Services;
-using Lykke.Service.Operations.Workflow.Validation;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 
 namespace Lykke.Service.Operations.Workflow
@@ -32,8 +30,6 @@ namespace Lykke.Service.Operations.Workflow
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly IExchangeOperationsServiceClient _exchangeOperationsServiceClient;
         private readonly IBlockchainCashoutPreconditionsCheckClient _blockchainCashoutPreconditionsCheckClient;
-        private readonly IEthereumFacade _ethereumFacade;
-        private readonly IMatchingEngineClient _matchingEngineClient;
 
         public CashoutWorkflow(
             Operation operation,
@@ -42,16 +38,12 @@ namespace Lykke.Service.Operations.Workflow
             BlockchainAddress blockchainAddress,
             IFeeCalculatorClient feeCalculatorClient,
             IExchangeOperationsServiceClient exchangeOperationsServiceClient,
-            IBlockchainCashoutPreconditionsCheckClient blockchainCashoutPreconditionsCheckClient, 
-            IEthereumFacade ethereumFacade, 
-            IMatchingEngineClient matchingEngineClient) : base(operation, log, activityFactory)
+            IBlockchainCashoutPreconditionsCheckClient blockchainCashoutPreconditionsCheckClient) : base(operation, log, activityFactory)
         {
             _log = log.CreateLog(this);
             _feeCalculatorClient = feeCalculatorClient;
             _exchangeOperationsServiceClient = exchangeOperationsServiceClient;
             _blockchainCashoutPreconditionsCheckClient = blockchainCashoutPreconditionsCheckClient;
-            _ethereumFacade = ethereumFacade;
-            _matchingEngineClient = matchingEngineClient;
 
             Configure(cfg =>
                 cfg
@@ -63,19 +55,10 @@ namespace Lykke.Service.Operations.Workflow
                     .Do("Disclaimers validation").OnFail("Fail operation")
                     .Do("Balance validation").OnFail("Fail operation")
                     .Do("BTC ajust volume on low remainder").OnFail("Fail operation")
-                    .On("Is not eth cashout").DeterminedAs(context => context.OperationValues.Asset.Id != "ETH").ContinueWith("Start blockchain validation")
-                    .On("Is eth cashout").DeterminedAs(context => context.OperationValues.Asset.Id == "ETH").ContinueWith("Load eth adapter balance")
-                    .WithBranch()
-                        .Do("Load eth adapter balance").OnFail("Fail operation")
-                        .Do("Estimate eth cashout").OnFail("Fail operation")
-                        .Do("ETH validation").OnFail("Fail operation")
+                    .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
                         .ContinueWith("Limits validation")
-                    .WithBranch()
-                        .Do("Start blockchain validation")
-                        .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
-                            .ContinueWith("Limits validation")
-                        .On("Is blockchain integration").DeterminedAs(context => !string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
-                            .ContinueWith("Merge blockchain address")                  
+                    .On("Is blockchain integration").DeterminedAs(context => !string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
+                        .ContinueWith("Merge blockchain address")                    
                     .WithBranch()
                         .Do("Merge blockchain address").OnFail("Fail operation")
                         .Do("BIL check").OnFail("Fail operation")
@@ -181,41 +164,6 @@ namespace Lykke.Service.Operations.Workflow
                     Volume = context.OperationValues.Volume,
                 })
                 .MergeOutput(output => output);
-
-            DelegateNode<AdapterBalanceInput, AdapterBalanceOutput>("Load eth adapter balance", input => LoadEthAdapterBalance(input))
-                .WithInput(context => new AdapterBalanceInput
-                {
-                    AssetAddress = context.OperationValues.Asset.AssetAddress,
-                    AssetMultiplierPower = context.OperationValues.Asset.MultiplierPower,
-                    AssetAccuracy = context.OperationValues.Asset.Accuracy,
-                    HotWallet = context.OperationValues.GlobalSettings.EthereumHotWallet
-                })
-                .MergeOutput(output => new { EthAdapterBalance = output })
-                .MergeFailOutput(e => new { ErrorMessage = e.Message });
-            DelegateNode<EthCashoutEstimationInput, EthCashoutEstimation>("Estimate eth cashout", input => EstimateEthCashout(input))
-               .WithInput(context => new EthCashoutEstimationInput
-               {
-                   OperationId = context.Id.ToString(),
-                   AssetAddress = context.OperationValues.Asset.AssetAddress,
-                   AssetMultiplierPower = context.OperationValues.Asset.MultiplierPower,
-                   AssetAccuracy = context.OperationValues.Asset.Accuracy,
-                   FromAddress = context.OperationValues.GlobalSettings.EthereumHotWallet,
-                   ToAddress = context.OperationValues.DestinationAddress,
-                   Volume = context.OperationValues.Volume
-               })
-               .MergeOutput(output => new
-               {
-                   EthCashoutEstimation = output
-               })
-               .MergeFailOutput(e => new { ErrorMessage = e.Message });
-            ValidationNode<EthInput>("ETH validation")
-               .WithInput(context => new EthInput
-               {
-                   Volume = context.OperationValues.Volume,
-                   AdapterBalance = context.OperationValues.EthAdapterBalance.Balance,
-                   CashoutIsAllowed = context.OperationValues.EthCashoutEstimation.IsAllowed
-               })
-               .MergeFailOutput(output => output);
 
             DelegateNode<BlockchainAddressInput, string>("Merge blockchain address", 
                     input => blockchainAddress.MergeAsync(input.DestinationAddress,
@@ -366,34 +314,6 @@ namespace Lykke.Service.Operations.Workflow
 
                 throw new InvalidOperationException(message);
             }
-        }
-
-        private AdapterBalanceOutput LoadEthAdapterBalance(AdapterBalanceInput input)
-        {
-            var balance = _ethereumFacade.GetBalanceOnAdapterAsync(
-                    input.AssetAddress,
-                    input.AssetMultiplierPower,
-                    input.AssetAccuracy,
-                    input.HotWallet).ConfigureAwait(false)
-                .GetAwaiter()
-                .GetResult();
-            return new AdapterBalanceOutput
-            {
-                Balance = balance
-            };
-        }
-        private EthCashoutEstimation EstimateEthCashout(EthCashoutEstimationInput input)
-        {
-            return _ethereumFacade.EstimateCashOutAsync(
-                    input.OperationId,
-                    input.AssetAddress,
-                    input.AssetMultiplierPower,
-                    input.AssetAccuracy,
-                    input.FromAddress,
-                    input.ToAddress,
-                    input.Volume).ConfigureAwait(false)
-                .GetAwaiter()
-                .GetResult();
         }
 
         private BilOutput BilCheck(BilInput input)
