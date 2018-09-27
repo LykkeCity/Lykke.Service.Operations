@@ -37,13 +37,8 @@ namespace Lykke.Service.Operations.Modules
                     "LimitOrders", ctx.Resolve<ILogFactory>()))).SingleInstance();
             
             builder.RegisterType<WorkflowService>().As<IWorkflowService>().SingleInstance();
-
-            builder.RegisterType<SrvBlockchainValidations>().SingleInstance();
-            builder.RegisterType<EthereumFacade>().As<IEthereumFacade>().SingleInstance();
-            builder.RegisterType<SrvNinjaBlockChainReader>()
-                .WithParameter("url", _settings.CurrentValue.NinjaServiceClient.ServiceUrl)
-                .As<ISrvBlockchainReader>()
-                .SingleInstance();
+            
+            builder.RegisterType<EthereumFacade>().As<IEthereumFacade>().SingleInstance();            
 
             builder.RegisterInstance<ISrvSolarCoinCommandProducer>(
                 new SrvSolarCoinCommandProducer(AzureQueueExt.Create(_settings.ConnectionString(x => x.OperationsService.Db.SolarCoinConnString), "solar-out")));

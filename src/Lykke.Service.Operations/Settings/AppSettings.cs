@@ -24,8 +24,7 @@ namespace Lykke.Service.Operations.Settings
         public AssetDisclaimersServiceClientSettings AssetDisclaimersServiceClient { get; set; }
         public ExchangeOperationsServiceClientSettings ExchangeOperationsServiceClient { get; set; }        
 
-        public SagasRabbitMq SagasRabbitMq { get; set; }
-        public NinjaClientSettings NinjaServiceClient { get; set; }
+        public SagasRabbitMq SagasRabbitMq { get; set; }        
         public BlockchainWalletsSettings BlockchainWalletsServiceClient { get; set; }
         public RedisSettings RedisSettings { get; set; }
 
@@ -41,12 +40,7 @@ namespace Lykke.Service.Operations.Settings
     public class BlockchainWalletsSettings
     {
         public string ServiceUrl { get; set; }
-    }
-
-    public class NinjaClientSettings
-    {
-        public string ServiceUrl { get; set; }
-    }
+    }    
 
     public class SagasRabbitMq
     {
