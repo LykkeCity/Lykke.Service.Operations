@@ -57,7 +57,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             operation.Create(command.OperationId, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
             await _operationsRepository.Save(operation);
 
-            eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id });
+            eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id, OperationType = OperationType.Cashout });
 
             return CommandHandlingResult.Ok();
         }
@@ -115,7 +115,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             operation.Create(command.OperationId, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(command, Formatting.Indented));
             await _operationsRepository.Save(operation);
 
-            eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id });
+            eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id, OperationType = OperationType.CashoutSwift });
 
             return CommandHandlingResult.Ok();
         }
