@@ -67,9 +67,9 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                 return CommandHandlingResult.Ok();
             }
 
-            if (operation.Status == OperationStatus.Completed)
+            if (operation.Status == OperationStatus.Completed || operation.Status == OperationStatus.Failed || operation.Status == OperationStatus.Corrupted)
             {
-                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] already completed!");
+                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] already {operation.Status.ToString()}!");
 
                 return CommandHandlingResult.Ok();
             }
