@@ -140,7 +140,7 @@ namespace Lykke.Service.Operations.Controllers
             };
 
             operation = new Operation();
-            operation.Create(id, cmd.WalletId, OperationType.NewOrder, JsonConvert.SerializeObject(context));
+            operation.Create(id, cmd.WalletId, OperationType.NewOrder, JsonConvert.SerializeObject(context), true);
             await _operationsRepository.Create(operation);
 
             return Created(Url.Action("Get", new { id }), id);
@@ -173,7 +173,7 @@ namespace Lykke.Service.Operations.Controllers
             };
 
             operation = new Operation();
-            operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+            operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented), true);
             await _operationsRepository.Save(operation);
 
             await HandleWorkflow("MarketOrderWorkflow", operation);
@@ -209,7 +209,7 @@ namespace Lykke.Service.Operations.Controllers
             };
 
             operation = new Operation();
-            operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+            operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented), true);
             await _operationsRepository.Save(operation);
 
             await HandleWorkflow("LimitOrderWorkflow", operation);
@@ -248,7 +248,7 @@ namespace Lykke.Service.Operations.Controllers
             };
 
             operation = new Operation();
-            operation.Create(id, command.Client.Id, OperationType.StopLimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
+            operation.Create(id, command.Client.Id, OperationType.StopLimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented), true);
             await _operationsRepository.Save(operation);
 
             await HandleWorkflow("StopLimitOrderWorkflow", operation);
@@ -282,7 +282,7 @@ namespace Lykke.Service.Operations.Controllers
             };
 
             operation = new Operation();
-            operation.Create(id, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(context, Formatting.Indented));
+            operation.Create(id, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(context, Formatting.Indented), true);
             await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent
@@ -317,7 +317,7 @@ namespace Lykke.Service.Operations.Controllers
             command.GlobalSettings.EthereumHotWallet = _ethereumServiceClientSettings.HotwalletAddress;
 
             operation = new Operation();
-            operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
+            operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented), true);
             await _operationsRepository.Save(operation);
 
             _cqrsEngine.PublishEvent(new OperationCreatedEvent
@@ -434,7 +434,7 @@ namespace Lykke.Service.Operations.Controllers
             };
 
             operation = new Operation();
-            operation.Create(id, cmd.ClientId, OperationType.Transfer, JsonConvert.SerializeObject(context, Formatting.Indented));
+            operation.Create(id, cmd.ClientId, OperationType.Transfer, JsonConvert.SerializeObject(context, Formatting.Indented), true);
 
             await _operationsRepository.Create(operation);
 

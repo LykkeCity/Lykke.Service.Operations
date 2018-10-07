@@ -21,6 +21,7 @@ namespace Lykke.Service.Operations.Core.Domain
         public OperationType Type { get; set; }
         public OperationStatus Status { get; set; }
         public string Context { get; set; }
+        public bool SyncExecution { get; set; }
 
         [BsonIgnore]
         public dynamic OperationValues
@@ -52,7 +53,7 @@ namespace Lykke.Service.Operations.Core.Domain
             InputValues = Context = "{}";
         }
 
-        public void Create(Guid id, Guid clientId, OperationType type, string inputValues)
+        public void Create(Guid id, Guid clientId, OperationType type, string inputValues, bool syncExecution = false)
         {
             Id = id;
             Created = DateTime.UtcNow;
@@ -62,6 +63,7 @@ namespace Lykke.Service.Operations.Core.Domain
             InputValues = inputValues;
             Context = inputValues;
             OperationValues = JObject.Parse(inputValues);
+            SyncExecution = syncExecution;
         }
 
         public void Fail()

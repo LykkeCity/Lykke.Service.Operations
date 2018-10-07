@@ -45,6 +45,12 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
             var operation = await _operationsRepository.Get(command.OperationId);
 
+            if (operation.SyncExecution)
+            {
+                _log.Info($"ExecuteOperationCommand received. Operation [{command.OperationId}] is not for async execution, skipping.", command);
+                return CommandHandlingResult.Ok();
+            }
+
             var wf = _workflowFactory(operation.Type + "Workflow", operation);
             var wfResult = wf.Run(operation);
 
