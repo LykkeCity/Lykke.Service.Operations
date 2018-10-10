@@ -8,10 +8,18 @@ namespace Lykke.Service.Operations.Workflow.Validation
     public class BilValidator : AbstractValidator<BilOutput>
     {
         // TODO: extend?
-        private readonly Dictionary<ValidationErrorType, (string codeType, string message)> _errors = new Dictionary<ValidationErrorType, (string, string)>()
+        //implicit maps error codes from bil to lykke wallet ResponseModel.ErrorCodeType
+        private readonly Dictionary<ValidationErrorType, string> _codeTypes = new Dictionary<ValidationErrorType, string>()
         {
-            { ValidationErrorType.AddressIsNotValid, ("InvalidCashoutAddress", "Invalid Destination Address. Please try again.") },
-            { ValidationErrorType.BlackListedAddress, ("InvalidCashoutAddress", "The destination address is not allowed for the withdrawal from the Trading wallet. Please try to send funds to your private wallet first.") }            
+            { ValidationErrorType.AddressIsNotValid, "InvalidCashoutAddress" },
+            { ValidationErrorType.BlackListedAddress, "InvalidCashoutAddress" },
+            { ValidationErrorType.LessThanMinCashout, "AmountIsLessThanLimit" }
+        };
+
+        private readonly Dictionary<ValidationErrorType, string> _messages = new Dictionary<ValidationErrorType, string>()
+        {
+            { ValidationErrorType.AddressIsNotValid, "Invalid Destination Address. Please try again." },
+            { ValidationErrorType.BlackListedAddress, "The destination address is not allowed for the withdrawal from the Trading wallet. Please try to send funds to your private wallet first." }
         };
 
         public BilValidator()
@@ -23,8 +31,8 @@ namespace Lykke.Service.Operations.Workflow.Validation
                     {
                         var errorType = input.Errors.First().Type;
 
-                        if (_errors.ContainsKey(errorType))
-                            return _errors[errorType].codeType;
+                        if (_codeTypes.ContainsKey(errorType))
+                            return _codeTypes[errorType];
 
                         return "RuntimeProblem";
                     })
@@ -32,8 +40,8 @@ namespace Lykke.Service.Operations.Workflow.Validation
                     {
                         var errorType = input.Errors.First().Type;
 
-                        if (_errors.ContainsKey(errorType))
-                            return _errors[errorType].message;
+                        if (_messages.ContainsKey(errorType))
+                            return _messages[errorType];
 
                         return input.Errors.First().Value;
                     }));
