@@ -2,7 +2,6 @@
 using Common.Log;
 using Lykke.Common.Log;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
-using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client.Models;
 using Lykke.Service.ExchangeOperations.Client;
 using Lykke.Service.ExchangeOperations.Contracts.Fee;
 using Lykke.Service.FeeCalculator.AutorestClient.Models;
@@ -20,6 +19,7 @@ using NBitcoin;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
+using Lykke.Service.BlockchainCashoutPreconditionsCheck.Contract.Requests;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 
 namespace Lykke.Service.Operations.Workflow
@@ -318,7 +318,7 @@ namespace Lykke.Service.Operations.Workflow
 
         private BilOutput BilCheck(BilInput input)
         {
-            var result = _blockchainCashoutPreconditionsCheckClient.ValidateCashoutAsync(new CashoutValidateModel()
+            var result = _blockchainCashoutPreconditionsCheckClient.ValidateCashoutAsync(new CheckCashoutValidityModel()
             {
                 AssetId = input.AssetId,
                 Amount = input.Amount,

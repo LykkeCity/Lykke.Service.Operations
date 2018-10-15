@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
-using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client.AutorestClient.Models;
+using Lykke.Service.BlockchainCashoutPreconditionsCheck.Contract.Responses;
 
 namespace Lykke.Service.Operations.Workflow.Validation
 {

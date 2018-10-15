@@ -8,6 +8,7 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.Balances.Client;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
 using Lykke.Service.BlockchainWallets.Client;
+using Lykke.Service.BlockchainWallets.Client.ClientGenerator;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.ExchangeOperations.Client;
@@ -52,15 +53,15 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterInstance<IEthereumCoreAPI>(new EthereumCoreAPI(new Uri(_settings.CurrentValue.EthereumServiceClient.ServiceUrl), new HttpClient()));
 
             builder.Register(ctx => new BlockchainCashoutPreconditionsCheckClient(
-                    _settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient.ServiceUrl,
-                    ctx.Resolve<ILogFactory>().CreateLog("BlockchainCashoutPreconditionsCheckClient")))
+                    _settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient.ServiceUrl))
                 .As<IBlockchainCashoutPreconditionsCheckClient>()
                 .SingleInstance();
 
 
             builder.Register(ctx => new BlockchainWalletsClient(
                     _settings.CurrentValue.BlockchainWalletsServiceClient.ServiceUrl,
-                    ctx.Resolve<ILogFactory>().CreateLog("BlockchainWalletsClient")))
+                    ctx.Resolve<ILogFactory>(),
+                    new BlockchainWalletsApiFactory()))
                 .As<IBlockchainWalletsClient>()
                 .SingleInstance();
 
