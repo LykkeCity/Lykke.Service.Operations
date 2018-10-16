@@ -106,7 +106,36 @@ namespace Lykke.Service.Operations.Workflow.Sagas
 
             commandSender.SendCommand(command, "operations");
         }
-        
+
+        #region CashourProcessorEvents
+
+        [UsedImplicitly]
+        public async Task Handle(CashoutsBatchCompletedEvent evt, ICommandSender commandSender)
+        {
+            _log.Info($"CashoutsBatchCompletedEvent for BIL received. BatchId [{evt.BatchId}]", evt);
+
+            if (evt.Cashouts == null || evt.Cashouts.Length == 0)
+            {
+                _log.Warning($"Empty cashouts in batch. BatchId [{evt.BatchId}]", context: evt);
+
+                return;
+            }
+
+            foreach (var cashout in evt.Cashouts)
+            {
+                var command = new CompleteActivityCommand
+                {
+                    OperationId = cashout.OperationId,
+                    Output = new
+                    {
+                        evt.TransactionHash
+                    }.ToJson()
+                };
+
+                commandSender.SendCommand(command, "operations");
+            }
+        }
+
         [UsedImplicitly]
         public async Task Handle(CashoutCompletedEvent evt, ICommandSender commandSender)
         {
@@ -124,6 +153,69 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             commandSender.SendCommand(command, "operations");
         }
 
+        [UsedImplicitly]
+        public async Task Handle(CrossClientCashoutCompletedEvent evt, ICommandSender commandSender)
+        {
+            _log.Info($"CrossClientCashoutCompletedEvent for BIL received. Operation [{evt.OperationId}]", evt);
+
+            var command = new CompleteActivityCommand
+            {
+                OperationId = evt.OperationId,
+            };
+
+            commandSender.SendCommand(command, "operations");
+        }
+
+        [UsedImplicitly]
+        public async Task Handle(CashoutFailedEvent evt, ICommandSender commandSender)
+        {
+            _log.Info($"OperationExecutionFailedEvent for BIL received. Operation [{evt.OperationId}]", evt);
+
+            var command = new FailActivityCommand
+            {
+                OperationId = evt.OperationId,
+                Output = new
+                {
+                    ErrorCode = "BIL error",
+                    ErrorMessage = evt.Error
+                }.ToJson()
+            };
+
+            commandSender.SendCommand(command, "operations");
+        }
+
+        [UsedImplicitly]
+        public async Task Handle(CashoutsBatchFailedEvent evt, ICommandSender commandSender)
+        {
+            _log.Info($"CashoutsBatchFailedEvent for BIL received. BatchId [{evt.BatchId}]", evt);
+
+            if (evt.Cashouts == null || evt.Cashouts.Length == 0)
+            {
+                _log.Warning($"Empty cashouts in batch. BatchId [{evt.BatchId}]", context:evt);
+
+                return;
+            }
+
+            foreach (var cashout in evt.Cashouts)
+            {
+                var command = new FailActivityCommand
+                {
+                    OperationId = cashout.OperationId,
+                    Output = new
+                    {
+                        ErrorCode = "BIL error",
+                        ErrorMessage = evt.Error
+                    }.ToJson()
+                };
+
+                commandSender.SendCommand(command, "operations");
+            }
+        }
+
+        #endregion
+
+        [Obsolete]
+        [UsedImplicitly]
         public async Task Handle(OperationExecutionFailedEvent evt, ICommandSender commandSender)
         {
             _log.Info($"OperationExecutionFailedEvent for BIL received. Operation [{evt.OperationId}]", evt);

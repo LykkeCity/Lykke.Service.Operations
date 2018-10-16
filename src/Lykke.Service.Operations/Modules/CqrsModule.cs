@@ -148,7 +148,13 @@ namespace Lykke.Service.Operations.Modules
                             .ListeningEvents(typeof(OperationExecutionFailedEvent)).From(BlockchainOperationsExecutorBoundedContext.Name).On("events")                            
                             .ListeningEvents(typeof(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent)).From(EthereumBoundedContext.Name).On("events")
                             .ListeningEvents(typeof(SolarCashOutCompletedEvent)).From("solarcoin").On("events")
-                            .ListeningEvents(typeof(CashoutCompletedEvent)).From(BlockchainCashoutProcessorBoundedContext.Name).On("events")
+                            .ListeningEvents(
+                                typeof(CashoutCompletedEvent), 
+                                typeof(CashoutsBatchCompletedEvent),
+                                typeof(CrossClientCashoutCompletedEvent),
+                                typeof(CashoutFailedEvent),
+                                typeof(CashoutsBatchFailedEvent))
+                            .From(BlockchainCashoutProcessorBoundedContext.Name).On("events")
                             .PublishingCommands(typeof(StartCashoutCommand)).To(BlockchainCashoutProcessorBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(Job.EthereumCore.Contracts.Cqrs.Commands.StartCashoutCommand)).To(EthereumBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(SolarCashOutCommand)).To("solarcoin").With("commands")                            
