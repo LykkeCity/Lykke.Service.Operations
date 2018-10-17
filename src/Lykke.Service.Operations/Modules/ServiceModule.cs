@@ -1,16 +1,14 @@
 ﻿using Autofac;
 using AzureStorage.Queue;
 using AzureStorage.Tables;
-using Common.Log;
 using Lykke.Common.Log;
+using Lykke.Sdk;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Repositories;
-using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.Repositories;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Services.Blockchain;
 using Lykke.Service.Operations.Settings;
-using Lykke.Service.Operations.Workflow;
 using Lykke.Service.Operations.Workflow.Validation;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.Caching.Distributed;
@@ -60,6 +58,14 @@ namespace Lykke.Service.Operations.Modules
             });
 
             builder.RegisterInstance(redis).As<IDistributedCache>().SingleInstance();
+            
+            builder.RegisterType<ShutdownManager>()
+                .As<IShutdownManager>()
+                .SingleInstance();
+
+            builder.RegisterType<StartupManager>()
+                .As<IStartupManager>()
+                .SingleInstance();
         }
     }
 }
