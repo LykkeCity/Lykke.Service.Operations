@@ -1,4 +1,6 @@
-﻿namespace Lykke.Service.Operations.Contracts.Orders
+﻿using ProtoBuf;
+
+namespace Lykke.Service.Operations.Contracts.Orders
 {
     /// <summary>
     /// Possible order actions
