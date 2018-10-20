@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -13,13 +12,13 @@ using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.Operations.Contracts;
+using Lykke.Service.Operations.Contracts.Api;
 using Lykke.Service.Operations.Contracts.Commands;
-using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow;
-using Lykke.Service.Operations.Workflow.Events;
+using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.PushNotifications.Client.AutorestClient.Models;
 using Lykke.Workflow;
@@ -216,7 +215,7 @@ namespace Lykke.Service.Operations.Controllers
 
             return Created(Url.Action("Get", new { id }), id);
         }
-        
+
         [HttpPost]
         [Route("order/{id}/stoplimit")]
         [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
@@ -312,7 +311,7 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
             await _operationsRepository.Save(operation);
-            
+
             await HandleWorkflow(OperationType.Cashout + "Workflow", operation);
 
             return Created(Url.Action("Get", "Operations", new { id }), id);
@@ -328,7 +327,7 @@ namespace Lykke.Service.Operations.Controllers
             if (wfResult.State == WorkflowState.Corrupted)
             {
                 _log.Critical(operation.Type + "Workflow", context: wfResult, message: $"Workflow for operation [{operation.Id}] has corrupted!");
-                
+
                 ModelState.AddModelError("InternalError", wfResult.Error);
 
                 throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult(ModelState));
@@ -502,7 +501,7 @@ namespace Lykke.Service.Operations.Controllers
 
             if (operation.Status != OperationStatus.Created && operation.Status != OperationStatus.Accepted)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be confirmed"));
-            
+
             switch (operation.Type)
             {
                 case OperationType.Cashout:
@@ -511,6 +510,36 @@ namespace Lykke.Service.Operations.Controllers
                     await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
                     break;
             }
+        }
+
+        [HttpPost]
+        [Route("{id}/activity/{activityId}/complete")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public IActionResult ManualCompleteActivity(Guid id, Guid activityId, [FromBody] ManualResumeActivityModel model)
+        {
+            _cqrsEngine.SendCommand(new CompleteActivityCommand
+            {
+                OperationId = id,
+                ActivityId = activityId,
+                Output = model.OutputJson
+            }, OperationsBoundedContext.Name, OperationsBoundedContext.Name);
+
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("{id}/activity/{activityId}/fail")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        public IActionResult ManualFailActivity(Guid id, Guid activityId, [FromBody] ManualResumeActivityModel model)
+        {
+            _cqrsEngine.SendCommand(new FailActivityCommand
+            {
+                OperationId = id,
+                ActivityId = activityId,
+                Output = model.OutputJson
+            }, OperationsBoundedContext.Name, OperationsBoundedContext.Name);
+
+            return Ok();
         }
     }
 }
