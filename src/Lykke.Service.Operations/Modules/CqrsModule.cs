@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Autofac;
 using Lykke.Common.Log;
-using Lykke.Bitcoin.Contracts;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
 using Lykke.Frontend.WampHost.Contracts;
@@ -146,15 +145,13 @@ namespace Lykke.Service.Operations.Modules
 
                         Register.Saga<BlockchainCashoutSaga>("blockchain-cashout-saga")
                             .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent)).From(OperationsBoundedContext.Name).On("events")
-                            .ListeningEvents(typeof(OperationExecutionFailedEvent)).From(BlockchainOperationsExecutorBoundedContext.Name).On("events")
-                            .ListeningEvents(typeof(Bitcoin.Contracts.Events.CashoutCompletedEvent)).From(BitcoinBoundedContext.Name).On("events")
+                            .ListeningEvents(typeof(OperationExecutionFailedEvent)).From(BlockchainOperationsExecutorBoundedContext.Name).On("events")                            
                             .ListeningEvents(typeof(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent)).From(EthereumBoundedContext.Name).On("events")
                             .ListeningEvents(typeof(SolarCashOutCompletedEvent)).From("solarcoin").On("events")
                             .ListeningEvents(typeof(CashoutCompletedEvent)).From(BlockchainCashoutProcessorBoundedContext.Name).On("events")
                             .PublishingCommands(typeof(StartCashoutCommand)).To(BlockchainCashoutProcessorBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(Job.EthereumCore.Contracts.Cqrs.Commands.StartCashoutCommand)).To(EthereumBoundedContext.Name).With("commands")
-                            .PublishingCommands(typeof(SolarCashOutCommand)).To("solarcoin").With("commands")
-                            .PublishingCommands(typeof(Bitcoin.Contracts.Commands.StartCashoutCommand)).To(BitcoinBoundedContext.Name).With("commands")
+                            .PublishingCommands(typeof(SolarCashOutCommand)).To("solarcoin").With("commands")                            
                             .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).To(OperationsBoundedContext.Name).With("commands"),
 
                         Register.Saga<WorkflowSaga>("workflow-saga")

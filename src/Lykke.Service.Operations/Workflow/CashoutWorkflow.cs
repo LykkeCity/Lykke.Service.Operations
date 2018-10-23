@@ -53,8 +53,7 @@ namespace Lykke.Service.Operations.Workflow
                     .Do("Destination address validation").OnFail("Fail operation")
                     .Do("Kyc validation").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
-                    .Do("Balance validation").OnFail("Fail operation")
-                    .Do("BTC ajust volume on low remainder").OnFail("Fail operation")
+                    .Do("Balance validation").OnFail("Fail operation")                    
                     .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
                         .ContinueWith("Limits validation")
                     .On("Is blockchain integration").DeterminedAs(context => !string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
@@ -94,7 +93,7 @@ namespace Lykke.Service.Operations.Workflow
                         .Do("Send operation status")
                     .End()
             );
-
+            
             ValidationNode<GlobalInput>("Global validation")
                 .WithInput(context => new GlobalInput
                 {
@@ -152,18 +151,7 @@ namespace Lykke.Service.Operations.Workflow
                     ClientId = context.OperationValues.Client.Id,
                     LykkeEntityId1 = context.OperationValues.Asset.LykkeEntityId
                 })
-                .MergeFailOutput(output => output);
-
-            DelegateNode<AjustmentInput, AjustmentOutput>("BTC ajust volume on low remainder", input => AjustBtcVolume(input))
-                .WithInput(context => new AjustmentInput
-                {
-                    AssetId = context.OperationValues.Asset.Id,
-                    AssetAccuracy = context.OperationValues.Asset.Accuracy,
-                    CashoutMinimalAmount = context.OperationValues.Asset.CashoutMinimalAmount,
-                    Balance = context.OperationValues.Client.Balance,
-                    Volume = context.OperationValues.Volume,
-                })
-                .MergeOutput(output => output);
+                .MergeFailOutput(output => output);         
 
             DelegateNode<BlockchainAddressInput, string>("Merge blockchain address", 
                     input => blockchainAddress.MergeAsync(input.DestinationAddress,
@@ -351,19 +339,6 @@ namespace Lykke.Service.Operations.Workflow
                 throw new WorkflowException("ConfirmationFailed", "Number of attempts exceeded");
 
             return new { ConfirmationAttemptsCount = currentAttemptsCount };
-        }
-
-        private AjustmentOutput AjustBtcVolume(AjustmentInput input)
-        {
-            var volume = input.Volume;
-
-            if (input.AssetId == "BTC" && input.Balance - input.Volume < input.CashoutMinimalAmount)
-                volume = Convert.ToDecimal(input.Balance).TruncateDecimalPlaces(input.AssetAccuracy);
-
-            return new AjustmentOutput
-            {
-                Volume = volume
-            };
-        }
+        }      
     }
 }

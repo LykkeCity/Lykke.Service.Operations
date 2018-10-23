@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Common;
 using Common.Log;
 using JetBrains.Annotations;
-using Lykke.Bitcoin.Contracts;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
@@ -76,40 +75,9 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                     commandSender.SendCommand(command, "solarcoin");
 
                     _log.Info($"StartCashoutCommand for Solarcoin has sent. Operation [{command.Id}]", command);
-                }                
-                else if (input.AssetBlockchain == "Bitcoin" && input.AssetBlockchainWithdrawal)
-                {
-                    var command = new Bitcoin.Contracts.Commands.StartCashoutCommand
-                    {
-                        Id = input.OperationId,
-                        AssetId = input.AssetId,
-                        Amount = input.Amount,
-                        Address = input.ToAddress
-                    };
-
-                    commandSender.SendCommand(command, BitcoinBoundedContext.Name);
-
-                    _log.Info($"StartCashoutCommand for Bitcoin has sent. Operation [{command.Id}]", command);
-                }
+                }                                
             }
-        }        
-
-        [UsedImplicitly]
-        public async Task Handle(Bitcoin.Contracts.Events.CashoutCompletedEvent evt, ICommandSender commandSender)
-        {
-            _log.Info($"CashoutCompletedEvent for Bitcoin received. Operation [{evt.OperationId}]", evt);
-
-            var command = new CompleteActivityCommand
-            {
-                OperationId = evt.OperationId,
-                Output = new
-                {
-                    TransactionHash = evt.TxHash
-                }.ToJson()
-            };
-
-            commandSender.SendCommand(command, "operations");
-        }
+        }              
 
         [UsedImplicitly]
         public async Task Handle(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent evt, ICommandSender commandSender)
