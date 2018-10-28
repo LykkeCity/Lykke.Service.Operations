@@ -19,6 +19,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
     public class BlockchainCashoutSaga
     {
         private readonly ILog _log;
+        private static readonly string _bilError = "BIL error";
 
         public BlockchainCashoutSaga(ILogFactory logFactory)
         {
@@ -176,7 +177,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 OperationId = evt.OperationId,
                 Output = new
                 {
-                    ErrorCode = "BIL error",
+                    ErrorCode = _bilError,
                     ErrorMessage = evt.Error
                 }.ToJson()
             };
@@ -203,7 +204,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                     OperationId = cashout.OperationId,
                     Output = new
                     {
-                        ErrorCode = "BIL error",
+                        ErrorCode = _bilError,
                         ErrorMessage = evt.Error
                     }.ToJson()
                 };
@@ -225,7 +226,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 OperationId = evt.OperationId,
                 Output = new
                 {
-                    ErrorCode = "BIL error",
+                    ErrorCode = _bilError,
                     ErrorMessage = evt.Error
                 }.ToJson()
             };
