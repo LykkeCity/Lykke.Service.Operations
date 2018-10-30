@@ -145,7 +145,7 @@ namespace Lykke.Service.Operations.Modules
 
                         Register.Saga<BlockchainCashoutSaga>("blockchain-cashout-saga")
                             .ListeningEvents(typeof(ExternalExecutionActivityCreatedEvent)).From(OperationsBoundedContext.Name).On("events")
-                            .ListeningEvents(typeof(Bitcoin.Contracts.Events.CashoutCompletedEvent)).From(BitcoinBoundedContext.Name).On("events")                            .ListeningEvents(typeof(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent)).From(EthereumBoundedContext.Name).On("events")
+                            .ListeningEvents(typeof(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent)).From(EthereumBoundedContext.Name).On("events")
                             .ListeningEvents(typeof(SolarCashOutCompletedEvent)).From("solarcoin").On("events")
                             .ListeningEvents(
                                 typeof(CashoutCompletedEvent), 
