@@ -105,7 +105,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 Output = new
                 {
                     TransactionHash = evt.TxHash
-                }.ToJson()
+                }.ToJson(),
+                ActivityType = nameof(IActivityReference.SettleOnBlockchain)
             };
 
             commandSender.SendCommand(command, "operations");
@@ -119,7 +120,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             var command = new CompleteActivityCommand
             {
                 OperationId = evt.OperationId,
-                Output = "{}"
+                Output = "{}",
+                ActivityType = nameof(IActivityReference.SettleOnBlockchain)
             };
 
             commandSender.SendCommand(command, "operations");
@@ -133,7 +135,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             var command = new CompleteActivityCommand
             {
                 OperationId = new Guid(evt.OperationId),
-                Output = "{}"
+                Output = "{}",
+                ActivityType = nameof(IActivityReference.SettleOnBlockchain)
             };
 
             commandSender.SendCommand(command, "operations");
@@ -150,7 +153,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 Output = new
                 {
                     evt.TransactionHash                    
-                }.ToJson()
+                }.ToJson(),
+                ActivityType = nameof(IActivityReference.SettleOnBlockchain)
             };
 
             commandSender.SendCommand(command, "operations");

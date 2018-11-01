@@ -74,9 +74,9 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                 return CommandHandlingResult.Ok();
             }
 
-            if (operation.ExecutingActivity() == null)
+            if (operation.ExecutingActivity(command.ActivityType) == null)
             {
-                _log.Info($"Executing activity for operation [{operation.Id}] is null. Retrying...");
+                _log.Info($"Executing activity {command.ActivityType} for operation [{operation.Id}] is null. Retrying...");
 
                 return new CommandHandlingResult
                 {
