@@ -38,7 +38,7 @@ namespace Lykke.Service.Operations.Core.Domain
         [BsonIgnore]
         public JObject OperationValuesJObject
         {
-            get => (JObject)OperationValues;            
+            get => (JObject)OperationValues;
         }
 
         public List<OperationActivity> Activities { get; set; } = new List<OperationActivity>();
@@ -47,7 +47,7 @@ namespace Lykke.Service.Operations.Core.Domain
         public string InputValues { get; set; }
 
         public Operation()
-        {            
+        {
             WorkflowState = WorkflowState.None;
             InputValues = Context = "{}";
         }
@@ -77,9 +77,9 @@ namespace Lykke.Service.Operations.Core.Domain
         public void ActivityFinished(Guid activityExecutionId, string node, string activityType, object outputValues)
         {
             var activity = Activities.Single(om => om.ActivityId == activityExecutionId);
-                
+
             activity.Status = ActivityResult.Succeeded;
-            activity.Finished = DateTime.UtcNow;            
+            activity.Finished = DateTime.UtcNow;
             activity.Output = outputValues.ToJsonString();
         }
 
@@ -101,7 +101,7 @@ namespace Lykke.Service.Operations.Core.Domain
         public void Save(Operation context, Execution<Operation> execution)
         {
             Activities.ForEach(oa => oa.IsExecuting = false);
-            
+
             foreach (var ea in execution.ExecutingActivities)
             {
                 Activities.Single(a => a.ActivityId == ea.Id && a.Name == ea.Node).IsExecuting = true;
@@ -119,7 +119,7 @@ namespace Lykke.Service.Operations.Core.Domain
                     case WorkflowState.Corrupted:
                         WorkflowState = WorkflowState.Corrupted;
                         break;
-                }                
+                }
             }
         }
 
@@ -169,9 +169,9 @@ namespace Lykke.Service.Operations.Core.Domain
             Status = OperationStatus.Corrupted;
         }
 
-        public OperationActivity ExecutingActivity()
+        public OperationActivity ExecutingActivity(string type)
         {
-            return Activities.SingleOrDefault(o => o.IsExecuting);
+            return Activities.SingleOrDefault(o => o.IsExecuting && (string.IsNullOrWhiteSpace(type) || o.Type == type));
         }
 
         public void CompleteActivity(Guid activityId, object output)

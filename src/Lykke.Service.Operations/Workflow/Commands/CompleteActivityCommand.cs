@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Workflow.Commands
     {
         public Guid OperationId { get; set; }
         public Guid? ActivityId { get; set; }
-        public string Output { get; set; }        
+        public string Output { get; set; }
+        public string ActivityType { get; set; }
     }
 }
