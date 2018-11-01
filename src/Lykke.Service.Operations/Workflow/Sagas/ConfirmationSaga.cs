@@ -79,7 +79,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                         {
                             Code = evt.Confirmation
                         }
-                    }.ToJson()
+                    }.ToJson(),
+                    ActivityType = nameof(IActivityReference.RequestConfirmation)
                 };
 
                 commandSender.SendCommand(command, "operations");
@@ -100,7 +101,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                     {
                         IsValid = true
                     }
-                }.ToJson()
+                }.ToJson(),
+                ActivityType = nameof(IActivityReference.ValidateConfirmation)
             };
 
             commandSender.SendCommand(command, "operations");
@@ -120,7 +122,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                     {
                         IsValid = false
                     }
-                }.ToJson()
+                }.ToJson(),
+                ActivityType = nameof(IActivityReference.ValidateConfirmation)
             };
 
             commandSender.SendCommand(command, "operations");

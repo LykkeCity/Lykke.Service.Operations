@@ -55,7 +55,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                     evt.Volume,
                     evt.Timestamp,
                     evt.FeeSize                    
-                }.ToJson()
+                }.ToJson(),
+                ActivityType = nameof(IActivityReference.WaitForResultsFromMe)
             };
 
             commandSender.SendCommand(command, "operations");
