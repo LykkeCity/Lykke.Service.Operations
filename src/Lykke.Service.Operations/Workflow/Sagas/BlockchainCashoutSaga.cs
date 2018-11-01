@@ -150,6 +150,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             var command = new CompleteActivityCommand
             {
                 OperationId = evt.OperationId,
+                Output = "{}"
             };
 
             commandSender.SendCommand(command, "operations");
