@@ -21,7 +21,7 @@ namespace Lykke.Service.Operations.Workflow
             _activityExecutor = operation;
         }
 
-        public override Execution<Operation> Run(Operation operation)
+        public override Execution Run(Operation operation)
         {
             Log.Info(GetType().Name, operation.Context, $"Operation [{operation.Id}] Run - running operation of type '{operation.Type}'");
 
@@ -34,7 +34,7 @@ namespace Lykke.Service.Operations.Workflow
             return result;
         }
 
-        public override Execution<Operation> Resume<TClosure>(Operation operation, Guid activityExecutionId, TClosure closure)
+        public override Execution Resume<TClosure>(Operation operation, Guid activityExecutionId, TClosure closure)
         {
             if (operation.WorkflowState == WorkflowState.Corrupted
                 || operation.WorkflowState == WorkflowState.Complete)

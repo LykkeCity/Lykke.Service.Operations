@@ -138,7 +138,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             return CommandHandlingResult.Ok();
         }
 
-        private async Task HandleWorkflow(Operation operation, Execution<Operation> wfResult, IEventPublisher eventPublisher, OperationStatus previousStatus)
+        private async Task HandleWorkflow(Operation operation, Execution wfResult, IEventPublisher eventPublisher, OperationStatus previousStatus)
         {
             _log.Info($"Handle workflow result: [{wfResult.State}]. Operation [{operation.Id}]", wfResult);
 

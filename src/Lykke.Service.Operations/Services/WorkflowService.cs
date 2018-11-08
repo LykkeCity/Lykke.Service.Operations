@@ -25,7 +25,7 @@ namespace Lykke.Service.Operations.Services
             _workflowFactory = workflowFactory;
         }
 
-        public async Task<Execution<Operation>> CompleteActivity(Operation operation, Guid? activityId, JObject activityOutput)
+        public async Task<Execution> CompleteActivity(Operation operation, Guid? activityId, JObject activityOutput)
         {            
             var activity = operation.Activities.SingleOrDefault(o => !activityId.HasValue && o.IsExecuting || o.ActivityId == activityId);
 

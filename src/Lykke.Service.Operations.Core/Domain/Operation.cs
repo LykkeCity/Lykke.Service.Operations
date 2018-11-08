@@ -98,7 +98,7 @@ namespace Lykke.Service.Operations.Core.Domain
             activity.Status = ActivityResult.None;
         }
 
-        public void Save(Operation context, Execution<Operation> execution)
+        public void Save(Operation context, Execution execution)
         {
             Activities.ForEach(oa => oa.IsExecuting = false);
 
@@ -123,13 +123,13 @@ namespace Lykke.Service.Operations.Core.Domain
             }
         }
 
-        public Execution<Operation> Load(Operation context)
+        public Execution Load(Operation context)
         {
             var executingActivities = Activities.Where(a => a.IsExecuting)
                 .Select(a => new ActivityExecution(a.Name, a.ActivityId))
                 .ToList();
 
-            var execution = new Execution<Operation>
+            var execution = new Execution
             {
                 State = WorkflowState
             };
