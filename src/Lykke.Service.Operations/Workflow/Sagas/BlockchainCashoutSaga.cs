@@ -111,7 +111,9 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         {
             if (evt.Cashouts == null || evt.Cashouts.Length == 0)
             {
-                throw new InvalidOperationException($"Empty cashouts in batch. BatchId [{evt.BatchId}]");
+                _log.Warning($"Empty cashouts in batch. BatchId [{evt.BatchId}]");
+
+                return;
             }
 
             foreach (var cashout in evt.Cashouts)
@@ -177,7 +179,9 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         {
             if (evt.Cashouts == null || evt.Cashouts.Length == 0)
             {
-                throw new InvalidOperationException($"Empty cashouts in batch. BatchId [{evt.BatchId}]");
+                _log.Warning($"Empty cashouts in batch. BatchId [{evt.BatchId}]");
+
+                return;
             }
 
             foreach (var cashout in evt.Cashouts)
