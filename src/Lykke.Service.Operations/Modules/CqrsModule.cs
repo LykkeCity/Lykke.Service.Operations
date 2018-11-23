@@ -184,8 +184,7 @@ namespace Lykke.Service.Operations.Modules
                     );
                 })
                 .As<ICqrsEngine>()
-                .SingleInstance()
-                .AutoActivate();
+                .SingleInstance();
         }
     }
 }
