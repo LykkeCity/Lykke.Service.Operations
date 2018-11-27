@@ -15,8 +15,8 @@ namespace Lykke.Service.Operations.Services
 
         public Task StartAsync()
         {
-            _cqrsEngine.Start();
-
+            _cqrsEngine.StartSubscribers();
+            _cqrsEngine.StartProcesses();
             return Task.CompletedTask;
         }
     }
