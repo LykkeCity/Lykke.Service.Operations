@@ -44,6 +44,8 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             _log.Info($"ExecuteOperationCommand received. Operation [{command.OperationId}]", command);
 
             var operation = await _operationsRepository.Get(command.OperationId);
+            if (operation == null)
+                throw new InvalidOperationException($"Operation with id {command.OperationId} not found");
 
             var wf = _workflowFactory(operation.Type + "Workflow", operation);
             var wfResult = wf.Run(operation);
