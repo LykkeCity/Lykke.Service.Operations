@@ -88,7 +88,7 @@ namespace Lykke.Service.Operations.Modules
 
             builder.Register(ctx =>
                 {
-                    return new CqrsEngine(
+                    var cqrsEngine = new CqrsEngine(
                         ctx.Resolve<ILogFactory>(),
                         ctx.Resolve<IDependencyResolver>(),
                         ctx.Resolve<IMessagingEngine>(),
@@ -120,8 +120,7 @@ namespace Lykke.Service.Operations.Modules
                                 typeof(OperationCompletedEvent),
                                 typeof(ExternalExecutionActivityCreatedEvent),
                                 typeof(ConfirmationReceivedEvent))
-                                .With("events")
-                                .WithLoopback(),
+                                .With("events"),
 
                         Register.BoundedContext("solarcoin")
                             .ListeningCommands(typeof(SolarCashOutCommand)).On("commands")
@@ -182,10 +181,12 @@ namespace Lykke.Service.Operations.Modules
                             .PublishingCommands(typeof(ExecuteOperationCommand), typeof(CompleteActivityCommand), typeof(FailActivityCommand))
                                 .To(OperationsBoundedContext.Name).With("commands")
                     );
+                    cqrsEngine.StartPublishers();
+                    return cqrsEngine;
                 })
                 .As<ICqrsEngine>()
-                .SingleInstance()
-                .AutoActivate();
+                .AutoActivate()
+                .SingleInstance();
         }
     }
 }

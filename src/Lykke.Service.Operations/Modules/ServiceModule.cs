@@ -3,6 +3,7 @@ using AzureStorage.Queue;
 using AzureStorage.Tables;
 using Common.Log;
 using Lykke.Common.Log;
+using Lykke.Sdk;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Core.Repositories;
 using Lykke.Service.Operations.Core.Services;
@@ -29,6 +30,10 @@ namespace Lykke.Service.Operations.Modules
 
         protected override void Load(ContainerBuilder builder)
         {
+            builder.RegisterType<StartupManager>()
+                .As<IStartupManager>()
+                .SingleInstance();
+
             builder.RegisterType<OperationsRepository>()
                 .As<IOperationsRepository>()
                 .SingleInstance();
