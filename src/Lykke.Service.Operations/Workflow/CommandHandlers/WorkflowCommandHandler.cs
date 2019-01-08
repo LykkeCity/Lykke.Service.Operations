@@ -74,6 +74,20 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                 return CommandHandlingResult.Ok();
             }
 
+            if (operation.Status == OperationStatus.Failed)
+            {
+                _log.Warning(nameof(CompleteActivityCommand), context: command, message: $"operation [{command.OperationId}] should be completed but in failed state!");
+
+                var activity = operation.Activities.SingleOrDefault(o => o.IsExecuting);
+                if (activity != null)
+                {
+                    activity.Fail(command.Output);
+                    await _operationsRepository.Save(operation);
+                }
+
+                return CommandHandlingResult.Ok();
+            }
+
             if (operation.ExecutingActivity(command.ActivityType) == null)
             {
                 _log.Info($"Executing activity {command.ActivityType} for operation [{operation.Id}] is null. Retrying...");
