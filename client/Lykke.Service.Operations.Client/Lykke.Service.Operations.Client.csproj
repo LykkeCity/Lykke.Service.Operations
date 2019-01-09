@@ -19,9 +19,8 @@
     <None Remove="Models\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.2.2" />
     <PackageReference Include="AutoMapper" Version="7.0.1" />
-    <PackageReference Include="Lykke.Common" Version="7.0.3" />
+    <PackageReference Include="Lykke.Common" Version="7.3.1" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.13" />
     <PackageReference Include="refit" Version="4.1.0" />
   </ItemGroup>

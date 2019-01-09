@@ -5,6 +5,7 @@ using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.ExchangeOperations.Client;
+using Lykke.Service.ExchangeOperations.Client.Models;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Limitations.Client;
 using Lykke.Service.Operations.Core.Domain;
@@ -119,7 +120,7 @@ namespace Lykke.Service.Operations.Workflow
 
             DelegateNode("Confirm operation", context => context.Confirm());
 
-            DelegateNode<CalculateSwiftCashoutFeeInput, ExchangeOperations.Contracts.Fee.FeeModel>("Calculate fee", input => CalculateFee(input))
+            DelegateNode<CalculateSwiftCashoutFeeInput, ExchangeOperations.Client.Models.Fee.FeeModel>("Calculate fee", input => CalculateFee(input))
                 .WithInput(context => new CalculateSwiftCashoutFeeInput
                 {
                     ClientId = context.OperationValues.Client.Id,
@@ -138,7 +139,7 @@ namespace Lykke.Service.Operations.Workflow
                     HotwalletId = context.OperationValues.CashoutSettings.HotwalletTargetId,
                     AssetId = context.OperationValues.Asset.Id,
                     Volume = context.OperationValues.Volume,
-                    Fee = ((JObject)context.OperationValues.Fee).ToObject<ExchangeOperations.Contracts.Fee.FeeModel>()
+                    Fee = ((JObject)context.OperationValues.Fee).ToObject<ExchangeOperations.Client.Models.Fee.FeeModel>()
                 })
                 .MergeFailOutput(failOutput => new { ErrorCode = WorkflowException.GetExceptionCode(failOutput), ErrorMessage = failOutput.Message });
 
@@ -168,14 +169,17 @@ namespace Lykke.Service.Operations.Workflow
         {
             var operationFee = Math.Abs(input.Fee.Size) > 0 ? input.Fee : null;
 
-            var result = _exchangeOperationsServiceClient.TransferAsync(
-                input.HotwalletId,
-                input.ClientId,
-                (double)input.Volume,
-                input.AssetId,
-                transactionId: input.Id,
-                fee: operationFee
-                ).GetAwaiter().GetResult();
+            var result = _exchangeOperationsServiceClient.ExchangeOperations.TransferAsync(
+                new TransferRequestModel
+                {
+                    DestClientId = input.HotwalletId,
+                    SourceClientId = input.ClientId,
+                    Amount = (double)input.Volume,
+                    AssetId = input.AssetId,
+                    OperationId = input.Id,
+                    Fee = operationFee,
+                })
+                .GetAwaiter().GetResult();
 
             if (result.IsOk())
                 return;
@@ -216,21 +220,20 @@ namespace Lykke.Service.Operations.Workflow
             }, SwiftWithdrawalBoundedContext.Name, SwiftWithdrawalBoundedContext.Name);
         }
 
-        private ExchangeOperations.Contracts.Fee.FeeModel CalculateFee(CalculateSwiftCashoutFeeInput input)
+        private ExchangeOperations.Client.Models.Fee.FeeModel CalculateFee(CalculateSwiftCashoutFeeInput input)
         {
             var fee = _feeCalculatorClient.GetWithdrawalFeeAsync(input.AssetId, input.Bic.GetCountryCode()).ConfigureAwait(false).GetAwaiter().GetResult();
             
-            return new ExchangeOperations.Contracts.Fee.FeeModel()
+            return new ExchangeOperations.Client.Models.Fee.FeeModel()
             {
-                Type = ExchangeOperations.Contracts.Fee.FeeType.CLIENT_FEE,
+                Type = ExchangeOperations.Client.Models.Fee.FeeType.CLIENT_FEE,
                 Size = fee.Size,
-                SizeType = ExchangeOperations.Contracts.Fee.FeeSizeType.ABSOLUTE,
+                SizeType = ExchangeOperations.Client.Models.Fee.FeeSizeType.ABSOLUTE,
                 SourceClientId = input.ClientId,
                 TargetClientId = input.FeeTargetId,
-                ChargingType = ExchangeOperations.Contracts.Fee.FeeChargingType.SUBTRACT_FROM_AMOUNT
+                ChargingType = ExchangeOperations.Client.Models.Fee.FeeChargingType.SUBTRACT_FROM_AMOUNT
             };
         }
-
     }
 
 
@@ -246,7 +249,7 @@ namespace Lykke.Service.Operations.Workflow
 
         public decimal Volume { get; set; }
 
-        public ExchangeOperations.Contracts.Fee.FeeModel Fee { get; set; }
+        public ExchangeOperations.Client.Models.Fee.FeeModel Fee { get; set; }
     }
 
     internal class AdditionalData
