@@ -1,9 +1,8 @@
-﻿using Common;
-using Common.Log;
+﻿using Common.Log;
 using Lykke.Common.Log;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
 using Lykke.Service.ExchangeOperations.Client;
-using Lykke.Service.ExchangeOperations.Contracts.Fee;
+using Lykke.Service.ExchangeOperations.Client.Models.Fee;
 using Lykke.Service.FeeCalculator.AutorestClient.Models;
 using Lykke.Service.FeeCalculator.Client;
 using Lykke.Service.Limitations.Client;
@@ -15,11 +14,11 @@ using Lykke.Service.Operations.Workflow.Exceptions;
 using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
-using NBitcoin;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Contract.Requests;
+using Lykke.Service.ExchangeOperations.Client.Models;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 
 namespace Lykke.Service.Operations.Workflow
@@ -284,15 +283,19 @@ namespace Lykke.Service.Operations.Workflow
 
         private void SendToMe(CashoutMeInput input)
         {
-            var res = _exchangeOperationsServiceClient.CashOutAsync(
-                input.ClientId,
-                input.DestinationAddress,
-                (double)input.Volume,
-                input.AssetId,
-                txId: input.OperationId.ToString(),
-                feeClientId: input.CashoutTargetClientId,
-                feeSize: input.FeeSize,
-                feeSizeType: input.FeeType == FeeType.Absolute ? FeeSizeType.ABSOLUTE : FeeSizeType.PERCENTAGE).GetAwaiter().GetResult();
+            var res = _exchangeOperationsServiceClient.ExchangeOperations.CashOutAsync(
+                new CashOutRequestModel
+                {
+                    ClientId = input.ClientId,
+                    Address = input.DestinationAddress,
+                    Amount = (double)input.Volume,
+                    AssetId = input.AssetId,
+                    TransactionId = input.OperationId.ToString(),
+                    FeeClientId = input.CashoutTargetClientId,
+                    FeeSize = input.FeeSize,
+                    FeeSizeType = input.FeeType == FeeType.Absolute ? FeeSizeType.ABSOLUTE : FeeSizeType.PERCENTAGE,
+                })
+                .GetAwaiter().GetResult();
 
             if (!res.IsOk())
             {

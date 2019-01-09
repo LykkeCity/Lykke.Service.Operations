@@ -524,6 +524,8 @@ namespace Lykke.Service.Operations.Controllers
                 Output = model.OutputJson
             }, OperationsBoundedContext.Name, OperationsBoundedContext.Name);
 
+            _log.Info($"Operation {id} is manually completed with activity id {activityId}", model);
+
             return Ok();
         }
 
@@ -538,6 +540,8 @@ namespace Lykke.Service.Operations.Controllers
                 ActivityId = activityId,
                 Output = model.OutputJson
             }, OperationsBoundedContext.Name, OperationsBoundedContext.Name);
+
+            _log.Info($"Operation {id} is manually failed with activity id {activityId}", model);
 
             return Ok();
         }
