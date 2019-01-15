@@ -43,6 +43,6 @@ namespace Lykke.Service.Operations.Client
         [Post("/api/operations/fail/{id}")]
         Task Fail(Guid id);
         [Post("/api/operations/confirm/{id}")]
-        Task Confirm(Guid id, ConfirmCommand cmd);
+        Task Confirm(Guid id);
     }
 }
