@@ -54,7 +54,7 @@
     <PackageReference Include="Lykke.Service.RateCalculator.Client" Version="1.2.1" />
     <PackageReference Include="Lykke.Service.ExchangeOperations.Client" Version="2.0.5" />
     <PackageReference Include="Lykke.Service.Kyc.Client" Version="1.0.40" />
-    <PackageReference Include="Lykke.Service.Limitations.Client" Version="1.1.1.39" />
+    <PackageReference Include="Lykke.Service.Limitations.Client" Version="1.1.1.40" />
     <PackageReference Include="Lykke.Service.Session" Version="1.0.33" />
     <PackageReference Include="Lykke.Service.SwiftWithdrawal.Contracts" Version="1.0.2" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.5" />
@@ -71,6 +71,7 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\client\Lykke.Service.Operations.Client\Lykke.Service.Operations.Client.csproj" />
     <ProjectReference Include="..\Lykke.Service.Operations.Contracts\Lykke.Service.Operations.Contracts.csproj" />
     <ProjectReference Include="..\Lykke.Service.Operations.Core\Lykke.Service.Operations.Core.csproj" />
     <ProjectReference Include="..\Lykke.Service.Operations.MongoRepositories\Lykke.Service.Operations.Repositories.csproj" />

@@ -11,12 +11,12 @@ using Lykke.Service.Assets.Client;
 using Lykke.Service.ClientAccount.Client.AutorestClient;
 using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
 using Lykke.Service.EthereumCore.Client;
+using Lykke.Service.Operations.Client;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Api;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
-using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow;
 using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
@@ -33,14 +33,13 @@ namespace Lykke.Service.Operations.Controllers
 {
     [Route("api/operations")]
     [Produces("application/json")]
-    public class OperationsController : Controller
+    public class OperationsController : Controller, IOperations
     {
         private readonly IOperationsRepository _operationsRepository;
         private readonly IClientAccountService _clientAccountService;
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
-        private readonly IWorkflowService _workflowService;
         private readonly ICqrsEngine _cqrsEngine;
         private readonly EthereumServiceClientSettings _ethereumServiceClientSettings;
         private readonly ILog _log;
@@ -52,7 +51,6 @@ namespace Lykke.Service.Operations.Controllers
             IPushNotificationsAPI pushNotificationsApi,
             IAssetsServiceWithCache assetsServiceWithCache,
             Func<string, Operation, OperationWorkflow> workflowFactory,
-            IWorkflowService workflowService,
             ICqrsEngine cqrsEngine,
             EthereumServiceClientSettings ethereumServiceClientSettings,
             ILogFactory log,
@@ -63,7 +61,6 @@ namespace Lykke.Service.Operations.Controllers
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
             _workflowFactory = workflowFactory;
-            _workflowService = workflowService;
             _cqrsEngine = cqrsEngine;
             _ethereumServiceClientSettings = ethereumServiceClientSettings;
             _log = log.CreateLog(this);
@@ -116,11 +113,11 @@ namespace Lykke.Service.Operations.Controllers
         /// </summary>
         /// <param name="id">The order Id</param>
         /// <param name="cmd">Order related information</param>
-        /// <returns>A path to the new context</returns>
+        /// <returns>Guid of created order.</returns>
         [HttpPost]
         [Route("newOrder/{id}")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> NewOrder(Guid id, [FromBody]CreateNewOrderCommand cmd)
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
+        public async Task<Guid> NewOrder(Guid id, [FromBody]CreateNewOrderCommand cmd)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be not empty and has a correct GUID value"));
@@ -142,13 +139,13 @@ namespace Lykke.Service.Operations.Controllers
             operation.Create(id, cmd.WalletId, OperationType.NewOrder, JsonConvert.SerializeObject(context));
             await _operationsRepository.Create(operation);
 
-            return Created(Url.Action("Get", new { id }), id);
+            return id;
         }
 
         [HttpPost]
         [Route("order/{id}/market")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> MarketOrder(Guid id, [FromBody] CreateMarketOrderCommand command)
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
+        public async Task<Guid> MarketOrder(Guid id, [FromBody] CreateMarketOrderCommand command)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -177,13 +174,13 @@ namespace Lykke.Service.Operations.Controllers
 
             await HandleWorkflow("MarketOrderWorkflow", operation);
 
-            return Created(Url.Action("Get", new { id }), id);
+            return id;
         }
 
         [HttpPost]
         [Route("order/{id}/limit")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> LimitOrder(Guid id, [FromBody] CreateLimitOrderCommand command)
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
+        public async Task<Guid> LimitOrder(Guid id, [FromBody] CreateLimitOrderCommand command)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -213,13 +210,13 @@ namespace Lykke.Service.Operations.Controllers
 
             await HandleWorkflow("LimitOrderWorkflow", operation);
 
-            return Created(Url.Action("Get", new { id }), id);
+            return id;
         }
 
         [HttpPost]
         [Route("order/{id}/stoplimit")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> StopLimitOrder(Guid id, [FromBody] CreateStopLimitOrderCommand command)
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
+        public async Task<Guid> StopLimitOrder(Guid id, [FromBody] CreateStopLimitOrderCommand command)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -252,13 +249,13 @@ namespace Lykke.Service.Operations.Controllers
 
             await HandleWorkflow("StopLimitOrderWorkflow", operation);
 
-            return Created(Url.Action("Get", new { id }), id);
+            return id;
         }
 
         [HttpPost]
         [Route("cashout/{id}/swift")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> CashoutSwift(Guid id, [FromBody] CreateSwiftCashoutCommand command)
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
+        public async Task<Guid> CashoutSwift(Guid id, [FromBody] CreateSwiftCashoutCommand command)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -286,13 +283,13 @@ namespace Lykke.Service.Operations.Controllers
 
             await HandleWorkflow(OperationType.CashoutSwift + "Workflow", operation);
 
-            return Created(Url.Action("Get", "Operations", new { id }), id);
+            return id;
         }
 
         [HttpPost]
         [Route("cashout/{id}")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
+        public async Task<Guid> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -314,7 +311,7 @@ namespace Lykke.Service.Operations.Controllers
 
             await HandleWorkflow(OperationType.Cashout + "Workflow", operation);
 
-            return Created(Url.Action("Get", "Operations", new { id }), id);
+            return id;
         }
 
         private async Task HandleWorkflow(string workflowType, Operation operation)
@@ -356,8 +353,8 @@ namespace Lykke.Service.Operations.Controllers
 
         [HttpPost]
         [Route("transfer/{id}")]
-        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.Created)]
-        public async Task<IActionResult> Transfer(Guid id, [FromBody]CreateTransferCommand cmd)
+        [ProducesResponseType(typeof(Guid), (int)HttpStatusCode.OK)]
+        public async Task<Guid> Transfer(Guid id, [FromBody]CreateTransferCommand cmd)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
@@ -425,7 +422,7 @@ namespace Lykke.Service.Operations.Controllers
 
             await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId }, "Operation"));
 
-            return Created(Url.Action("Get", new { id }), id);
+            return id;
         }
 
         [HttpPost]
@@ -515,7 +512,7 @@ namespace Lykke.Service.Operations.Controllers
         [HttpPost]
         [Route("{id}/activity/{activityId}/complete")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public IActionResult ManualCompleteActivity(Guid id, Guid activityId, [FromBody] ManualResumeActivityModel model)
+        public Task ManualCompleteActivity(Guid id, Guid activityId, [FromBody] ManualResumeActivityModel model)
         {
             _cqrsEngine.SendCommand(new CompleteActivityCommand
             {
@@ -526,13 +523,13 @@ namespace Lykke.Service.Operations.Controllers
 
             _log.Info($"Operation {id} is manually completed with activity id {activityId}", model);
 
-            return Ok();
+            return Task.CompletedTask;
         }
 
         [HttpPost]
         [Route("{id}/activity/{activityId}/fail")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public IActionResult ManualFailActivity(Guid id, Guid activityId, [FromBody] ManualResumeActivityModel model)
+        public Task ManualFailActivity(Guid id, Guid activityId, [FromBody] ManualResumeActivityModel model)
         {
             _cqrsEngine.SendCommand(new FailActivityCommand
             {
@@ -543,7 +540,7 @@ namespace Lykke.Service.Operations.Controllers
 
             _log.Info($"Operation {id} is manually failed with activity id {activityId}", model);
 
-            return Ok();
+            return Task.CompletedTask;
         }
     }
 }
