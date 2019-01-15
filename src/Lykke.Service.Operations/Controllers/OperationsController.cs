@@ -76,7 +76,7 @@ namespace Lykke.Service.Operations.Controllers
             var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
-                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
+                throw new ApiException(HttpStatusCode.NotFound, "id", "Operation not found");
 
             var result = _mapper.Map<Operation, OperationModel>(operation);
 
@@ -120,15 +120,15 @@ namespace Lykke.Service.Operations.Controllers
         public async Task<Guid> NewOrder(Guid id, [FromBody]CreateNewOrderCommand cmd)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be not empty and has a correct GUID value"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be not empty and has a correct GUID value");
 
             if (!ModelState.IsValid)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation with the id already exists.");
 
             var context = new NewOrderContext
             {
@@ -148,15 +148,15 @@ namespace Lykke.Service.Operations.Controllers
         public async Task<Guid> MarketOrder(Guid id, [FromBody] CreateMarketOrderCommand command)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             if (!ModelState.IsValid)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation with the id already exists.");
 
             var context = new
             {
@@ -183,15 +183,15 @@ namespace Lykke.Service.Operations.Controllers
         public async Task<Guid> LimitOrder(Guid id, [FromBody] CreateLimitOrderCommand command)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             if (!ModelState.IsValid)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation with the id already exists.");
 
             var context = new
             {
@@ -219,15 +219,15 @@ namespace Lykke.Service.Operations.Controllers
         public async Task<Guid> StopLimitOrder(Guid id, [FromBody] CreateStopLimitOrderCommand command)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             if (!ModelState.IsValid)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation with the id already exists.");
 
             var context = new
             {
@@ -258,15 +258,15 @@ namespace Lykke.Service.Operations.Controllers
         public async Task<Guid> CashoutSwift(Guid id, [FromBody] CreateSwiftCashoutCommand command)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             if (!ModelState.IsValid)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation with the id already exists.");
 
             var context = new
             {
@@ -292,15 +292,15 @@ namespace Lykke.Service.Operations.Controllers
         public async Task<Guid> Cashout(Guid id, [FromBody] CreateCashoutCommand command)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             if (!ModelState.IsValid)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation with the id already exists.");
 
             // TODO: temp, ugly
             command.GlobalSettings.EthereumHotWallet = _ethereumServiceClientSettings.HotwalletAddress;
@@ -327,7 +327,7 @@ namespace Lykke.Service.Operations.Controllers
 
                 ModelState.AddModelError("InternalError", wfResult.Error);
 
-                throw new ApiException(HttpStatusCode.InternalServerError, new ApiResult(ModelState));
+                throw new ApiException(HttpStatusCode.InternalServerError, ModelState);
             }
 
             if (operation.Status == OperationStatus.Failed)
@@ -347,7 +347,7 @@ namespace Lykke.Service.Operations.Controllers
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                     modelState.AddModelError(errorCode ?? "Error", errorMessage);
 
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(modelState));
+                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
             }
         }
 
@@ -357,34 +357,34 @@ namespace Lykke.Service.Operations.Controllers
         public async Task<Guid> Transfer(Guid id, [FromBody]CreateTransferCommand cmd)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             if (!ModelState.IsValid)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
+                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation != null)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation with the id already exists.");
 
             var clientResponse = await _clientAccountService.GetByIdAsync(cmd.ClientId.ToString());
             if (clientResponse is ClientAccount.Client.AutorestClient.Models.ErrorResponse)
             {
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("clientId", "Non-existed client."));
+                throw new ApiException(HttpStatusCode.BadRequest, "clientId", "Non-existed client.");
             }
             var clientAccount = (ClientResponseModel)clientResponse;
 
             var isSourceWalletTrustedResponse = await _clientAccountService.IsTrustedAsync(cmd.SourceWalletId.ToString());
             if (isSourceWalletTrustedResponse is ClientAccount.Client.AutorestClient.Models.ErrorResponse)
             {
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("sourceWalletId", "Non-existed wallet."));
+                throw new ApiException(HttpStatusCode.BadRequest, "sourceWalletId", "Non-existed wallet.");
             }
             var isSourceWalletTrusted = (bool?)isSourceWalletTrustedResponse ?? false;
 
             var isDestinationWalletTrustedResponse = await _clientAccountService.IsTrustedAsync(cmd.WalletId.ToString());
             if (isDestinationWalletTrustedResponse is ClientAccount.Client.AutorestClient.Models.ErrorResponse)
             {
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("walletId", "Non-existed wallet."));
+                throw new ApiException(HttpStatusCode.BadRequest, "walletId", "Non-existed wallet.");
             }
             var isDestinationWalletTrusted = (bool?)isDestinationWalletTrustedResponse ?? false;
 
@@ -431,18 +431,18 @@ namespace Lykke.Service.Operations.Controllers
         public async Task Cancel(Guid id)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
-                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
+                throw new ApiException(HttpStatusCode.NotFound, "id", "Operation not found");
 
             if (operation.Status == OperationStatus.Canceled)
                 return;
 
             if (operation.Status != OperationStatus.Created)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be canceled"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "An operation in created status could be canceled");
 
             await _operationsRepository.UpdateStatus(id, OperationStatus.Canceled);
         }
@@ -453,7 +453,7 @@ namespace Lykke.Service.Operations.Controllers
         public async Task Complete(Guid id)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             var operation = await _operationsRepository.Get(id);
 
@@ -469,7 +469,7 @@ namespace Lykke.Service.Operations.Controllers
         public async Task Fail(Guid id)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             var operation = await _operationsRepository.Get(id);
 
@@ -486,18 +486,18 @@ namespace Lykke.Service.Operations.Controllers
         public async Task Confirm(Guid id)
         {
             if (id == Guid.Empty)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "Operation id must be non empty");
 
             var operation = await _operationsRepository.Get(id);
 
             if (operation == null)
-                throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
+                throw new ApiException(HttpStatusCode.NotFound, "id", "Operation not found");
 
             if (operation.Status == OperationStatus.Confirmed)
                 return;
 
             if (operation.Status != OperationStatus.Created && operation.Status != OperationStatus.Accepted)
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be confirmed"));
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "An operation in created status could be confirmed");
 
             switch (operation.Type)
             {
