@@ -497,7 +497,7 @@ namespace Lykke.Service.Operations.Controllers
                 return;
 
             if (operation.Status != OperationStatus.Created && operation.Status != OperationStatus.Accepted)
-                throw new ApiException(HttpStatusCode.BadRequest, "id", "An operation in created status could be confirmed");
+                throw new ApiException(HttpStatusCode.BadRequest, "id", "An operation could be confirmed only in created or accepted status ");
 
             switch (operation.Type)
             {
