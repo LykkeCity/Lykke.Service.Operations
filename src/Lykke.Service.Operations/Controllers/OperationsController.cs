@@ -347,7 +347,7 @@ namespace Lykke.Service.Operations.Controllers
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                     modelState.AddModelError(errorCode ?? "Error", errorMessage);
 
-                throw new ApiException(HttpStatusCode.BadRequest, ModelState);
+                throw new ApiException(HttpStatusCode.BadRequest, modelState);
             }
         }
 
