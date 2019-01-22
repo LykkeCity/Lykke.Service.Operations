@@ -1,7 +1,6 @@
 ﻿using System;
 using Autofac;
 using JetBrains.Annotations;
-using Lykke.HttpClientGenerator.Infrastructure;
 
 namespace Lykke.Service.Operations.Client
 {
@@ -17,7 +16,7 @@ namespace Lykke.Service.Operations.Client
 
             var httpClientGenerator = HttpClientGenerator.HttpClientGenerator
                 .BuildForUrl(serviceUrl)
-                .WithAdditionalCallsWrapper(new ExceptionHandlerCallsWrapper())
+                .WithAdditionalCallsWrapper(new OwnExceptionHandlerCallsWrapper())
                 .WithoutRetries()
                 .Create();
 
