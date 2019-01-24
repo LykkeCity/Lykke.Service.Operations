@@ -15,7 +15,7 @@ namespace Lykke.Service.Operations.Workflow.Validation
                 .WithMessage("Volume");
 
             RuleFor(m => m.Volume)
-                .Must((input, volume) => input.Balance > input.Volume)
+                .Must((input, volume) => input.Balance >= input.Volume)
                 .WithErrorCode("NotEnoughFunds")
                 .WithMessage(input => "Not enough funds");
         }
