@@ -123,15 +123,15 @@ namespace Lykke.Service.Operations.Repositories
             limitOrder.Status = LimitOrderStatus.InOrderBook.ToString();
 
             var byOrderEntity = LimitOrderEntity.ByOrderId.Create(limitOrder);
-            var byClientEntity = LimitOrderEntity.ByClientId.Create(limitOrder);
-            var byClientEntityActive = LimitOrderEntity.ByClientIdActive.Create(limitOrder);
 
             // already created by TransactionHandler
             if (!await _tableStorage.CreateIfNotExistsAsync(byOrderEntity))
                 return;
 
-            await _tableStorage.InsertOrMergeAsync(byClientEntity);
-            await _tableStorage.InsertOrMergeAsync(byClientEntityActive);
+            var byClientEntity = LimitOrderEntity.ByClientId.Create(limitOrder);
+            var byClientEntityActive = LimitOrderEntity.ByClientIdActive.Create(limitOrder);
+
+            await _tableStorage.InsertOrMergeBatchAsync(new []{byClientEntity, byClientEntityActive });
         }
 
         public Task RemoveAsync(string id, string clientId)
