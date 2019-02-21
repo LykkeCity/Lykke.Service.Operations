@@ -22,7 +22,7 @@ namespace Lykke.Service.Operations.Workflow
     {
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly IMatchingEngineClient _matchingEngineClient;
-        private ILog _log;
+        private readonly ILog _log;
 
         public MarketOrderWorkflow(
             Operation operation,
