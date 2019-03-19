@@ -91,47 +91,39 @@ namespace Lykke.Service.Operations.Workflow
 
         private object SendToMe(MeMoOrderInput input)
         {
-            try
+            var marketOrderModel = new MarketOrderModel
             {
-                var marketOrderModel = new MarketOrderModel
-                {
-                    Id = input.Id,
-                    AssetPairId = input.AssetPairId,
-                    ClientId = input.ClientId,
-                    ReservedLimitVolume = null,
-                    Straight = input.Straight,
-                    Volume = Math.Abs(input.Volume),
-                    OrderAction = input.OrderAction == OrderAction.Buy
-                        ? MatchingEngine.Connector.Models.Common.OrderAction.Buy
-                        : MatchingEngine.Connector.Models.Common.OrderAction.Sell
-                };
+                Id = input.Id,
+                AssetPairId = input.AssetPairId,
+                ClientId = input.ClientId,
+                ReservedLimitVolume = null,
+                Straight = input.Straight,
+                Volume = Math.Abs(input.Volume),
+                OrderAction = input.OrderAction == OrderAction.Buy
+                    ? MatchingEngine.Connector.Models.Common.OrderAction.Buy
+                    : MatchingEngine.Connector.Models.Common.OrderAction.Sell
+            };
 
-                if (input.Fee != null)
-                    marketOrderModel.Fees = new[] { input.Fee };
+            if (input.Fee != null)
+                marketOrderModel.Fees = new[] { input.Fee };
 
-                var response = _matchingEngineClient.HandleMarketOrderAsync(marketOrderModel).ConfigureAwait(false).GetAwaiter().GetResult();
+            var response = _matchingEngineClient.HandleMarketOrderAsync(marketOrderModel).ConfigureAwait(false).GetAwaiter().GetResult();
 
-                if (response == null)
-                    throw new ApplicationException("Me is not available");
+            if (response == null)
+                throw new ApplicationException("Me is not available");
 
-                if (response.Status != MeStatusCodes.Ok)
-                {
-                    _log.Warning($"ME returned invalid status code: [{response.Status}]", context: response);
-
-                    throw new ApplicationException(response.Status.Format());
-                }
-
-                return new
-                {
-                    Status = response.Status.ToString(),
-                    response.Price
-                };
-            }
-            catch (Exception e)
+            if (response.Status != MeStatusCodes.Ok)
             {
-                _log.Error(e);
-                throw;
+                _log.Warning($"ME returned invalid status code: [{response.Status}]", context: response);
+
+                throw new ApplicationException(response.Status.Format());
             }
+
+            return new
+            {
+                Status = response.Status.ToString(),
+                response.Price
+            };
         }
     }
 }
