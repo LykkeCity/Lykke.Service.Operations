@@ -22,7 +22,7 @@ namespace Lykke.Service.Operations.Workflow
     {
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly IMatchingEngineClient _matchingEngineClient;
-        private ILog _log;
+        private readonly ILog _log;
 
         public MarketOrderWorkflow(
             Operation operation,
@@ -99,8 +99,8 @@ namespace Lykke.Service.Operations.Workflow
                 ReservedLimitVolume = null,
                 Straight = input.Straight,
                 Volume = Math.Abs(input.Volume),
-                OrderAction = input.OrderAction == OrderAction.Buy 
-                    ? MatchingEngine.Connector.Models.Common.OrderAction.Buy 
+                OrderAction = input.OrderAction == OrderAction.Buy
+                    ? MatchingEngine.Connector.Models.Common.OrderAction.Buy
                     : MatchingEngine.Connector.Models.Common.OrderAction.Sell
             };
 
