@@ -52,11 +52,11 @@ namespace Lykke.Service.Operations.Workflow
                     .Do("Destination address validation").OnFail("Fail operation")
                     .Do("Kyc validation").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
-                    .Do("Balance validation").OnFail("Fail operation")                    
+                    .Do("Balance validation").OnFail("Fail operation")
                     .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
                         .ContinueWith("Limits validation")
                     .On("Is blockchain integration").DeterminedAs(context => !string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
-                        .ContinueWith("Merge blockchain address")                    
+                        .ContinueWith("Merge blockchain address")
                     .WithBranch()
                         .Do("Merge blockchain address").OnFail("Fail operation")
                         .Do("BIL check").OnFail("Fail operation")
@@ -92,7 +92,7 @@ namespace Lykke.Service.Operations.Workflow
                         .Do("Send operation status")
                     .End()
             );
-            
+
             ValidationNode<GlobalInput>("Global validation")
                 .WithInput(context => new GlobalInput
                 {
@@ -134,12 +134,11 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeFailOutput(output => output);
 
-            ValidationNode<AssetKycInput>("Kyc validation")
-                .WithInput(context => new AssetKycInput
+            ValidationNode<KycCheckInput>("Kyc validation")
+                .WithInput(context => new KycCheckInput
                 {
                     KycStatus = context.OperationValues.Client.KycStatus,
-                    AssetId = context.OperationValues.Asset.Id,
-                    AssetKycNeeded = context.OperationValues.Asset.KycNeeded
+                    ClientId = context.OperationValues.Client.Id
                 })
                 .MergeFailOutput(output => output);
 
@@ -150,11 +149,11 @@ namespace Lykke.Service.Operations.Workflow
                     ClientId = context.OperationValues.Client.Id,
                     LykkeEntityId1 = context.OperationValues.Asset.LykkeEntityId
                 })
-                .MergeFailOutput(output => output);         
+                .MergeFailOutput(output => output);
 
-            DelegateNode<BlockchainAddressInput, string>("Merge blockchain address", 
+            DelegateNode<BlockchainAddressInput, string>("Merge blockchain address",
                     input => blockchainAddress.MergeAsync(input.DestinationAddress,
-                                                          input.DestinationAddressExtension, 
+                                                          input.DestinationAddressExtension,
                                                           input.BlockchainIntegrationLayerId)
                                                           .ConfigureAwait(false)
                                                         .GetAwaiter()
@@ -342,6 +341,6 @@ namespace Lykke.Service.Operations.Workflow
                 throw new WorkflowException("ConfirmationFailed", "Number of attempts exceeded");
 
             return new { ConfirmationAttemptsCount = currentAttemptsCount };
-        }      
+        }
     }
 }
