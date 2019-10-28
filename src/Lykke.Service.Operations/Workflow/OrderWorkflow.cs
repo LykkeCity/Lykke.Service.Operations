@@ -14,17 +14,16 @@ namespace Lykke.Service.Operations.Workflow
     public class OrderWorkflow : OperationWorkflow
     {
         public OrderWorkflow(
-            Operation operation, 
-            ILogFactory logFactory, 
+            Operation operation,
+            ILogFactory logFactory,
             IActivityFactory activityFactory) : base(operation, logFactory, activityFactory)
-        {            
-            Configure(cfg => 
+        {
+            Configure(cfg =>
                 cfg
                     .Do("Client validation").OnFail("Fail operation")
                     .Do("Asset validation").OnFail("Fail operation")
                     .Do("Asset pair validation").OnFail("Fail operation")
-                    .Do("AssetPair: base asset kyc validation").OnFail("Fail operation")
-                    .Do("AssetPair: quoting asset kyc validation").OnFail("Fail operation")                    
+                    .Do("Kyc validation").OnFail("Fail operation")
                     .Do("USA users restrictions validation").OnFail("Fail operation")
                     .Do("LKK2Y restrictions validation").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
@@ -36,7 +35,7 @@ namespace Lykke.Service.Operations.Workflow
                     .WithBranch()
                         .Do("Prepare to send to ME")
                         .SubConfigure(ConfigurePreMeNodes)
-                        .Do("Send to ME").OnFail("Fail operation on Me fail")                        
+                        .Do("Send to ME").OnFail("Fail operation on Me fail")
                         .SubConfigure(ConfigurePostMeNodes)
                         .ContinueWith("Confirm operation")
                     .WithBranch()
@@ -48,15 +47,15 @@ namespace Lykke.Service.Operations.Workflow
                     .WithBranch()
                         .Do("Confirm operation")
                     .End()
-            );                    
+            );
 
             ValidationNode<ClientInput>("Client validation")
                 .WithInput(context => new ClientInput
                 {
-                    OperationsBlocked = context.OperationValues.Client.TradesBlocked                    
+                    OperationsBlocked = context.OperationValues.Client.TradesBlocked
                 })
                 .MergeFailOutput(output => output);
-            
+
             ValidationNode<AssetInput>("Asset validation")
                 .WithInput(context => new AssetInput
                 {
@@ -67,7 +66,7 @@ namespace Lykke.Service.Operations.Workflow
                     OrderAction = context.OperationValues.OrderAction
                 })
                 .MergeFailOutput(output => output);
-            
+
             ValidationNode<AssetPairInput>("Asset pair validation")
                 .WithInput(context => new AssetPairInput
                 {
@@ -86,23 +85,13 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeFailOutput(output => output);
 
-            ValidationNode<AssetKycInput>("AssetPair: base asset kyc validation")
-                .WithInput(context => new AssetKycInput
+            ValidationNode<KycCheckInput>("Kyc validation")
+                .WithInput(context => new KycCheckInput
                 {
                     KycStatus = context.OperationValues.Client.KycStatus,
-                    AssetId = context.OperationValues.AssetPair.BaseAsset.Id,
-                    AssetKycNeeded = context.OperationValues.AssetPair.BaseAsset.KycNeeded
+                    ClientId = context.OperationValues.Client.Id
                 })
                 .MergeFailOutput(output => output);
-
-            ValidationNode<AssetKycInput>("AssetPair: quoting asset kyc validation")
-                .WithInput(context => new AssetKycInput
-                {
-                    KycStatus = context.OperationValues.Client.KycStatus,
-                    AssetId = context.OperationValues.AssetPair.QuotingAsset.Id,
-                    AssetKycNeeded = context.OperationValues.AssetPair.QuotingAsset.KycNeeded
-                })
-                .MergeFailOutput(output => output);            
 
             ValidationNode<UsaUsersRestrictionsInput>("USA users restrictions validation")
                 .WithInput(context => new UsaUsersRestrictionsInput
@@ -121,9 +110,9 @@ namespace Lykke.Service.Operations.Workflow
             ValidationNode<Lkk2yRestrictionsInput>("LKK2Y restrictions validation")
                 .WithInput(context => new Lkk2yRestrictionsInput
                 {
-                    CountryFromPOA = context.OperationValues.Client.PersonalData.CountryFromPOA,                    
+                    CountryFromPOA = context.OperationValues.Client.PersonalData.CountryFromPOA,
                     BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
-                    QuotingAssetId = context.OperationValues.AssetPair.QuotingAsset.Id,                    
+                    QuotingAssetId = context.OperationValues.AssetPair.QuotingAsset.Id,
                     IcoSettings = new IcoSettings
                     {
                         LKK2YAssetId = context.OperationValues.GlobalSettings.IcoSettings.LKK2YAssetId,
@@ -147,15 +136,15 @@ namespace Lykke.Service.Operations.Workflow
                     };
                 })
                 .MergeFailOutput(output => output);
-            
-            DelegateNode("Fail operation on Me fail", context => OnMeFail(context));                
+
+            DelegateNode("Fail operation on Me fail", context => OnMeFail(context));
             DelegateNode("Fail operation", context => context.Fail());
             DelegateNode("Confirm operation", context => context.Confirm());
         }
 
         protected virtual void OnMeFail(Operation context)
         {
-            
+
         }
 
         protected virtual WorkflowConfiguration<Operation> ConfigurePostMeNodes(WorkflowConfiguration<Operation> configuration)
@@ -167,5 +156,5 @@ namespace Lykke.Service.Operations.Workflow
         {
             return configuration;
         }
-    }    
+    }
 }
