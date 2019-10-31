@@ -55,6 +55,7 @@
     <PackageReference Include="Lykke.Service.Limitations.Client" Version="1.1.1.39" />
     <PackageReference Include="Lykke.Service.Session" Version="1.0.33" />
     <PackageReference Include="Lykke.Service.SwiftWithdrawal.Contracts" Version="1.0.2" />
+    <PackageReference Include="Lykke.Service.Tier.Client" Version="1.10.0" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.5" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.8.2" />
     <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />

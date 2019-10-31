@@ -2,31 +2,45 @@
 using System.Threading.Tasks;
 using FluentValidation;
 using JetBrains.Annotations;
-using Lykke.Service.ClientAccount.Client;
-using Lykke.Service.ClientAccount.Client.Models;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
+using Lykke.Service.Tier.Client;
 
 namespace Lykke.Service.Operations.Workflow.Data.Validation
 {
     [UsedImplicitly]
     public class KycValidator : AbstractValidator<KycCheckInput>
     {
-        private readonly IClientAccountClient _clientAccountClient;
+        private readonly ITierClient _tierClient;
 
         public KycValidator(
-            IClientAccountClient clientAccountClient
-            )
+            ITierClient tierClient)
         {
-            _clientAccountClient = clientAccountClient;
-
-            RuleFor(m => m).MustAsync(IsKycNotNeeded).WithMessage("KYC needed").WithErrorCode("AssetKycNeeded");
+            _tierClient = tierClient;
+            RuleFor(m => m).MustAsync(IsKycNotNeeded).WithMessage("KYC needed").WithErrorCode("KycNeeded");
         }
 
         private async Task<bool> IsKycNotNeeded(KycCheckInput input, CancellationToken cancellationToken)
         {
-            var client = await _clientAccountClient.ClientAccountInformation.GetByIdAsync(input.ClientId);
-
-            return !(client.Tier == AccountTier.Beginner && input.KycStatus != KycStatus.Ok);
+            switch (input.KycStatus)
+            {
+                case KycStatus.NeedToFillData:
+                case KycStatus.RestrictedArea:
+                case KycStatus.Rejected:
+                case KycStatus.Complicated:
+                case KycStatus.JumioInProgress:
+                case KycStatus.JumioOk:
+                case KycStatus.JumioFailed:
+                    return true;
+                case KycStatus.Pending:
+                    var tierInfo = await _tierClient.Tiers.GetClientTierInfoAsync(input.ClientId);
+                    return tierInfo.CurrentTier.Current > tierInfo.CurrentTier.MaxLimit;
+                case KycStatus.ReviewDone:
+                case KycStatus.Ok:
+                    return false;
+                default:
+                    return false;
+            }
         }
     }
 }
+
