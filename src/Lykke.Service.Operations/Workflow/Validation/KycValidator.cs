@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using FluentValidation;
 using JetBrains.Annotations;
+using Lykke.Service.ClientAccount.Client.Models;
 using Lykke.Service.Kyc.Abstractions.Domain.Verification;
 using Lykke.Service.Tier.Client;
 
@@ -33,7 +34,7 @@ namespace Lykke.Service.Operations.Workflow.Data.Validation
                     return true;
                 case KycStatus.Pending:
                     var tierInfo = await _tierClient.Tiers.GetClientTierInfoAsync(input.ClientId);
-                    return tierInfo.CurrentTier.Current > tierInfo.CurrentTier.MaxLimit;
+                    return tierInfo.CurrentTier.Tier == AccountTier.Beginner || tierInfo.CurrentTier.Current > tierInfo.CurrentTier.MaxLimit;
                 case KycStatus.ReviewDone:
                 case KycStatus.Ok:
                     return false;
