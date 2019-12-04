@@ -12,6 +12,8 @@ using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.ExchangeOperations.Client;
 using Lykke.Service.FeeCalculator.Client;
+using Lykke.Service.Kyc.Abstractions.Services;
+using Lykke.Service.Kyc.Client;
 using Lykke.Service.Limitations.Client;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
@@ -51,7 +53,6 @@ namespace Lykke.Service.Operations.Modules
                 .As<IBlockchainCashoutPreconditionsCheckClient>()
                 .SingleInstance();
 
-
             builder.Register(ctx => new BlockchainWalletsClient(
                     _settings.CurrentValue.BlockchainWalletsServiceClient.ServiceUrl,
                     ctx.Resolve<ILogFactory>(),
@@ -73,6 +74,11 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterMeClient(_settings.CurrentValue.MatchingEngineClient.IpEndpoint.GetClientIpEndPoint(), true);
             builder.RegisterLimitationsServiceClient(_settings.CurrentValue.LimitationServiceClient.ServiceUrl);
             builder.RegisterExchangeOperationsClient(_settings.CurrentValue.ExchangeOperationsServiceClient.ServiceUrl);
+
+            builder.Register(ctx =>
+                    new KycStatusServiceClient(_settings.CurrentValue.KycServiceClient, ctx.Resolve<ILogFactory>()))
+                .As<IKycStatusService>()
+                .SingleInstance();
         }
     }
 }
