@@ -18,9 +18,10 @@ namespace Lykke.Service.Operations.Workflow.Data.Validation
             RuleFor(m => m).MustAsync(IsKycNotNeeded).WithMessage("KYC needed").WithErrorCode("KycNeeded");
         }
 
-        private Task<bool> IsKycNotNeeded(KycCheckInput input, CancellationToken cancellationToken)
+        private async Task<bool> IsKycNotNeeded(KycCheckInput input, CancellationToken cancellationToken)
         {
-            return _kycStatusService.IsKycNeededAsync(input.ClientId, input.KycStatus);
+            bool isKycNeeded = await _kycStatusService.IsKycNeededAsync(input.ClientId, input.KycStatus);
+            return !isKycNeeded;
         }
     }
 }
