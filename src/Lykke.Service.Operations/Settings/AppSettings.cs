@@ -1,10 +1,10 @@
 ﻿using System.Net;
-using JetBrains.Annotations;
 using Lykke.Sdk.Settings;
 using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.ExchangeOperations.Client;
+using Lykke.Service.Kyc.Client;
 using Lykke.Service.Operations.Settings.Assets;
 using Lykke.Service.Operations.Settings.ServiceSettings;
 using Lykke.SettingsReader.Attributes;
@@ -22,16 +22,17 @@ namespace Lykke.Service.Operations.Settings
         public FeeCalculatorSettings FeeCalculatorServiceClient { get; set; }
         public MatchingEngineSettings MatchingEngineClient { set; get; }
         public AssetDisclaimersServiceClientSettings AssetDisclaimersServiceClient { get; set; }
-        public ExchangeOperationsServiceClientSettings ExchangeOperationsServiceClient { get; set; }        
+        public ExchangeOperationsServiceClientSettings ExchangeOperationsServiceClient { get; set; }
 
-        public SagasRabbitMq SagasRabbitMq { get; set; }        
+        public SagasRabbitMq SagasRabbitMq { get; set; }
         public BlockchainWalletsSettings BlockchainWalletsServiceClient { get; set; }
         public RedisSettings RedisSettings { get; set; }
 
         public BlockchainCashoutPreconditionsCheckServiceClientSettings BlockchainCashoutPreconditionsCheckServiceClient { get; set; }
         public EthereumServiceClientSettings EthereumServiceClient { get; set; }
+        public KycServiceClientSettings KycServiceClient { get; set; }
     }
-    
+
     public class RedisSettings
     {
         public string Configuration { get; set; }
@@ -40,7 +41,7 @@ namespace Lykke.Service.Operations.Settings
     public class BlockchainWalletsSettings
     {
         public string ServiceUrl { get; set; }
-    }    
+    }
 
     public class SagasRabbitMq
     {

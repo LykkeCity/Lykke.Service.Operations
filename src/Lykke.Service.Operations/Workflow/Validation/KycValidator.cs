@@ -2,45 +2,25 @@
 using System.Threading.Tasks;
 using FluentValidation;
 using JetBrains.Annotations;
-using Lykke.Service.ClientAccount.Client.Models;
-using Lykke.Service.Kyc.Abstractions.Domain.Verification;
-using Lykke.Service.Tier.Client;
+using Lykke.Service.Kyc.Abstractions.Services;
 
 namespace Lykke.Service.Operations.Workflow.Data.Validation
 {
     [UsedImplicitly]
     public class KycValidator : AbstractValidator<KycCheckInput>
     {
-        private readonly ITierClient _tierClient;
+        private readonly IKycStatusService _kycStatusService;
 
         public KycValidator(
-            ITierClient tierClient)
+            IKycStatusService kycStatusService)
         {
-            _tierClient = tierClient;
+            _kycStatusService = kycStatusService;
             RuleFor(m => m).MustAsync(IsKycNotNeeded).WithMessage("KYC needed").WithErrorCode("KycNeeded");
         }
 
-        private async Task<bool> IsKycNotNeeded(KycCheckInput input, CancellationToken cancellationToken)
+        private Task<bool> IsKycNotNeeded(KycCheckInput input, CancellationToken cancellationToken)
         {
-            switch (input.KycStatus)
-            {
-                case KycStatus.NeedToFillData:
-                case KycStatus.RestrictedArea:
-                case KycStatus.Rejected:
-                case KycStatus.Complicated:
-                case KycStatus.JumioInProgress:
-                case KycStatus.JumioOk:
-                case KycStatus.JumioFailed:
-                    return true;
-                case KycStatus.Pending:
-                    var tierInfo = await _tierClient.Tiers.GetClientTierInfoAsync(input.ClientId);
-                    return tierInfo.CurrentTier.Tier == AccountTier.Beginner || tierInfo.CurrentTier.Current > tierInfo.CurrentTier.MaxLimit;
-                case KycStatus.ReviewDone:
-                case KycStatus.Ok:
-                    return false;
-                default:
-                    return false;
-            }
+            return _kycStatusService.IsKycNeededAsync(input.ClientId, input.KycStatus);
         }
     }
 }
