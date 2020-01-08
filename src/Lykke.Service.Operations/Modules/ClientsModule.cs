@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net.Http;
 using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using Lykke.Common.Log;
 using Lykke.Service.AssetDisclaimers.Client;
 using Lykke.Service.Assets.Client;
@@ -9,35 +8,32 @@ using Lykke.Service.Balances.Client;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Client;
 using Lykke.Service.BlockchainWallets.Client;
 using Lykke.Service.BlockchainWallets.Client.ClientGenerator;
-using Lykke.Service.ClientAccount.Client.AutorestClient;
+using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.ExchangeOperations.Client;
 using Lykke.Service.FeeCalculator.Client;
+using Lykke.Service.Kyc.Abstractions.Services;
+using Lykke.Service.Kyc.Client;
 using Lykke.Service.Limitations.Client;
 using Lykke.Service.Operations.Settings;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
 using Lykke.Service.RateCalculator.Client;
 using Lykke.SettingsReader;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lykke.Service.Operations.Modules
 {
     public class ClientsModule : Module
     {
         private readonly IReloadingManager<AppSettings> _settings;
-        private readonly IServiceCollection _services;
 
         public ClientsModule(IReloadingManager<AppSettings> settings)
         {
             _settings = settings;
-            _services = new ServiceCollection();
         }
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<ClientAccountService>()
-                .As<IClientAccountService>()
-                .WithParameter("baseUri", new Uri(_settings.CurrentValue.OperationsService.Services.ClientAccountUrl));
+            builder.RegisterClientAccountClient(_settings.CurrentValue.OperationsService.Services.ClientAccountUrl);
 
             builder.RegisterType<PushNotificationsAPI>()
                 .As<IPushNotificationsAPI>()
@@ -56,7 +52,6 @@ namespace Lykke.Service.Operations.Modules
                     _settings.CurrentValue.BlockchainCashoutPreconditionsCheckServiceClient.ServiceUrl))
                 .As<IBlockchainCashoutPreconditionsCheckClient>()
                 .SingleInstance();
-
 
             builder.Register(ctx => new BlockchainWalletsClient(
                     _settings.CurrentValue.BlockchainWalletsServiceClient.ServiceUrl,
@@ -80,7 +75,10 @@ namespace Lykke.Service.Operations.Modules
             builder.RegisterLimitationsServiceClient(_settings.CurrentValue.LimitationServiceClient.ServiceUrl);
             builder.RegisterExchangeOperationsClient(_settings.CurrentValue.ExchangeOperationsServiceClient.ServiceUrl);
 
-            builder.Populate(_services);
+            builder.Register(ctx =>
+                    new KycStatusServiceClient(_settings.CurrentValue.KycServiceClient, ctx.Resolve<ILogFactory>()))
+                .As<IKycStatusService>()
+                .SingleInstance();
         }
     }
 }

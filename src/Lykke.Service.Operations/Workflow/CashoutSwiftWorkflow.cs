@@ -44,7 +44,7 @@ namespace Lykke.Service.Operations.Workflow
                 cfg
                     .Do("Swift check").OnFail("Fail operation")
                     .Do("Asset check").OnFail("Fail operation")
-                    .Do("Asset kyc validation").OnFail("Fail operation")
+                    .Do("Kyc validation").OnFail("Fail operation")
                     .Do("Balance check").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
                     .Do("Limits check").OnFail("Fail operation")
@@ -78,12 +78,11 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .MergeFailOutput(output => output);
 
-            ValidationNode<AssetKycInput>("Asset kyc validation")
-                .WithInput(context => new AssetKycInput
+            ValidationNode<KycCheckInput>("Kyc validation")
+                .WithInput(context => new KycCheckInput
                 {
                     KycStatus = context.OperationValues.Client.KycStatus,
-                    AssetId = context.OperationValues.Asset.Id,
-                    AssetKycNeeded = context.OperationValues.Asset.KycNeeded
+                    ClientId = context.OperationValues.Client.Id,
                 })
                 .MergeFailOutput(output => output);
 
@@ -223,7 +222,7 @@ namespace Lykke.Service.Operations.Workflow
         private ExchangeOperations.Client.Models.Fee.FeeModel CalculateFee(CalculateSwiftCashoutFeeInput input)
         {
             var fee = _feeCalculatorClient.GetWithdrawalFeeAsync(input.AssetId, input.Bic.GetCountryCode()).ConfigureAwait(false).GetAwaiter().GetResult();
-            
+
             return new ExchangeOperations.Client.Models.Fee.FeeModel()
             {
                 Type = ExchangeOperations.Client.Models.Fee.FeeType.CLIENT_FEE,

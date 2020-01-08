@@ -4,19 +4,18 @@ using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
+using Lykke.Common.ApiLibrary.Exceptions;
 using Lykke.Common.Log;
 using Lykke.Contracts.Operations;
 using Lykke.Cqrs;
 using Lykke.Service.Assets.Client;
-using Lykke.Service.ClientAccount.Client.AutorestClient;
-using Lykke.Service.ClientAccount.Client.AutorestClient.Models;
+using Lykke.Service.ClientAccount.Client;
 using Lykke.Service.EthereumCore.Client;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Api;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Core.Domain;
 using Lykke.Service.Operations.Models;
-using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow;
 using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.PushNotifications.Client.AutorestClient;
@@ -26,6 +25,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using ApiException = Lykke.Service.Operations.Models.ApiException;
 using OperationStatus = Lykke.Service.Operations.Contracts.OperationStatus;
 using OperationType = Lykke.Service.Operations.Contracts.OperationType;
 
@@ -36,11 +36,10 @@ namespace Lykke.Service.Operations.Controllers
     public class OperationsController : Controller
     {
         private readonly IOperationsRepository _operationsRepository;
-        private readonly IClientAccountService _clientAccountService;
+        private readonly IClientAccountClient _clientAccountService;
         private readonly IPushNotificationsAPI _pushNotificationsApi;
         private readonly IAssetsServiceWithCache _assetsServiceWithCache;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
-        private readonly IWorkflowService _workflowService;
         private readonly ICqrsEngine _cqrsEngine;
         private readonly EthereumServiceClientSettings _ethereumServiceClientSettings;
         private readonly ILog _log;
@@ -48,11 +47,10 @@ namespace Lykke.Service.Operations.Controllers
 
         public OperationsController(
             IOperationsRepository operationsRepository,
-            IClientAccountService clientAccountService,
+            IClientAccountClient clientAccountService,
             IPushNotificationsAPI pushNotificationsApi,
             IAssetsServiceWithCache assetsServiceWithCache,
             Func<string, Operation, OperationWorkflow> workflowFactory,
-            IWorkflowService workflowService,
             ICqrsEngine cqrsEngine,
             EthereumServiceClientSettings ethereumServiceClientSettings,
             ILogFactory log,
@@ -63,7 +61,6 @@ namespace Lykke.Service.Operations.Controllers
             _pushNotificationsApi = pushNotificationsApi;
             _assetsServiceWithCache = assetsServiceWithCache;
             _workflowFactory = workflowFactory;
-            _workflowService = workflowService;
             _cqrsEngine = cqrsEngine;
             _ethereumServiceClientSettings = ethereumServiceClientSettings;
             _log = log.CreateLog(this);
@@ -370,26 +367,39 @@ namespace Lykke.Service.Operations.Controllers
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
 
-            var clientResponse = await _clientAccountService.GetByIdAsync(cmd.ClientId.ToString());
-            if (clientResponse is ClientAccount.Client.AutorestClient.Models.ErrorResponse)
+            var clientAccount = await _clientAccountService.ClientAccountInformation.GetByIdAsync(cmd.ClientId.ToString());
+
+            if (clientAccount == null)
             {
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("clientId", "Non-existed client."));
             }
-            var clientAccount = (ClientResponseModel)clientResponse;
 
-            var isSourceWalletTrustedResponse = await _clientAccountService.IsTrustedAsync(cmd.SourceWalletId.ToString());
-            if (isSourceWalletTrustedResponse is ClientAccount.Client.AutorestClient.Models.ErrorResponse)
-            {
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("sourceWalletId", "Non-existed wallet."));
-            }
-            var isSourceWalletTrusted = (bool?)isSourceWalletTrustedResponse ?? false;
+            bool isSourceWalletTrusted;
+            bool isDestinationWalletTrusted;
 
-            var isDestinationWalletTrustedResponse = await _clientAccountService.IsTrustedAsync(cmd.WalletId.ToString());
-            if (isDestinationWalletTrustedResponse is ClientAccount.Client.AutorestClient.Models.ErrorResponse)
+            try
             {
-                throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("walletId", "Non-existed wallet."));
+                isSourceWalletTrusted = await _clientAccountService.ClientAccount.IsTrustedAsync(cmd.SourceWalletId.ToString());
             }
-            var isDestinationWalletTrusted = (bool?)isDestinationWalletTrustedResponse ?? false;
+            catch (ValidationApiException ex)
+            {
+                if (ex.StatusCode == HttpStatusCode.NotFound)
+                    throw new ApiException(HttpStatusCode.BadRequest,
+                        new ApiResult("sourceWalletId", "Non-existed wallet."));
+                throw;
+            }
+
+            try
+            {
+                isDestinationWalletTrusted = await _clientAccountService.ClientAccount.IsTrustedAsync(cmd.WalletId.ToString());
+            }
+            catch (ValidationApiException ex)
+            {
+                if (ex.StatusCode == HttpStatusCode.NotFound)
+                    throw new ApiException(HttpStatusCode.BadRequest,
+                        new ApiResult("walletId", "Non-existed wallet."));
+                throw;
+            }
 
             var isSourceAssetTrusted = (await _assetsServiceWithCache.TryGetAssetAsync(cmd.AssetId))?.IsTrusted ?? false;
 
