@@ -50,7 +50,6 @@ namespace Lykke.Service.Operations.Workflow
                     .Do("Client validation").OnFail("Fail operation")
                     .Do("Asset validation").OnFail("Fail operation")
                     .Do("Destination address validation").OnFail("Fail operation")
-                    .Do("Kyc validation").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
                     .Do("Balance validation").OnFail("Fail operation")
                     .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
@@ -131,14 +130,6 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     Balance = context.OperationValues.Client.Balance,
                     Volume = context.OperationValues.Volume
-                })
-                .MergeFailOutput(output => output);
-
-            ValidationNode<KycCheckInput>("Kyc validation")
-                .WithInput(context => new KycCheckInput
-                {
-                    KycStatus = context.OperationValues.Client.KycStatus,
-                    ClientId = context.OperationValues.Client.Id
                 })
                 .MergeFailOutput(output => output);
 
