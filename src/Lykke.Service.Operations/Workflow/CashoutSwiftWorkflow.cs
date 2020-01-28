@@ -44,7 +44,6 @@ namespace Lykke.Service.Operations.Workflow
                 cfg
                     .Do("Swift check").OnFail("Fail operation")
                     .Do("Asset check").OnFail("Fail operation")
-                    .Do("Kyc validation").OnFail("Fail operation")
                     .Do("Balance check").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
                     .Do("Limits check").OnFail("Fail operation")
@@ -75,14 +74,6 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new AssetInput
                 {
                     SwiftCashoutEnabled = context.OperationValues.Asset.SwiftCashoutEnabled
-                })
-                .MergeFailOutput(output => output);
-
-            ValidationNode<KycCheckInput>("Kyc validation")
-                .WithInput(context => new KycCheckInput
-                {
-                    KycStatus = context.OperationValues.Client.KycStatus,
-                    ClientId = context.OperationValues.Client.Id,
                 })
                 .MergeFailOutput(output => output);
 
