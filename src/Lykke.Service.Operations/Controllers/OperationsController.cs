@@ -496,7 +496,7 @@ namespace Lykke.Service.Operations.Controllers
         [Route("confirm/{id}")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task Confirm(Guid id, [FromBody]ConfirmCommand cmd)
+        public async Task Confirm(Guid id)
         {
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
