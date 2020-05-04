@@ -17,8 +17,13 @@ using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
+using Common;
+using Lykke.Common.ApiLibrary.Exceptions;
+using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Contract.Requests;
 using Lykke.Service.ExchangeOperations.Client.Models;
+using Polly;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 
 namespace Lykke.Service.Operations.Workflow
@@ -273,28 +278,53 @@ namespace Lykke.Service.Operations.Workflow
 
         private void SendToMe(CashoutMeInput input)
         {
-            var res = _exchangeOperationsServiceClient.ExchangeOperations.CashOutAsync(
-                new CashOutRequestModel
+            var policy = Policy
+                .Handle<ClientApiException>(exception =>
                 {
-                    ClientId = input.ClientId,
-                    Address = input.DestinationAddress,
-                    Amount = (double)input.Volume,
-                    AssetId = input.AssetId,
-                    TransactionId = input.OperationId.ToString(),
-                    FeeClientId = input.CashoutTargetClientId,
-                    FeeSize = input.FeeSize,
-                    FeeSizeType = input.FeeType == FeeType.Absolute ? FeeSizeType.ABSOLUTE : FeeSizeType.PERCENTAGE,
+                    _log.Warning("Retry on exception", context: exception.Message);
+                    return true;
                 })
-                .GetAwaiter().GetResult();
+                .Or<TaskCanceledException>(exception =>
+                {
+                    _log.Warning("Retry on exception", context: exception.Message);
+                    return true;
+                })
+                .OrResult<ExchangeOperationResult>(r =>
+                {
+                    _log.Info("Response from ME", r.ToJson());
+                    return r.Code == 500;
+                }) //ME runtime error
+                .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-            if (!res.IsOk())
+            ExchangeOperationResult res = null;
+
+            policy.Execute(() =>
             {
-                var message = $"{res.Code}: {res.Message}";
+                res = _exchangeOperationsServiceClient.ExchangeOperations.CashOutAsync(
+                    new CashOutRequestModel
+                        {
+                            ClientId = input.ClientId,
+                            Address = input.DestinationAddress,
+                            Amount = (double) input.Volume,
+                            AssetId = input.AssetId,
+                            TransactionId = input.OperationId.ToString(),
+                            FeeClientId = input.CashoutTargetClientId,
+                            FeeSize = input.FeeSize,
+                            FeeSizeType = input.FeeType == FeeType.Absolute
+                                ? FeeSizeType.ABSOLUTE
+                                : FeeSizeType.PERCENTAGE,
+                        })
+                    .GetAwaiter().GetResult();
 
-                _log.Warning(message, context: new { input.OperationId, ErrorMessage = message });
+                return res;
+            });
 
-                throw new InvalidOperationException(message);
-            }
+            if (res.IsOk() || res.Code == (int)MeStatusCodes.Duplicate)
+                return;
+
+            var message = $"{res.Code}: {res.Message}";
+            _log.Warning(message, context: new {input.OperationId, ErrorMessage = message});
+            throw new InvalidOperationException(message);
         }
 
         private BilOutput BilCheck(BilInput input)
