@@ -17,6 +17,7 @@ using Lykke.Workflow.Fluent;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
+using Lykke.Common.ApiLibrary.Exceptions;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Contract.Requests;
 using Lykke.Service.ExchangeOperations.Client.Models;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
@@ -273,27 +274,36 @@ namespace Lykke.Service.Operations.Workflow
 
         private void SendToMe(CashoutMeInput input)
         {
-            var res = _exchangeOperationsServiceClient.ExchangeOperations.CashOutAsync(
-                new CashOutRequestModel
-                {
-                    ClientId = input.ClientId,
-                    Address = input.DestinationAddress,
-                    Amount = (double)input.Volume,
-                    AssetId = input.AssetId,
-                    TransactionId = input.OperationId.ToString(),
-                    FeeClientId = input.CashoutTargetClientId,
-                    FeeSize = input.FeeSize,
-                    FeeSizeType = input.FeeType == FeeType.Absolute ? FeeSizeType.ABSOLUTE : FeeSizeType.PERCENTAGE,
-                })
-                .GetAwaiter().GetResult();
-
-            if (!res.IsOk())
+            try
             {
-                var message = $"{res.Code}: {res.Message}";
+                var res = _exchangeOperationsServiceClient.ExchangeOperations.CashOutAsync(
+                        new CashOutRequestModel
+                        {
+                            ClientId = input.ClientId,
+                            Address = input.DestinationAddress,
+                            Amount = (double) input.Volume,
+                            AssetId = input.AssetId,
+                            TransactionId = input.OperationId.ToString(),
+                            FeeClientId = input.CashoutTargetClientId,
+                            FeeSize = input.FeeSize,
+                            FeeSizeType = input.FeeType == FeeType.Absolute
+                                ? FeeSizeType.ABSOLUTE
+                                : FeeSizeType.PERCENTAGE,
+                        })
+                    .GetAwaiter().GetResult();
 
-                _log.Warning(message, context: new { input.OperationId, ErrorMessage = message });
+                if (!res.IsOk())
+                {
+                    var message = $"{res.Code}: {res.Message}";
 
-                throw new InvalidOperationException(message);
+                    _log.Warning(message, context: new {input.OperationId, ErrorMessage = message});
+
+                    throw new InvalidOperationException(message);
+                }
+            }
+            catch (ClientApiException ex)
+            {
+                _log.Error(ex, ex.Message);
             }
         }
 
