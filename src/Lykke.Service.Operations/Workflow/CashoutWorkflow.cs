@@ -296,11 +296,9 @@ namespace Lykke.Service.Operations.Workflow
                 }) //ME runtime error
                 .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-            ExchangeOperationResult res = null;
-
-            policy.Execute(() =>
+            var result = policy.Execute(() =>
             {
-                res = _exchangeOperationsServiceClient.ExchangeOperations.CashOutAsync(
+                var res = _exchangeOperationsServiceClient.ExchangeOperations.CashOutAsync(
                     new CashOutRequestModel
                         {
                             ClientId = input.ClientId,
@@ -319,10 +317,10 @@ namespace Lykke.Service.Operations.Workflow
                 return res;
             });
 
-            if (res.IsOk() || res.Code == (int)MeStatusCodes.Duplicate)
+            if (result.IsOk() || result.Code == (int)MeStatusCodes.Duplicate)
                 return;
 
-            var message = $"{res.Code}: {res.Message}";
+            var message = $"{result.Code}: {result.Message}";
             _log.Warning(message, context: new {input.OperationId, ErrorMessage = message});
             throw new InvalidOperationException(message);
         }
