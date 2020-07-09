@@ -23,6 +23,7 @@ using Lykke.Common.ApiLibrary.Exceptions;
 using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Contract.Requests;
 using Lykke.Service.ExchangeOperations.Client.Models;
+using Microsoft.WindowsAzure.Storage;
 using Polly;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
 
@@ -281,12 +282,16 @@ namespace Lykke.Service.Operations.Workflow
             var policy = Policy
                 .Handle<ClientApiException>(exception =>
                 {
-                    _log.Warning("Retry on exception", context: exception.Message);
+                    _log.Warning("Retry on ClientApiException", context: input.ToJson());
                     return true;
                 })
                 .Or<TaskCanceledException>(exception =>
                 {
-                    _log.Warning("Retry on exception", context: exception.Message);
+                    _log.Warning("Retry on TaskCanceledException", context: input.ToJson());
+                    return true;
+                }).Or<StorageException>(exception =>
+                {
+                    _log.Warning("Retry on StorageException", context: input.ToJson());
                     return true;
                 })
                 .OrResult<ExchangeOperationResult>(r =>
