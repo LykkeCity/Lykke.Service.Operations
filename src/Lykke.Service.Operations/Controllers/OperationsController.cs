@@ -15,6 +15,7 @@ using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Api;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.Models;
 using Lykke.Service.Operations.Workflow;
 using Lykke.Service.Operations.Workflow.Commands;
@@ -42,6 +43,7 @@ namespace Lykke.Service.Operations.Controllers
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
         private readonly ICqrsEngine _cqrsEngine;
         private readonly EthereumServiceClientSettings _ethereumServiceClientSettings;
+        private readonly IOperationsCacheService _operationsCacheService;
         private readonly ILog _log;
         private readonly IMapper _mapper;
 
@@ -53,6 +55,7 @@ namespace Lykke.Service.Operations.Controllers
             Func<string, Operation, OperationWorkflow> workflowFactory,
             ICqrsEngine cqrsEngine,
             EthereumServiceClientSettings ethereumServiceClientSettings,
+            IOperationsCacheService operationsCacheService,
             ILogFactory log,
             IMapper mapper)
         {
@@ -63,6 +66,7 @@ namespace Lykke.Service.Operations.Controllers
             _workflowFactory = workflowFactory;
             _cqrsEngine = cqrsEngine;
             _ethereumServiceClientSettings = ethereumServiceClientSettings;
+            _operationsCacheService = operationsCacheService;
             _log = log.CreateLog(this);
             _mapper = mapper;
         }
@@ -73,7 +77,7 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType(typeof(void), (int)HttpStatusCode.NotFound)]
         public async Task<OperationModel> Get(Guid id)
         {
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation == null)
                 throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
@@ -89,7 +93,7 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType(typeof(IEnumerable<OperationModel>), (int)HttpStatusCode.OK)]
         public async Task<IEnumerable<OperationModel>> Get(Guid clientId, OperationStatus status)
         {
-            var operations = await _operationsRepository.Get(clientId, status, null);
+            var operations = await _operationsCacheService.GetAsync(clientId, status, null);
 
             var result = _mapper.Map<IEnumerable<Operation>, IEnumerable<OperationModel>>(operations);
 
@@ -101,7 +105,7 @@ namespace Lykke.Service.Operations.Controllers
         [ProducesResponseType(typeof(IEnumerable<OperationModel>), (int)HttpStatusCode.OK)]
         public async Task<IEnumerable<OperationModel>> Get(Guid? clientId, OperationStatus? status, OperationType? type, int? skip = 0, int? take = 10)
         {
-            var operations = await _operationsRepository.Get(clientId, status, type, skip, take);
+            var operations = await _operationsCacheService.GetAsync(clientId ?? Guid.Empty, status, type, skip, take);
 
             var result = _mapper.Map<IEnumerable<Operation>, IEnumerable<OperationModel>>(operations);
 
@@ -125,7 +129,7 @@ namespace Lykke.Service.Operations.Controllers
             if (!ModelState.IsValid)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
@@ -137,7 +141,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, cmd.WalletId, OperationType.NewOrder, JsonConvert.SerializeObject(context));
-            await _operationsRepository.Create(operation);
+            await _operationsCacheService.CreateAsync(operation);
 
             return Created(Url.Action("Get", new { id }), id);
         }
@@ -153,7 +157,7 @@ namespace Lykke.Service.Operations.Controllers
             if (!ModelState.IsValid)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
@@ -170,7 +174,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.MarketOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             await HandleWorkflow("MarketOrderWorkflow", operation);
 
@@ -188,7 +192,7 @@ namespace Lykke.Service.Operations.Controllers
             if (!ModelState.IsValid)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
@@ -206,7 +210,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.LimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             await HandleWorkflow("LimitOrderWorkflow", operation);
 
@@ -224,7 +228,7 @@ namespace Lykke.Service.Operations.Controllers
             if (!ModelState.IsValid)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
@@ -245,7 +249,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.StopLimitOrder, JsonConvert.SerializeObject(context, Formatting.Indented));
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             await HandleWorkflow("StopLimitOrderWorkflow", operation);
 
@@ -263,7 +267,7 @@ namespace Lykke.Service.Operations.Controllers
             if (!ModelState.IsValid)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
@@ -279,7 +283,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(context, Formatting.Indented));
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             await HandleWorkflow(OperationType.CashoutSwift + "Workflow", operation);
 
@@ -297,7 +301,7 @@ namespace Lykke.Service.Operations.Controllers
             if (!ModelState.IsValid)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
@@ -307,7 +311,7 @@ namespace Lykke.Service.Operations.Controllers
 
             operation = new Operation();
             operation.Create(id, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             await HandleWorkflow(OperationType.Cashout + "Workflow", operation);
 
@@ -319,7 +323,7 @@ namespace Lykke.Service.Operations.Controllers
             var wf = _workflowFactory(workflowType, operation);
             var wfResult = wf.Run(operation);
 
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             if (wfResult.State == WorkflowState.Corrupted)
             {
@@ -362,7 +366,7 @@ namespace Lykke.Service.Operations.Controllers
             if (!ModelState.IsValid)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult(ModelState));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation != null)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation with the id already exists."));
@@ -431,8 +435,7 @@ namespace Lykke.Service.Operations.Controllers
             operation = new Operation();
             operation.Create(id, cmd.ClientId, OperationType.Transfer, JsonConvert.SerializeObject(context, Formatting.Indented));
 
-            await _operationsRepository.Create(operation);
-
+            await _operationsCacheService.CreateAsync(operation);
             await _pushNotificationsApi.SendDataNotificationToAllDevicesAsync(new DataNotificationModel(NotificationType.OperationCreated, new[] { clientAccount.NotificationsId }, "Operation"));
 
             return Created(Url.Action("Get", new { id }), id);
@@ -446,7 +449,7 @@ namespace Lykke.Service.Operations.Controllers
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation == null)
                 throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
@@ -457,7 +460,7 @@ namespace Lykke.Service.Operations.Controllers
             if (operation.Status != OperationStatus.Created)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "An operation in created status could be canceled"));
 
-            await _operationsRepository.UpdateStatus(id, OperationStatus.Canceled);
+            await _operationsCacheService.UpdateStatusAsync(id, OperationStatus.Canceled);
         }
 
         [HttpPost]
@@ -468,12 +471,12 @@ namespace Lykke.Service.Operations.Controllers
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation == null || operation.Status == OperationStatus.Completed || operation.Status == OperationStatus.Confirmed)
                 return;
 
-            await _operationsRepository.UpdateStatus(id, OperationStatus.Completed);
+            await _operationsCacheService.UpdateStatusAsync(id, OperationStatus.Completed);
         }
 
         [HttpPost]
@@ -484,12 +487,12 @@ namespace Lykke.Service.Operations.Controllers
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation == null || operation.Status == OperationStatus.Failed)
                 return;
 
-            await _operationsRepository.UpdateStatus(id, OperationStatus.Failed);
+            await _operationsCacheService.UpdateStatusAsync(id, OperationStatus.Failed);
         }
 
         [HttpPost]
@@ -501,7 +504,7 @@ namespace Lykke.Service.Operations.Controllers
             if (id == Guid.Empty)
                 throw new ApiException(HttpStatusCode.BadRequest, new ApiResult("id", "Operation id must be non empty"));
 
-            var operation = await _operationsRepository.Get(id);
+            var operation = await _operationsCacheService.GetAsync(id);
 
             if (operation == null)
                 throw new ApiException(HttpStatusCode.NotFound, new ApiResult("id", "Operation not found"));
@@ -517,7 +520,7 @@ namespace Lykke.Service.Operations.Controllers
                 case OperationType.Cashout:
                     break;
                 default:
-                    await _operationsRepository.UpdateStatus(id, OperationStatus.Confirmed);
+                    await _operationsCacheService.UpdateStatusAsync(id, OperationStatus.Confirmed);
                     break;
             }
         }

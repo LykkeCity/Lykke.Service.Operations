@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Common;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -9,12 +8,11 @@ using Lykke.Cqrs;
 using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.Services;
 using Lykke.Service.Operations.Workflow.Commands;
-using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Events;
 using Lykke.Workflow;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Lykke.Service.Operations.Workflow.CommandHandlers
@@ -22,18 +20,18 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
     public class WorkflowCommandHandler
     {
         private readonly ILog _log;
-        private readonly IOperationsRepository _operationsRepository;
+        private readonly IOperationsCacheService _operationsCacheService;
         private readonly IWorkflowService _workflowService;
         private readonly Func<string, Operation, OperationWorkflow> _workflowFactory;
 
         public WorkflowCommandHandler(
             ILogFactory logFactory,
-            IOperationsRepository operationsRepository,
+            IOperationsCacheService operationsCacheService,
             IWorkflowService workflowService,
             Func<string, Operation, OperationWorkflow> workflowFactory)
         {
             _log = logFactory.CreateLog(this);
-            _operationsRepository = operationsRepository;
+            _operationsCacheService = operationsCacheService;
             _workflowService = workflowService;
             _workflowFactory = workflowFactory;
         }
@@ -43,7 +41,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         {
             _log.Info($"ExecuteOperationCommand received. Operation [{command.OperationId}]", command);
 
-            var operation = await _operationsRepository.Get(command.OperationId);
+            var operation = await _operationsCacheService.GetAsync(command.OperationId);
             if (operation == null)
                 throw new InvalidOperationException($"Operation with id {command.OperationId} not found");
 
@@ -60,7 +58,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         {
             _log.Info($"CompleteActivityCommand received. Operation [{command.OperationId}]", command);
 
-            var operation = await _operationsRepository.Get(command.OperationId);
+            var operation = await _operationsCacheService.GetAsync(command.OperationId);
 
             if (operation == null)
             {
@@ -109,7 +107,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         {
             _log.Info($"FailActivityCommand received. Operation [{command.OperationId}]", command);
 
-            var operation = await _operationsRepository.Get(command.OperationId);
+            var operation = await _operationsCacheService.GetAsync(command.OperationId);
 
             if (operation == null)
             {
@@ -129,7 +127,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
             activity.Fail(command.Output);
 
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             if (!string.IsNullOrWhiteSpace(command.Output))
             {
@@ -157,7 +155,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
                 operation.Corrupt();
 
-                await _operationsRepository.Save(operation);
+                await _operationsCacheService.SaveAsync(operation);
 
                 eventPublisher.PublishEvent(new OperationCorruptedEvent
                 {
@@ -178,7 +176,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
                     errorMessage = errors.First()["ErrorMessage"].ToString();
                 }
 
-                await _operationsRepository.Save(operation);
+                await _operationsCacheService.SaveAsync(operation);
 
                 eventPublisher.PublishEvent(new OperationFailedEvent
                 {
@@ -192,7 +190,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             {
                 var executingActivity = operation.Activities.Single(a => a.IsExecuting);
 
-                await _operationsRepository.Save(operation);
+                await _operationsCacheService.SaveAsync(operation);
 
                 eventPublisher.PublishEvent(new ExternalExecutionActivityCreatedEvent
                 {
@@ -212,7 +210,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             }
             else
             {
-                await _operationsRepository.Save(operation);
+                await _operationsCacheService.SaveAsync(operation);
 
                 if (operation.Status == OperationStatus.Confirmed)
                     eventPublisher.PublishEvent(new OperationConfirmedEvent
