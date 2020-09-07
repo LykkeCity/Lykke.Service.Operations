@@ -12,6 +12,7 @@ using Lykke.Service.ConfirmationCodes.Contract;
 using Lykke.Service.ConfirmationCodes.Contract.Commands;
 using Lykke.Service.ConfirmationCodes.Contract.Events;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Events;
@@ -23,11 +24,14 @@ namespace Lykke.Service.Operations.Workflow.Sagas
     public class ConfirmationSaga
     {
         private readonly ILog _log;
-        private readonly IOperationsRepository _operationsRepository;
+        private readonly IOperationsCacheService _operationsCacheService;
 
-        public ConfirmationSaga(ILogFactory logFactory, IOperationsRepository operationsRepository)
+        public ConfirmationSaga(
+            ILogFactory logFactory,
+            IOperationsCacheService operationsCacheService
+            )
         {
-            _operationsRepository = operationsRepository;
+            _operationsCacheService = operationsCacheService;
             _log = logFactory.CreateLog(this);
         }
 
@@ -64,7 +68,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         {
             _log.Info($"ConfirmationValidationPassedEvent for operation [{evt.OperationId}] received", evt);
 
-            var operation = await _operationsRepository.Get(evt.OperationId);
+            var operation = await _operationsCacheService.GetAsync(evt.OperationId);
 
             var hasPendingConfirmationActivity = GetConfirmationActivity(operation) != null;
 

@@ -31,6 +31,7 @@ namespace Lykke.Service.Operations.Settings
         public BlockchainCashoutPreconditionsCheckServiceClientSettings BlockchainCashoutPreconditionsCheckServiceClient { get; set; }
         public EthereumServiceClientSettings EthereumServiceClient { get; set; }
         public KycServiceClientSettings KycServiceClient { get; set; }
+        public MyNoSqlSettings MyNoSqlServer { get; set; }
     }
 
     public class RedisSettings
