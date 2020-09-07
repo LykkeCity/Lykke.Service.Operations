@@ -7,6 +7,7 @@ using Lykke.Service.Operations.Contracts;
 using Lykke.Service.Operations.Contracts.Commands;
 using Lykke.Service.Operations.Contracts.Events;
 using Lykke.Service.Operations.Core.Domain;
+using Lykke.Service.Operations.Core.Services;
 using Lykke.Service.Operations.Workflow.Events;
 using Newtonsoft.Json;
 
@@ -15,16 +16,16 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
     public class CommandHandler
     {
         private readonly ILog _log;
-        private readonly IOperationsRepository _operationsRepository;
+        private readonly IOperationsCacheService _operationsCacheService;
         private readonly string _ethereumHotWallet;
 
         public CommandHandler(
             ILogFactory logFactory,
-            IOperationsRepository operationsRepository,
+            IOperationsCacheService operationsCacheService,
             string ethereumHotWallet)
         {
             _log = logFactory.CreateLog(this);
-            _operationsRepository = operationsRepository;
+            _operationsCacheService = operationsCacheService;
             _ethereumHotWallet = ethereumHotWallet;
         }
 
@@ -36,7 +37,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
             // TODO: obsolete
             command.GlobalSettings.EthereumHotWallet = _ethereumHotWallet;
 
-            var operation = await _operationsRepository.Get(command.OperationId);
+            var operation = await _operationsCacheService.GetAsync(command.OperationId);
 
             if (operation != null)
             {
@@ -55,7 +56,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
             operation = new Operation();
             operation.Create(command.OperationId, command.Client.Id, OperationType.Cashout, JsonConvert.SerializeObject(command, Formatting.Indented));
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id });
 
@@ -67,7 +68,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         {
             _log.Info($"ConfirmCommand received. Operation [{command.OperationId}]", command);
 
-            var operation = await _operationsRepository.Get(command.OperationId);
+            var operation = await _operationsCacheService.GetAsync(command.OperationId);
 
             if (operation == null || operation.ClientId != command.ClientId)
             {
@@ -94,7 +95,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
         {
             _log.Info($"CreateSwiftCashoutCommand received. Operation [{command.OperationId}]", command);
 
-            var operation = await _operationsRepository.Get(command.OperationId);
+            var operation = await _operationsCacheService.GetAsync(command.OperationId);
 
             if (operation != null)
             {
@@ -113,7 +114,7 @@ namespace Lykke.Service.Operations.Workflow.CommandHandlers
 
             operation = new Operation();
             operation.Create(command.OperationId, command.Client.Id, OperationType.CashoutSwift, JsonConvert.SerializeObject(command, Formatting.Indented));
-            await _operationsRepository.Save(operation);
+            await _operationsCacheService.SaveAsync(operation);
 
             eventPublisher.PublishEvent(new OperationCreatedEvent { Id = command.OperationId, ClientId = command.Client.Id });
 
