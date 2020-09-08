@@ -57,7 +57,12 @@ namespace Lykke.Service.Operations.Repositories
                     _log.Warning("Retry on SocketException", context: new { exception.ErrorCode, exception.SocketErrorCode, Data = exception.Data.ToJson()}.ToJson());
                     return true;
                 })
-                .WaitAndRetry(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+                .Or<TimeoutException>(exception =>
+                {
+                    _log.Warning("Retry on TimeoutException", context: new { exception.Message }.ToJson());
+                    return true;
+                })
+                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 
         protected IMongoCollection<T> GetCollection()
@@ -67,13 +72,7 @@ namespace Lykke.Service.Operations.Repositories
 
         public async Task<T> Get(Guid id)
         {
-            var result = await RetryPolicy.Execute(async () =>
-            {
-                var res = await Get(x => x.Id == id).ConfigureAwait(false);
-
-                return res;
-            });
-
+            var result = await Get(x => x.Id == id).ConfigureAwait(false);
             return result;
         }
 
@@ -137,7 +136,7 @@ namespace Lykke.Service.Operations.Repositories
 
         public async Task<T> Get(Expression<Func<T, bool>> expression)
         {
-            var result = await RetryPolicy.Execute(async () =>
+            var result = await RetryPolicy.ExecuteAsync(async () =>
             {
                 var res = await GetCollection().Find(expression).FirstOrDefaultAsync().ConfigureAwait(false);
 
@@ -149,7 +148,7 @@ namespace Lykke.Service.Operations.Repositories
 
         public async Task<List<T>> FilterBy(Expression<Func<T, bool>> expression)
         {
-            var result = await RetryPolicy.Execute(async () =>
+            var result = await RetryPolicy.ExecuteAsync(async () =>
             {
                 var res = await GetCollection().Find(expression).ToListAsync();
 
