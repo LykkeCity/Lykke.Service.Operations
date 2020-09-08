@@ -17,14 +17,14 @@ namespace Lykke.Service.Operations.Repositories
 
         public async Task<IEnumerable<Operation>> Get(Guid? clientId, OperationStatus? status, OperationType? type, int? skip = 0, int? take = 10)
         {
-            var result = await RetryPolicy.Execute(async () =>
+            var result = await RetryPolicy.ExecuteAsync(async () =>
             {
                 var res = await GetCollection()
-                  .Find(x => (clientId == null || x.ClientId == clientId) && (status == null || x.Status == status) && (type == null|| x.Type == type))
-                  .SortByDescending(x => x.Created)
-                  .Skip(skip)
-                  .Limit(take)
-                  .ToListAsync();
+                    .Find(x => (clientId == null || x.ClientId == clientId) && (status == null || x.Status == status) && (type == null|| x.Type == type))
+                    .SortByDescending(x => x.Created)
+                    .Skip(skip)
+                    .Limit(take)
+                    .ToListAsync();
 
                 return res;
             });

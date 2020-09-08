@@ -17,6 +17,9 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="appsettings.Development.json" />
+    <None Update="appsettings.dev.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Update="Dockerfile">
