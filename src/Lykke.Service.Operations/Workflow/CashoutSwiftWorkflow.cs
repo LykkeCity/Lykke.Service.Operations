@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Common;
+using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.ApiLibrary.Exceptions;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.MatchingEngine.Connector.Models.Api;
@@ -15,7 +18,9 @@ using Lykke.Service.Operations.Workflow.Extensions;
 using Lykke.Service.SwiftWithdrawal.Contracts;
 using Lykke.Workflow;
 using Lykke.Workflow.Fluent;
+using Microsoft.WindowsAzure.Storage;
 using Newtonsoft.Json.Linq;
+using Polly;
 using AssetInput = Lykke.Service.Operations.Workflow.Data.SwiftCashout.AssetInput;
 
 namespace Lykke.Service.Operations.Workflow
@@ -26,6 +31,7 @@ namespace Lykke.Service.Operations.Workflow
         private readonly IExchangeOperationsServiceClient _exchangeOperationsServiceClient;
         private readonly IFeeCalculatorClient _feeCalculatorClient;
         private readonly ICqrsEngine _cqrsEngine;
+        private readonly ILog _log;
 
         public CashoutSwiftWorkflow(
             Operation operation,
@@ -36,6 +42,7 @@ namespace Lykke.Service.Operations.Workflow
             ICqrsEngine cqrsEngine
             ) : base(operation, logFactory, activityFactory)
         {
+            _log = logFactory.CreateLog(this);
             _exchangeOperationsServiceClient = exchangeOperationsServiceClient;
             _feeCalculatorClient = feeCalculatorClient;
             _cqrsEngine = cqrsEngine;
@@ -159,19 +166,46 @@ namespace Lykke.Service.Operations.Workflow
         {
             var operationFee = Math.Abs(input.Fee.Size) > 0 ? input.Fee : null;
 
-            var result = _exchangeOperationsServiceClient.ExchangeOperations.TransferAsync(
-                new TransferRequestModel
+            var policy = Policy
+                .Handle<ClientApiException>(exception =>
                 {
-                    DestClientId = input.HotwalletId,
-                    SourceClientId = input.ClientId,
-                    Amount = (double)input.Volume,
-                    AssetId = input.AssetId,
-                    OperationId = input.Id,
-                    Fee = operationFee,
+                    _log.Warning("Retry on ClientApiException", context: input.ToJson());
+                    return true;
                 })
-                .GetAwaiter().GetResult();
+                .Or<TaskCanceledException>(exception =>
+                {
+                    _log.Warning("Retry on TaskCanceledException", context: input.ToJson());
+                    return true;
+                }).Or<StorageException>(exception =>
+                {
+                    _log.Warning("Retry on StorageException", context: input.ToJson());
+                    return true;
+                })
+                .OrResult<ExchangeOperationResult>(r =>
+                {
+                    _log.Info(message: "Response from ME", r?.ToJson());
+                    return r == null || r.Code == 500;
+                }) //ME runtime error
+                .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-            if (result.IsOk())
+            var result = policy.Execute(() =>
+            {
+                var res = _exchangeOperationsServiceClient.ExchangeOperations.TransferAsync(
+                        new TransferRequestModel
+                        {
+                            DestClientId = input.HotwalletId,
+                            SourceClientId = input.ClientId,
+                            Amount = (double)input.Volume,
+                            AssetId = input.AssetId,
+                            OperationId = input.Id,
+                            Fee = operationFee,
+                        })
+                    .GetAwaiter().GetResult();
+
+                return res;
+            });
+
+            if (result.IsOk() || result.Code == (int)MeStatusCodes.Duplicate)
                 return;
 
             if (!Enum.IsDefined(typeof(MeStatusCodes), result.Code))

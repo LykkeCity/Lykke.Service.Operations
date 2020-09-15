@@ -296,8 +296,8 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .OrResult<ExchangeOperationResult>(r =>
                 {
-                    _log.Info("Response from ME", r.ToJson());
-                    return r.Code == 500;
+                    _log.Info(message: "Response from ME", r?.ToJson());
+                    return r == null || r.Code == 500;
                 }) //ME runtime error
                 .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
