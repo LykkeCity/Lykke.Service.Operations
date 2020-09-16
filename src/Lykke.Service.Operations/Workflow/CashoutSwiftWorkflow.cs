@@ -183,8 +183,8 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .OrResult<ExchangeOperationResult>(r =>
                 {
-                    _log.Info(message: "Response from ME", r?.ToJson());
-                    return r == null || r.Code == 500;
+                    _log.Info(message: "Response from ME", r.ToJson());
+                    return r.Code == 500;
                 }) //ME runtime error
                 .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
@@ -205,8 +205,14 @@ namespace Lykke.Service.Operations.Workflow
                 return res;
             });
 
-            if (result.IsOk() || result.Code == (int)MeStatusCodes.Duplicate)
+            if (result.IsOk())
                 return;
+
+            if (result.Code == (int) MeStatusCodes.Duplicate)
+            {
+                _log.Warning("Duplicate status from ME", context: result.ToJson());
+                return;
+            }
 
             if (!Enum.IsDefined(typeof(MeStatusCodes), result.Code))
                 throw new WorkflowException("InternalError", $"Exchange operation service failed, code {result.Code}");

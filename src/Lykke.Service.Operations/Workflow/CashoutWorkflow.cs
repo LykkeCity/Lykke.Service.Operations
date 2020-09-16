@@ -296,8 +296,8 @@ namespace Lykke.Service.Operations.Workflow
                 })
                 .OrResult<ExchangeOperationResult>(r =>
                 {
-                    _log.Info(message: "Response from ME", r?.ToJson());
-                    return r == null || r.Code == 500;
+                    _log.Info(message: "Response from ME", r.ToJson());
+                    return r.Code == 500;
                 }) //ME runtime error
                 .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
@@ -322,8 +322,14 @@ namespace Lykke.Service.Operations.Workflow
                 return res;
             });
 
-            if (result.IsOk() || result.Code == (int)MeStatusCodes.Duplicate)
+            if (result.IsOk())
                 return;
+
+            if (result.Code == (int) MeStatusCodes.Duplicate)
+            {
+                _log.Warning("Duplicate status from ME", context: result.ToJson());
+                return;
+            }
 
             var message = $"{result.Code}: {result.Message}";
             _log.Warning(message, context: new {input.OperationId, ErrorMessage = message});
