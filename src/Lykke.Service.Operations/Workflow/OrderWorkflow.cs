@@ -24,7 +24,6 @@ namespace Lykke.Service.Operations.Workflow
                     .Do("Asset validation").OnFail("Fail operation")
                     .Do("Asset pair validation").OnFail("Fail operation")
                     .Do("Kyc validation").OnFail("Fail operation")
-                    .Do("USA users restrictions validation").OnFail("Fail operation")
                     .Do("LKK2Y restrictions validation").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
                     .On("Fee enabled").DeterminedAs(context => (bool)context.OperationValues.GlobalSettings.FeeSettings.FeeEnabled).ContinueWith("Calculate fee")
@@ -90,20 +89,6 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     KycStatus = context.OperationValues.Client.KycStatus,
                     ClientId = context.OperationValues.Client.Id
-                })
-                .MergeFailOutput(output => output);
-
-            ValidationNode<UsaUsersRestrictionsInput>("USA users restrictions validation")
-                .WithInput(context => new UsaUsersRestrictionsInput
-                {
-                    Country = context.OperationValues.Client.PersonalData.Country,
-                    CountryFromID = context.OperationValues.Client.PersonalData.CountryFromID,
-                    CountryFromPOA = context.OperationValues.Client.PersonalData.CountryFromPOA,
-                    AssetId = context.OperationValues.Asset.Id,
-                    Volume = context.OperationValues.Volume,
-                    BaseAssetId = context.OperationValues.AssetPair.BaseAsset.Id,
-                    QuotingAssetId = context.OperationValues.AssetPair.QuotingAsset.Id,
-                    KycStatus = context.OperationValues.Client.KycStatus
                 })
                 .MergeFailOutput(output => output);
 
