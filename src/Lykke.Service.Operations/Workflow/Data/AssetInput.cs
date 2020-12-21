@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Lykke.Service.Assets.Client.Models;
-using Lykke.Service.Operations.Contracts;
+﻿using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.Operations.Contracts.Orders;
 
 namespace Lykke.Service.Operations.Workflow.Data
@@ -13,6 +9,8 @@ namespace Lykke.Service.Operations.Workflow.Data
         public string DisplayId { get; set; }
         public bool IsTradable { get; set; }
         public bool IsTrusted { get; set; }
-        public OrderAction OrderAction { get; set; }        
+        public OrderAction OrderAction { get; set; }
+        public long SiriusAssetId { get; set; }
+        public BlockchainIntegrationType BlockchainIntegrationType { get; set; }
     }
 }
