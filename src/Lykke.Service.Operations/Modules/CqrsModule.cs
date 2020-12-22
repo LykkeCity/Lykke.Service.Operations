@@ -159,6 +159,7 @@ namespace Lykke.Service.Operations.Modules
                                 typeof(Lykke.Job.SiriusCashoutProcessor.Contract.Events.CashoutFailedEvent))
                             .From(SiriusCashoutProcessorBoundedContext.Name).On("events")
                             .PublishingCommands(typeof(StartCashoutCommand)).To(BlockchainCashoutProcessorBoundedContext.Name).With("commands")
+                            .PublishingCommands(typeof(Job.SiriusCashoutProcessor.Contract.Commands.StartCashoutCommand)).To(SiriusCashoutProcessorBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(Job.EthereumCore.Contracts.Cqrs.Commands.StartCashoutCommand)).To(EthereumBoundedContext.Name).With("commands")
                             .PublishingCommands(typeof(SolarCashOutCommand)).To("solarcoin").With("commands")
                             .PublishingCommands(typeof(CompleteActivityCommand), typeof(FailActivityCommand)).To(OperationsBoundedContext.Name).With("commands"),
