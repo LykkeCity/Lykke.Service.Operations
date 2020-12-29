@@ -8,8 +8,9 @@ using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
-using Lykke.Job.BlockchainOperationsExecutor.Contract.Events;
 using Lykke.Job.EthereumCore.Contracts.Cqrs;
+using Lykke.Job.SiriusCashoutProcessor.Contract;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.Operations.Workflow.Commands;
 using Lykke.Service.Operations.Workflow.Events;
 using Newtonsoft.Json;
@@ -21,7 +22,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
         private readonly ILog _log;
         private static readonly string _bilError = "BIL error";
 
-        public BlockchainCashoutSaga(ILogFactory logFactory)
+        public BlockchainCashoutSaga(
+            ILogFactory logFactory)
         {
             _log = logFactory.CreateLog(this);
         }
@@ -33,7 +35,24 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             {
                 var input = JsonConvert.DeserializeObject<BlockchainCashoutInput>(evt.Input);
 
-                if (!string.IsNullOrWhiteSpace(input.BlockchainIntegrationLayerId))
+                if (input.BlockchainIntegrationType == BlockchainIntegrationType.Sirius)
+                {
+                    var command = new Lykke.Job.SiriusCashoutProcessor.Contract.Commands.StartCashoutCommand
+                    {
+                        OperationId = input.OperationId,
+                        AssetId = input.AssetId,
+                        SiriusAssetId = input.SiriusAssetId,
+                        Amount = input.Amount,
+                        Address = input.ToAddress,
+                        Tag = input.Tag,
+                        ClientId = input.ClientId
+                    };
+
+                    commandSender.SendCommand(command, SiriusCashoutProcessorBoundedContext.Name);
+
+                    _log.Info($"StartCashoutCommand for sirius cashout processor has sent. Operation [{command.OperationId}]", command);
+                }
+                else if (!string.IsNullOrWhiteSpace(input.BlockchainIntegrationLayerId))
                 {
                     var command = new StartCashoutCommand
                     {
@@ -42,7 +61,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                         Amount = input.Amount,
                         ToAddress = input.ToAddress,
                         ClientId = input.ClientId
-                    };                    
+                    };
 
                     commandSender.SendCommand(command, BlockchainCashoutProcessorBoundedContext.Name);
 
@@ -76,9 +95,9 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                     commandSender.SendCommand(command, "solarcoin");
 
                     _log.Info($"StartCashoutCommand for Solarcoin has sent. Operation [{command.Id}]", command);
-                }                                
+                }
             }
-        }              
+        }
 
         [UsedImplicitly]
         public async Task Handle(Job.EthereumCore.Contracts.Cqrs.Events.CashoutCompletedEvent evt, ICommandSender commandSender)
@@ -87,6 +106,19 @@ namespace Lykke.Service.Operations.Workflow.Sagas
             {
                 OperationId = evt.OperationId,
                 Output = "{}",
+                ActivityType = nameof(IActivityReference.SettleOnBlockchain)
+            };
+
+            commandSender.SendCommand(command, "operations");
+        }
+
+        [UsedImplicitly]
+        public async Task Handle(Job.SiriusCashoutProcessor.Contract.Events.CashoutCompletedEvent evt, ICommandSender commandSender)
+        {
+            var command = new CompleteActivityCommand
+            {
+                OperationId = evt.OperationId,
+                Output = evt.ToJson(),
                 ActivityType = nameof(IActivityReference.SettleOnBlockchain)
             };
 
@@ -141,7 +173,7 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 OperationId = evt.OperationId,
                 Output = new
                 {
-                    evt.TransactionHash                    
+                    evt.TransactionHash
                 }.ToJson(),
                 ActivityType = nameof(IActivityReference.SettleOnBlockchain)
             };
@@ -171,6 +203,27 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                 {
                     ErrorCode = _bilError,
                     ErrorMessage = evt.Error
+                }.ToJson()
+            };
+
+            commandSender.SendCommand(command, "operations");
+        }
+        [UsedImplicitly]
+        public async Task Handle(Job.SiriusCashoutProcessor.Contract.Events.CashoutFailedEvent evt, ICommandSender commandSender)
+        {
+            if (!Guid.TryParse(evt.OperationId, out var operationId))
+            {
+                operationId = Guid.Empty;
+            }
+
+            var command = new FailActivityCommand
+            {
+                OperationId = operationId,
+                Output = new
+                {
+                    evt.RefundId,
+                    evt.Status,
+                    evt.Error
                 }.ToJson()
             };
 

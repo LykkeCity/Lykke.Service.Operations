@@ -1,4 +1,5 @@
-﻿using MessagePack;
+﻿using Lykke.Service.Assets.Client.Models;
+using MessagePack;
 
 namespace Lykke.Service.Operations.Contracts.Cashout
 {
@@ -20,5 +21,7 @@ namespace Lykke.Service.Operations.Contracts.Cashout
         public decimal LowVolumeAmount { get; set; }
         public bool BlockchainWithdrawal { get; set; }
         public string LykkeEntityId { get; set; }
+        public long SiriusAssetId { get; set; }
+        public BlockchainIntegrationType BlockchainIntegrationType { get; set; }
     }
 }

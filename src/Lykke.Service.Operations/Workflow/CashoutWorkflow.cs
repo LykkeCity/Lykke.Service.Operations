@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using Common;
 using Lykke.Common.ApiLibrary.Exceptions;
 using Lykke.MatchingEngine.Connector.Models.Api;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Contract.Requests;
 using Lykke.Service.ExchangeOperations.Client.Models;
 using Microsoft.WindowsAzure.Storage;
@@ -58,9 +59,11 @@ namespace Lykke.Service.Operations.Workflow
                     .Do("Destination address validation").OnFail("Fail operation")
                     .Do("Disclaimers validation").OnFail("Fail operation")
                     .Do("Balance validation").OnFail("Fail operation")
-                    .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
+                    .On("Is sirius integration").DeterminedAs(context => Enum.TryParse<BlockchainIntegrationType>((string)context.OperationValues.Asset.BlockchainIntegrationType, out var type) && type == BlockchainIntegrationType.Sirius)
+                        .ContinueWith("Calculate fee")
+                    .On("Is not blockchain integration").DeterminedAs(context => string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId) && Enum.TryParse<BlockchainIntegrationType>((string)context.OperationValues.Asset.BlockchainIntegrationType, out var type) && type != BlockchainIntegrationType.Sirius)
                         .ContinueWith("Limits validation")
-                    .On("Is blockchain integration").DeterminedAs(context => !string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId))
+                    .On("Is blockchain integration").DeterminedAs(context => !string.IsNullOrWhiteSpace((string)context.OperationValues.Asset.BlockchainIntegrationLayerId) && Enum.TryParse<BlockchainIntegrationType>((string)context.OperationValues.Asset.BlockchainIntegrationType, out var type) && type != BlockchainIntegrationType.Sirius)
                         .ContinueWith("Merge blockchain address")
                     .WithBranch()
                         .Do("Merge blockchain address").OnFail("Fail operation")
@@ -127,7 +130,9 @@ namespace Lykke.Service.Operations.Workflow
                 {
                     DisplayId = context.OperationValues.Asset.DisplayId,
                     IsTradable = context.OperationValues.Asset.IsTradable,
-                    IsTrusted = context.OperationValues.Asset.IsTrusted
+                    IsTrusted = context.OperationValues.Asset.IsTrusted,
+                    SiriusAssetId = context.OperationValues.Asset.SiriusAssetId,
+                    BlockchainIntegrationType = context.OperationValues.Asset.BlockchainIntegrationType
                 })
                 .MergeFailOutput(output => output);
 
@@ -261,11 +266,14 @@ namespace Lykke.Service.Operations.Workflow
                     OperationId = context.Id,
                     ClientId = context.ClientId,
                     AssetId = context.OperationValues.Asset.Id,
+                    SiriusAssetId = context.OperationValues.Asset.SiriusAssetId,
+                    BlockchainIntegrationType = context.OperationValues.Asset.BlockchainIntegrationType,
                     AssetBlockchain = context.OperationValues.Asset.Blockchain,
                     AssetBlockchainWithdrawal = context.OperationValues.Asset.BlockchainWithdrawal,
                     BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId,
                     Amount = context.OperationValues.Volume,
                     ToAddress = context.OperationValues.DestinationAddress,
+                    Tag = context.OperationValues.DestinationAddressExtension,
                     EthHotWallet = context.OperationValues.GlobalSettings.EthereumHotWallet
                 })
                 .MergeOutput(output => new { Blockchain = output })
