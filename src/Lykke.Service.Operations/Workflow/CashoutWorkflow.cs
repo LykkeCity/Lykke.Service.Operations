@@ -24,6 +24,7 @@ using Lykke.MatchingEngine.Connector.Models.Api;
 using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.BlockchainCashoutPreconditionsCheck.Contract.Requests;
 using Lykke.Service.ExchangeOperations.Client.Models;
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.WindowsAzure.Storage;
 using Polly;
 using FeeType = Lykke.Service.FeeCalculator.AutorestClient.Models.FeeType;
@@ -240,7 +241,7 @@ namespace Lykke.Service.Operations.Workflow
                 .WithInput(context => new CashoutMeInput
                 {
                     OperationId = context.Id,
-                    ClientId = context.OperationValues.Client.Id,
+                    ClientId = context.OperationValues.WalletId ?? context.OperationValues.Client.Id,
                     DestinationAddress = context.OperationValues.DestinationAddress,
                     Volume = context.OperationValues.Volume,
                     AssetId = context.OperationValues.Asset.Id,
@@ -261,20 +262,36 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             Node("Settle on blockchain", i => i.SettleOnBlockchain())
-                .WithInput(context => new BlockchainCashoutInput
+                .WithInput(context =>
                 {
-                    OperationId = context.Id,
-                    ClientId = context.ClientId,
-                    AssetId = context.OperationValues.Asset.Id,
-                    SiriusAssetId = context.OperationValues.Asset.SiriusAssetId,
-                    BlockchainIntegrationType = context.OperationValues.Asset.BlockchainIntegrationType,
-                    AssetBlockchain = context.OperationValues.Asset.Blockchain,
-                    AssetBlockchainWithdrawal = context.OperationValues.Asset.BlockchainWithdrawal,
-                    BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId,
-                    Amount = context.OperationValues.Volume,
-                    ToAddress = context.OperationValues.DestinationAddress,
-                    Tag = context.OperationValues.DestinationAddressExtension,
-                    EthHotWallet = context.OperationValues.GlobalSettings.EthereumHotWallet
+                    Guid? walletId=default;
+                    try
+                    {
+                        walletId = !string.IsNullOrWhiteSpace(context.OperationValues.WalletId)
+                            ? Guid.Parse(context.OperationValues.WalletId)
+                            : default;
+                    }
+                    catch (RuntimeBinderException)
+                    {
+                        // for backwards compatibility
+                    } 
+                    
+                    return new BlockchainCashoutInput
+                            {
+                                OperationId = context.Id,
+                                ClientId = context.ClientId,
+                                AssetId = context.OperationValues.Asset.Id,
+                                SiriusAssetId = context.OperationValues.Asset.SiriusAssetId,
+                                BlockchainIntegrationType = context.OperationValues.Asset.BlockchainIntegrationType,
+                                AssetBlockchain = context.OperationValues.Asset.Blockchain,
+                                AssetBlockchainWithdrawal = context.OperationValues.Asset.BlockchainWithdrawal,
+                                BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId,
+                                Amount = context.OperationValues.Volume,
+                                ToAddress = context.OperationValues.DestinationAddress,
+                                Tag = context.OperationValues.DestinationAddressExtension,
+                                WalletId = walletId,
+                                EthHotWallet = context.OperationValues.GlobalSettings.EthereumHotWallet
+                            };
                 })
                 .MergeOutput(output => new { Blockchain = output })
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });

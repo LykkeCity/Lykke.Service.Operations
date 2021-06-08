@@ -25,9 +25,10 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// <summary>
         /// Initializes a new instance of the CreateCashoutCommand class.
         /// </summary>
-        public CreateCashoutCommand(System.Guid operationId, string destinationAddress, string destinationAddressExtension, double volume, AssetCashoutModel asset, ClientCashoutModel client, GlobalSettingsCashoutModel globalSettings)
+        public CreateCashoutCommand(System.Guid operationId, System.Guid? walletId, string destinationAddress, string destinationAddressExtension, double volume, AssetCashoutModel asset, ClientCashoutModel client, GlobalSettingsCashoutModel globalSettings)
         {
             OperationId = operationId;
+            WalletId = walletId;
             DestinationAddress = destinationAddress;
             DestinationAddressExtension = destinationAddressExtension;
             Volume = volume;
@@ -46,6 +47,11 @@ namespace Lykke.Service.Operations.Client.AutorestClient.Models
         /// </summary>
         [JsonProperty(PropertyName = "OperationId")]
         public System.Guid OperationId { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "WalletId")]
+        public System.Guid? WalletId { get; set; }
 
         /// <summary>
         /// </summary>
