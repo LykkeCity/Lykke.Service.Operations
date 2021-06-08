@@ -15,6 +15,7 @@ namespace Lykke.Service.Operations.Workflow
         public string ToAddress { get; set; }
         public string Tag { get; set; }
         public Guid ClientId { get; set; }
+        public Guid? WalletId { set; get; }
         public string EthHotWallet { get; set; }
         public BlockchainIntegrationType BlockchainIntegrationType { get; set; }
     }
