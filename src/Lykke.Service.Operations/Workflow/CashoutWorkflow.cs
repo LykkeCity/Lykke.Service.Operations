@@ -238,17 +238,32 @@ namespace Lykke.Service.Operations.Workflow
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
 
             DelegateNode<CashoutMeInput>("Send to ME", i => SendToMe(i))
-                .WithInput(context => new CashoutMeInput
+                .WithInput(context =>
                 {
-                    OperationId = context.Id,
-                    ClientId = context.OperationValues.WalletId ?? context.OperationValues.Client.Id,
-                    DestinationAddress = context.OperationValues.DestinationAddress,
-                    Volume = context.OperationValues.Volume,
-                    AssetId = context.OperationValues.Asset.Id,
-                    AssetAccuracy = context.OperationValues.Asset.Accuracy,
-                    CashoutTargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClients["Cashout"],
-                    FeeSize = context.OperationValues.Fee.Size,
-                    FeeType = context.OperationValues.Fee.Type
+                    string clientId = context.OperationValues.Client.Id;
+
+                    try
+                    {
+                        clientId = context.OperationValues.WalletId;
+                    }
+                    catch (RuntimeBinderException)
+                    {
+                        // for backwards compatibility
+                    }
+                    
+                    return new CashoutMeInput
+                            {
+                                OperationId = context.Id,
+                                ClientId =  clientId,
+                                DestinationAddress = context.OperationValues.DestinationAddress,
+                                Volume = context.OperationValues.Volume,
+                                AssetId = context.OperationValues.Asset.Id,
+                                AssetAccuracy = context.OperationValues.Asset.Accuracy,
+                                CashoutTargetClientId =
+                                    context.OperationValues.GlobalSettings.FeeSettings.TargetClients["Cashout"],
+                                FeeSize = context.OperationValues.Fee.Size,
+                                FeeType = context.OperationValues.Fee.Type
+                            };
                 })
                 .MergeFailOutput(e => new
                 {
