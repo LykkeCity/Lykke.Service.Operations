@@ -284,7 +284,8 @@ namespace Lykke.Service.Operations.Workflow
                     Guid? walletId=default;
                     try
                     {
-                        var walletIdStr = context.OperationValues.WalletId;
+                        string walletIdStr = context.OperationValues.WalletId;
+                        _log.Info($"WalletId for settling: {walletIdStr}");
                         walletId = !string.IsNullOrWhiteSpace(walletIdStr)
                             ? Guid.Parse(walletIdStr)
                             : default;
