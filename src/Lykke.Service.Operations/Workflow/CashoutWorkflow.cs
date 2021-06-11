@@ -279,9 +279,8 @@ namespace Lykke.Service.Operations.Workflow
             Node("Settle on blockchain", i => i.SettleOnBlockchain())
                 .WithInput(context =>
                 {
-                    Console.WriteLine("____");
-                    Console.WriteLine(context.OperationValues.ToString());
-                    Console.WriteLine(context.Context);
+                    _log.Info($"Context for settling: {context.Context}");
+                    _log.Info($"OperationValues for settling: {context.OperationValues.ToString()}");
                     Guid? walletId=default;
                     try
                     {
