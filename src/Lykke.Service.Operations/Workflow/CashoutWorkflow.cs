@@ -282,8 +282,9 @@ namespace Lykke.Service.Operations.Workflow
                     Guid? walletId=default;
                     try
                     {
-                        walletId = !string.IsNullOrWhiteSpace(context.OperationValues.WalletId)
-                            ? Guid.Parse(context.OperationValues.WalletId)
+                        var walletIdStr = context.OperationValues.WalletId;
+                        walletId = !string.IsNullOrWhiteSpace(walletIdStr)
+                            ? Guid.Parse(walletIdStr)
                             : default;
                     }
                     catch (RuntimeBinderException)
