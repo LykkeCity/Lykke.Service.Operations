@@ -290,9 +290,9 @@ namespace Lykke.Service.Operations.Workflow
                     catch (RuntimeBinderException)
                     {
                         // for backwards compatibility
-                    } 
+                    }
                     
-                    return new BlockchainCashoutInput 
+                    return new BlockchainCashoutInput
                         {
                             OperationId = context.Id,
                             ClientId = context.ClientId,
