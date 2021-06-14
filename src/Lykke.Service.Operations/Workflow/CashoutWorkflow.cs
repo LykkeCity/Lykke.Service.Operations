@@ -282,7 +282,7 @@ namespace Lykke.Service.Operations.Workflow
                     Guid? walletId=default;
                     try
                     {
-                        var walletIdStr = context.OperationValues.WalletId;
+                        string walletIdStr = context.OperationValues.WalletId;
                         walletId = !string.IsNullOrWhiteSpace(walletIdStr)
                             ? Guid.Parse(walletIdStr)
                             : default;
@@ -293,21 +293,21 @@ namespace Lykke.Service.Operations.Workflow
                     } 
                     
                     return new BlockchainCashoutInput
-                            {
-                                OperationId = context.Id,
-                                ClientId = context.ClientId,
-                                AssetId = context.OperationValues.Asset.Id,
-                                SiriusAssetId = context.OperationValues.Asset.SiriusAssetId,
-                                BlockchainIntegrationType = context.OperationValues.Asset.BlockchainIntegrationType,
-                                AssetBlockchain = context.OperationValues.Asset.Blockchain,
-                                AssetBlockchainWithdrawal = context.OperationValues.Asset.BlockchainWithdrawal,
-                                BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId,
-                                Amount = context.OperationValues.Volume,
-                                ToAddress = context.OperationValues.DestinationAddress,
-                                Tag = context.OperationValues.DestinationAddressExtension,
-                                WalletId = walletId,
-                                EthHotWallet = context.OperationValues.GlobalSettings.EthereumHotWallet
-                            };
+                        {
+                            OperationId = context.Id,
+                            ClientId = context.ClientId,
+                            AssetId = context.OperationValues.Asset.Id,
+                            SiriusAssetId = context.OperationValues.Asset.SiriusAssetId,
+                            BlockchainIntegrationType = context.OperationValues.Asset.BlockchainIntegrationType,
+                            AssetBlockchain = context.OperationValues.Asset.Blockchain,
+                            AssetBlockchainWithdrawal = context.OperationValues.Asset.BlockchainWithdrawal,
+                            BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId,
+                            Amount = context.OperationValues.Volume,
+                            ToAddress = context.OperationValues.DestinationAddress,
+                            Tag = context.OperationValues.DestinationAddressExtension,
+                            WalletId = walletId,
+                            EthHotWallet = context.OperationValues.GlobalSettings.EthereumHotWallet
+                        };
                 })
                 .MergeOutput(output => new { Blockchain = output })
                 .MergeFailOutput(e => new { ErrorMessage = e.Message });
