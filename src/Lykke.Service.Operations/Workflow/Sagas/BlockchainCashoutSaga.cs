@@ -45,7 +45,8 @@ namespace Lykke.Service.Operations.Workflow.Sagas
                         Amount = input.Amount,
                         Address = input.ToAddress,
                         Tag = input.Tag,
-                        ClientId = input.ClientId
+                        ClientId = input.ClientId,
+                        WalletId = input.WalletId
                     };
 
                     commandSender.SendCommand(command, SiriusCashoutProcessorBoundedContext.Name);

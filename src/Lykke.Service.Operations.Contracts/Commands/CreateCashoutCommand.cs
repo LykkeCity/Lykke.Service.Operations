@@ -8,6 +8,7 @@ namespace Lykke.Service.Operations.Contracts.Commands
     public class CreateCashoutCommand
     {
         public Guid OperationId { get; set; }
+        public string WalletId { get; set; }
         public string DestinationAddress { get; set; }
         public string DestinationAddressExtension { get; set; }
         public decimal Volume { get; set; }
