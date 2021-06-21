@@ -248,7 +248,8 @@ namespace Lykke.Service.Operations.Workflow
                     }
                     catch (RuntimeBinderException)
                     {
-                        // for backwards compatibility
+                        // if WalletId is not present in the Context of the Operation, it means we're dealing with API wallet
+                        // which means that we should pass its Id as ClientId for the ME
                     }
                     
                     return new CashoutMeInput
