@@ -323,16 +323,16 @@ namespace Lykke.Service.Operations.Workflow
             var policy = Policy
                 .Handle<ClientApiException>(exception =>
                 {
-                    _log.Warning("Retry on ClientApiException", context: input.ToJson());
+                    _log.Error("Retry on ClientApiException", context: input.ToJson(), exception: exception);
                     return true;
                 })
                 .Or<TaskCanceledException>(exception =>
                 {
-                    _log.Warning("Retry on TaskCanceledException", context: input.ToJson());
+                    _log.Warning("Retry on TaskCanceledException", context: input.ToJson(), exception: exception);
                     return true;
                 }).Or<StorageException>(exception =>
                 {
-                    _log.Warning("Retry on StorageException", context: input.ToJson());
+                    _log.Warning("Retry on StorageException", context: input.ToJson(), exception: exception);
                     return true;
                 })
                 .OrResult<ExchangeOperationResult>(r =>
