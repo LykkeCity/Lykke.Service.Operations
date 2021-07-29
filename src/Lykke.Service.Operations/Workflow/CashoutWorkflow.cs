@@ -248,22 +248,22 @@ namespace Lykke.Service.Operations.Workflow
                     }
                     catch (RuntimeBinderException)
                     {
-                        // for backwards compatibility
+                        // if WalletId is present in the Context of the Operation, it means we're dealing with API wallet
+                        // which means that we should pass its Id as ClientId for the ME
                     }
                     
                     return new CashoutMeInput
-                            {
-                                OperationId = context.Id,
-                                ClientId =  clientId,
-                                DestinationAddress = context.OperationValues.DestinationAddress,
-                                Volume = context.OperationValues.Volume,
-                                AssetId = context.OperationValues.Asset.Id,
-                                AssetAccuracy = context.OperationValues.Asset.Accuracy,
-                                CashoutTargetClientId =
-                                    context.OperationValues.GlobalSettings.FeeSettings.TargetClients["Cashout"],
-                                FeeSize = context.OperationValues.Fee.Size,
-                                FeeType = context.OperationValues.Fee.Type
-                            };
+                    {
+                        OperationId = context.Id,
+                        ClientId =  clientId,
+                        DestinationAddress = context.OperationValues.DestinationAddress,
+                        Volume = context.OperationValues.Volume,
+                        AssetId = context.OperationValues.Asset.Id,
+                        AssetAccuracy = context.OperationValues.Asset.Accuracy,
+                        CashoutTargetClientId = context.OperationValues.GlobalSettings.FeeSettings.TargetClients["Cashout"],
+                        FeeSize = context.OperationValues.Fee.Size,
+                        FeeType = context.OperationValues.Fee.Type
+                    };
                 })
                 .MergeFailOutput(e => new
                 {
@@ -323,16 +323,16 @@ namespace Lykke.Service.Operations.Workflow
             var policy = Policy
                 .Handle<ClientApiException>(exception =>
                 {
-                    _log.Warning("Retry on ClientApiException", context: input.ToJson());
+                    _log.Error("Retry on ClientApiException", context: input.ToJson(), exception: exception);
                     return true;
                 })
                 .Or<TaskCanceledException>(exception =>
                 {
-                    _log.Warning("Retry on TaskCanceledException", context: input.ToJson());
+                    _log.Warning("Retry on TaskCanceledException", context: input.ToJson(), exception: exception);
                     return true;
                 }).Or<StorageException>(exception =>
                 {
-                    _log.Warning("Retry on StorageException", context: input.ToJson());
+                    _log.Warning("Retry on StorageException", context: input.ToJson(), exception: exception);
                     return true;
                 })
                 .OrResult<ExchangeOperationResult>(r =>
