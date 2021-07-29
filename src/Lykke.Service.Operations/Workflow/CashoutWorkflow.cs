@@ -321,9 +321,9 @@ namespace Lykke.Service.Operations.Workflow
         private void SendToMe(CashoutMeInput input)
         {
             var policy = Policy
-                .Handle<ClientApiException>(exception =>
+                .Handle<ClientApiException>(ex =>
                 {
-                    _log.Error("Retry on ClientApiException", context: input.ToJson(), exception: exception);
+                    _log.Error($"Retry on ClientApiException. HTTP status code: {ex.HttpStatusCode}, Error response: {ex.ErrorResponse.ToJson()}", context: input.ToJson(), exception: ex);
                     return true;
                 })
                 .Or<TaskCanceledException>(exception =>
