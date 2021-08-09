@@ -252,7 +252,7 @@ namespace Lykke.Service.Operations.Workflow
                         // which means that we should pass its Id as ClientId for the ME
                     }
 
-                    
+
                     return new CashoutMeInput
                     {
                         OperationId = context.Id,
@@ -280,19 +280,20 @@ namespace Lykke.Service.Operations.Workflow
             Node("Settle on blockchain", i => i.SettleOnBlockchain())
                 .WithInput(context =>
                 {
-                    Guid? walletId=default;
+                    Guid? walletId = null;
+
                     try
                     {
                         string walletIdStr = context.OperationValues.WalletId;
                         walletId = !string.IsNullOrWhiteSpace(walletIdStr)
                             ? Guid.Parse(walletIdStr)
-                            : default;
+                            : (Guid?)null;
                     }
                     catch (RuntimeBinderException)
                     {
                         // for backwards compatibility
                     }
-                    
+
                     return new BlockchainCashoutInput
                         {
                             OperationId = context.Id,
