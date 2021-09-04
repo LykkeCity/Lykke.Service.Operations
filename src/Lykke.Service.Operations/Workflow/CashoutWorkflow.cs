@@ -123,6 +123,7 @@ namespace Lykke.Service.Operations.Workflow
                     AssetBlockchain = context.OperationValues.Asset.Blockchain,
                     DestinationAddress = context.OperationValues.DestinationAddress,
                     BlockchainIntegrationLayerId = context.OperationValues.Asset.BlockchainIntegrationLayerId,
+                    BlockchainIntegrationType = context.OperationValues.Asset.BlockchainIntegrationType
                 })
                 .MergeFailOutput(output => output);
 

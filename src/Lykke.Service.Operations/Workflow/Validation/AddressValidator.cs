@@ -7,26 +7,23 @@ using Lykke.Service.EthereumCore.Client.Models;
 using Lykke.Service.Operations.Workflow.Data;
 using Lykke.Service.Operations.Workflow.Extensions;
 using Nethereum.Util;
-using Newtonsoft.Json;
 using System;
-using System.IO;
-using System.Net;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Lykke.Service.Assets.Client.Models;
 
 namespace Lykke.Service.Operations.Workflow.Validation
 {
     [UsedImplicitly]
     public class AddressValidator : AbstractValidator<AddressInput>
     {
-        private readonly IEthereumFacade _ethereumFacade;        
+        private readonly IEthereumFacade _ethereumFacade;
 
         public AddressValidator(IEthereumFacade ethereumFacade)
         {
-            _ethereumFacade = ethereumFacade;            
+            _ethereumFacade = ethereumFacade;
 
-            When(m => string.IsNullOrWhiteSpace(m.BlockchainIntegrationLayerId), () =>
+            When(m => string.IsNullOrWhiteSpace(m.BlockchainIntegrationLayerId) && m.BlockchainIntegrationType != BlockchainIntegrationType.Sirius, () =>
             {
                 RuleFor(m => m.DestinationAddress)
                     .MustAsync(async (input, address, token) =>
@@ -59,13 +56,13 @@ namespace Lykke.Service.Operations.Workflow.Validation
 
             if (_ethereumFacade.IsValidAddress(destinationAddress) && (assetId == LykkeConstants.ChronoBankAssetId || assetBlockchain == "Ethereum"))
                 return true;
-        
+
             return false;
         }
-    }       
+    }
 
     public interface IEthereumFacade
-    {       
+    {
         bool IsValidAddress(string address);
         bool IsValidAddressWithHexPrefix(string address);
 
